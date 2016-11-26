@@ -1,6 +1,7 @@
 '''
 Created on 17.10.2014
 This is the main file.
+TEST
 @author: Harald Ringbauer
 '''
 from grid import Grid

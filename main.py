@@ -2,6 +2,7 @@
 Created on 17.10.2014
 This is the main file.
 TEST
+TEST1
 @author: Harald Ringbauer
 '''
 from grid import Grid

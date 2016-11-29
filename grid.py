@@ -151,19 +151,19 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, coords, nr_genotypes, l=25):
+    def draw_correlated_genotypes(self, coords, nr_genotypes, l=25, a=0.1):
         '''Draws correlated genotypes.l: Typical correlation length'''
-        coords = np.array([(i, j) for i in range(0, 301, 10) for j in range(0, 301, 10)])  # To have denser sampling
+        coords = np.array([(i, j) for i in range(0, 101, 10) for j in range(0, 101, 10)])  # To have denser sampling: Originally 301
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)
         mean_p = np.array([0. for _ in range(len(coords))])  # Calculate the mean allele frequency
         # Add Identity matrix for numerical stability
-        cov_mat = 0.1 * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term
+        cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term
         # to make covariance matrix positive semidefinite.
         print(np.linalg.eig(cov_mat)[0])
         
         data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws
-        data = np.transpose(data)     # Transpose, so that individual x locus matrix
+        data = np.transpose(data)  # Transpose, so that individual x locus matrix
         p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
         
         genotypes = np.random.binomial(1, p)  # Draw the genotypes
@@ -179,6 +179,16 @@ class Grid(object):
         plt.colorbar()
         plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
+    
+    def draw_corr_genotypes_replicates(self, coords, nr_genotypes, l=25, a=0.1, replicate_nr=100):
+        '''Draws a number of replicates of correlated_genotypes'''
+        genotypes=[]
+        for i in range(replicate_nr):   # Do independent draws
+            genotype, coords = self.draw_correlated_genotypes(self, coords, nr_genotypes, l, a)
+            genotypes.append(genotype)
+        
+        
+        return coords, np.array(genotypes)
     
                
 def list_duplicates(seq):

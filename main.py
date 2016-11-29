@@ -23,10 +23,17 @@ def main():
     
     while True:
         print("\nWhat do you want to do?")
-        inp = int(input("\n (4) Simulate correlated allele frequencies"
-                        "\n (5) Run analysis for multiple genotypes \n (6) Run analysis for multiple genotypes with barrier"
+        inp = int(input("\n (2) Do Tensorflow Analysis \n (3) Simulate Bunch of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
+                        "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple genotypes with barrier"
                         "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Exit Program\n "))   
         
+        if inp == 2:
+            print("\nWhat do you want to do?")
+            inp3 = int(input("\n (3) Exit "))  
+            
+            if inp3 == 3:
+                break
+            
         if inp == 4:
             nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
             position_list, genotype_matrix = grid.draw_correlated_genotypes(position_list, nr_genotypes)  # Simulate draws from)

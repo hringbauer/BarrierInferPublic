@@ -153,7 +153,7 @@ class Grid(object):
 
     def draw_correlated_genotypes(self, coords, nr_genotypes, l=25, a=0.1):
         '''Draws correlated genotypes.l: Typical correlation length'''
-        coords = np.array([(i, j) for i in range(0, 101, 10) for j in range(0, 101, 10)])  # To have denser sampling: Originally 301
+        coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling: Originally 301
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)
         mean_p = np.array([0. for _ in range(len(coords))])  # Calculate the mean allele frequency
@@ -186,8 +186,6 @@ class Grid(object):
         for i in range(replicate_nr):   # Do independent draws
             genotype, coords = self.draw_correlated_genotypes(self, coords, nr_genotypes, l, a)
             genotypes.append(genotype)
-        
-        
         return coords, np.array(genotypes)
     
                

@@ -9,6 +9,7 @@ from grid import Grid
 from analysis import Analysis
 from forward_sim import Forward_sim
 from GPR_kernelfit import GPR_kernelfit
+from tf_analysis import TF_Analysis
 import numpy as np
 
 
@@ -24,14 +25,24 @@ def main():
     while True:
         print("\nWhat do you want to do?")
         inp = int(input("\n (2) Do Tensorflow Analysis \n (3) Simulate Bunch of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
-                        "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple genotypes with barrier"
-                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Exit Program\n "))   
+                        "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple Genotypes with barrier"
+                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load Samples \n (10) Exit Program\n "))   
         
         if inp == 2:
+            tf_analysis = TF_Analysis()
             print("\nWhat do you want to do?")
-            inp3 = int(input("\n (3) Exit "))  
+            inp3 = int(input("\n (1) Do Test Run \n (2) Do stuff \n (3) Generate Likelihood-Surface \n (4) Exit \n"))  
             
+            if inp3 == 1:
+                tf_analysis.calc_likelihood(params=[0.1, 25])  # Does a test run of the likelihood function
+                
+            if inp3 == 2:
+                print("To implement")
+                
             if inp3 == 3:
+                tf_analysis.generate_likelihood_surface()
+                
+            if inp3 == 4:
                 break
             
         if inp == 4:
@@ -77,8 +88,8 @@ def main():
                     analysis.geo_comparison()
                     
                 if inp1 == 4:
-                    np.savetxt("coordinates1.csv", analysis.position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("data_genotypes1.csv", analysis.genotypes, delimiter="$")  # Save the data 
+                    np.savetxt("coordinates2.csv", analysis.position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("data_genotypes2.csv", analysis.genotypes, delimiter="$")  # Save the data 
                     print("Saving Complete...")
                     
                 if inp1 == 5:
@@ -87,18 +98,18 @@ def main():
                     
                 if inp1 == 6:
                     print("Loading GPR-analysis")
-                    gpr=GPR_kernelfit(analysis.position_list,analysis.genotypes[:,0])
+                    gpr = GPR_kernelfit(analysis.position_list, analysis.genotypes[:, 0])
                     
                     
                     while True:
                         inp2 = int(input("What do you want to do?\n (1) Run Fit \n (2) Show Fit\n"
                                          " (3) Show Likelihood Surface\n (4) Back\n"))
                         
-                        if inp2 ==1:
+                        if inp2 == 1:
                             gpr.run_fit()
-                        if inp2 ==2:
+                        if inp2 == 2:
                             gpr.show_fit()
-                        if inp2 ==3:
+                        if inp2 == 3:
                             gpr.plot_loglike_sf()
                         if inp2 == 4:
                             break
@@ -131,8 +142,12 @@ def main():
                     genotype_matrix = f_sim.curr_genotypes / float(f_sim.ploidy)  # Assumes that there is no 2nd axis 
                 elif inp2 == 4:
                     break
-  
         if inp == 9:
+            position_list = np.loadtxt('./coordinates2.csv', delimiter='$').astype('float64')
+            genotype_matrix = np.loadtxt('./data_genotypes2.csv', delimiter='$').astype('float64')
+            
+            
+        if inp == 10:
             print("Future Harald: Keep your shit together - I believe in you. Do not think too much - that just hurts") 
             break
         

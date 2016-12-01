@@ -18,15 +18,14 @@ def main():
     grid = Grid()
     position_list = [(i, j) for i in range(0, 101, 5) for j in range(0, 101, 5)]  # Position_List describing individual positions
     genotype_matrix = []  # Matrix of multiple geno-types  
-    print(position_list)
 
     print("Welcome back!")
     
     while True:
         print("\nWhat do you want to do?")
-        inp = int(input("\n (2) Do Tensorflow Analysis \n (3) Simulate Bunch of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
+        inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate bunch of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
                         "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple Genotypes with barrier"
-                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load Samples \n (10) Exit Program\n "))   
+                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save \n (10) Exit Program\n "))   
         
         if inp == 2:
             tf_analysis = TF_Analysis()
@@ -46,8 +45,7 @@ def main():
                 break
             
         if inp == 4:
-            nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
-            position_list, genotype_matrix = grid.draw_correlated_genotypes(position_list, nr_genotypes)  # Simulate draws from)
+            position_list, genotype_matrix = grid.draw_correlated_genotypes(position_list)  # Simulate draws from)
             
         if inp == 5:
             nr_loci = int(input("\nFor how many loci?\n")) 
@@ -143,9 +141,17 @@ def main():
                 elif inp2 == 4:
                     break
         if inp == 9:
-            position_list = np.loadtxt('./coordinates2.csv', delimiter='$').astype('float64')
-            genotype_matrix = np.loadtxt('./data_genotypes2.csv', delimiter='$').astype('float64')
+            inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
+            if inp9 == 1:
+                np.savetxt("coordinates4.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("data_genotypes4.csv", genotype_matrix, delimiter="$")  # Save the data 
+                print("Saving Complete.")
+                
+            elif inp9 == 2:       
+                position_list = np.loadtxt('./coordinates4.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./data_genotypes4.csv', delimiter='$').astype('float64')
+                print("Loading Complete.")      
             
         if inp == 10:
             print("Future Harald: Keep your shit together - I believe in you. Do not think too much - that just hurts") 

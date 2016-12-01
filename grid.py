@@ -1,9 +1,6 @@
 '''
 Created on 27.01.2015
-The Grid class; basically two matrices (one per chromosome) of lists for blocks sitting there.
-Contains methods for updating one generation back in time and looking for IBD
-Also a class inheriting from Grid to a Grid allowing for growing/declining populations
-by varying the number of chromosomes at every grid
+The Grid class
 @author: hringbauer
 '''
 
@@ -151,8 +148,12 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, coords, nr_genotypes, l=25, a=0.1):
-        '''Draws correlated genotypes.l: Typical correlation length'''
+    def draw_correlated_genotypes(self, coords):
+        '''Draws correlated genotypes. l: Typical correlation length'''
+        nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
+        l = float(input("What length scale?\n"))
+        a = float(input("What absolute correlation?\n"))
+        
         coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling: Originally 301
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)

@@ -4,8 +4,8 @@ Class for doing and handling the Tensorflow analysis.
 Use Laplace approximation for Likelihood
 @author: hringbauer
 '''
-x_data_string = './coordinates4.csv'  # Where to find the data
-y_data_string = './data_genotypes4.csv'
+x_data_string = './coordinates1.csv'  # Where to find the data
+y_data_string = './data_genotypes1.csv'
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import tensorflow as tf
 import cPickle as pickle
 
 # Sections for Kernels:  
-def k_rbf(a , l , X, N):
+def k_rbf(a, l , X, N):
     return a * tf.exp(-tf.reduce_sum(((X[:, None] - X[None, :]) ** 2) / (2 * l ** 2),
                                         reduction_indices=[2])) + 0.0001 * tf.eye(N, dtype=tf.float64)  # Calculate Matrix of Covariances
                                           
@@ -30,6 +30,7 @@ class TF_Analysis(object):
     y_data = []  # y-Data: In the form of Nr. of Individuals x Nr. of loci
     true_val = [10, 0.15]
     nr_inds = 100  # Nr of Individuals which one wants to initialize
+    
 
     def __init__(self):  # Initialize the Analysis Object
         self.load_data_from_path()  # In case there is not
@@ -234,13 +235,13 @@ if __name__ == '__main__':
     a_list = np.logspace(-1.5, 0, 10)
     l_list = np.logspace(0, 2, 10)
     
-    #tf1.generate_likelihood_surface(a_list, l_list)
-    tf1.plot_likelihood_surface(a_list, l_list)
+    # tf1.generate_likelihood_surface(a_list, l_list)
+    # tf1.plot_likelihood_surface(a_list, l_list)
     
-    # params = [0.1, 25]  # [a, l]
-    # tf1.calc_likelihood(params)
-    # tf1.run_ll(params)
-    
+    params = [0.1, 25]  # [a, l]
+    #tf1.calc_likelihood(params)
+    r=tf1.run_ll(params)
+    print(r[-1])
 
 #########################################################################################
 

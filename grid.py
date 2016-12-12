@@ -148,16 +148,18 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, coords):
+    def draw_correlated_genotypes(self):
         '''Draws correlated genotypes. l: Typical correlation length'''
         nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
-        l = float(input("What length scale?\n"))
+        l = float(input("What length scale? \n"))
         a = float(input("What absolute correlation?\n"))
+        p_mean = float(input("What mean allele frequency? (p) \n"))
+        f_mean = np.log(p_mean) - np.log(1 - p_mean)  # Do the logit transform
         
         coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling: Originally 301
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)
-        mean_p = np.array([0. for _ in range(len(coords))])  # Calculate the mean allele frequency
+        mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
         # Add Identity matrix for numerical stability
         cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term
         # to make covariance matrix positive semidefinite.
@@ -181,10 +183,51 @@ class Grid(object):
         plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
     
+    def draw_correlated_genotypes_var_p(self):
+        '''Draws correlated genotypes with varying p.'''
+        nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
+        l = float(input("What length scale? \n"))
+        a = float(input("What absolute correlation?\n"))
+        v = float(input("What should the standard deviation around the mean f be?\n"))
+        
+        f_mean = np.random.normal(scale=v, size=nr_genotypes)
+        print("Observed Standard Deviation: %.4f" % np.std(f_mean))
+        
+        coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling
+        r = np.linalg.norm(coords[:, None] - coords, axis=2)
+        
+        cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(r[:, 0]))  # Calculate the covariance matrix.
+        # Add Identity matrix for numerical stability
+        # to make covariance matrix positive semidefinite.
+        print(np.linalg.eig(cov_mat)[0])
+        
+        data = np.zeros((len(coords), nr_genotypes))   # Create individual x locus matrix
+        
+        for i in range(nr_genotypes):
+            mean= np.array([f_mean[i] for _ in range(len(coords))])         # Create the mean    
+            data[:,i] = np.random.multivariate_normal(mean, cov_mat)  # Do the random draws for the ith locus
+
+        p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
+        
+        genotypes = np.random.binomial(1, p)  # Draw the genotypes
+        
+        plt.figure()
+        plt.subplot(211)
+        plt.scatter(coords[:, 0], coords[:, 1], c=data[:, 0], s=100)
+        plt.colorbar()
+        
+        plt.subplot(212)
+        plt.scatter(coords[:, 0], coords[:, 1], c=genotypes[:, 0], s=100)
+        plt.colorbar()
+        plt.show()
+        np.savetxt("mean_f6.csv", f_mean, delimiter="$")  # Save the coordinates
+        return coords, genotypes[:]  # Returns the geographic list + Data 
+        
+        
     def draw_corr_genotypes_replicates(self, coords, nr_genotypes, l=25, a=0.1, replicate_nr=100):
         '''Draws a number of replicates of correlated_genotypes'''
-        genotypes=[]
-        for i in range(replicate_nr):   # Do independent draws
+        genotypes = []
+        for i in range(replicate_nr):  # Do independent draws
             genotype, coords = self.draw_correlated_genotypes(self, coords, nr_genotypes, l, a)
             genotypes.append(genotype)
         return coords, np.array(genotypes)

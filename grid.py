@@ -154,7 +154,9 @@ class Grid(object):
         l = float(input("What length scale? \n"))
         a = float(input("What absolute correlation?\n"))
         p_mean = float(input("What mean allele frequency? (p) \n"))
-        f_mean = np.log(p_mean) - np.log(1 - p_mean)  # Do the logit transform
+        #f_mean = np.log(p_mean) - np.log(1 - p_mean)  # Do the logit transform
+        f_mean= 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
+        print("Mean f: %.4f" % f_mean)
         
         coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling: Originally 301
         
@@ -167,7 +169,8 @@ class Grid(object):
         
         data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws
         data = np.transpose(data)  # Transpose, so that individual x locus matrix
-        p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
+        #p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
+        p = arc_sin_lin(data)  # Do an arc-sin transform
         
         genotypes = np.random.binomial(1, p)  # Draw the genotypes
         
@@ -231,7 +234,13 @@ class Grid(object):
             genotype, coords = self.draw_correlated_genotypes(self, coords, nr_genotypes, l, a)
             genotypes.append(genotype)
         return coords, np.array(genotypes)
-    
+
+def arc_sin_lin(x):
+    '''Arcus-Sinus Link function'''
+    x=np.where(x<0, 0, x)       # If x smaller 0 make it 0
+    x=np.where(x>np.pi, np.pi, x) # If x bigger Pi keep it Pi
+    y = np.sin(x / 2.0) ** 2
+    return y   
                
 def list_duplicates(seq):
     '''Returns list of indices of all duplicate entries.

@@ -18,9 +18,6 @@ from random import shuffle # For shuffling start position list
 import time
 import scipy.optimize as opt
 
-
-
-
 #############################
 # Some important constants:
 mean_param = np.pi/2.0  # Set everything to true mean allele frequency 0.5 (in latent space)
@@ -28,32 +25,27 @@ hyper_paramss = np.array([0.02, 15, 0.5]) # The initial values for a & L & c !!!
 data_set_nr = 1  # Which data-set to use
 #############################
 
-
-
 ############################# # The data:
 path1 = "data_lists.p"  # Load data from pickle file!
 x_data_sets, y_data_sets  = pickle.load(open(path1, "rb"))  # Load data from pickle file!
-print(len(x_data_sets))
-
 
 X_data=x_data_sets[data_set_nr]
 Y_data=y_data_sets[data_set_nr]
 
 
-nr_inds=200  # Nr. of Individuals to Check
-
-inds=range(len(X_data))
-shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-inds=inds[:nr_inds]  # Only load first nr_inds
-
-# Only load first nr_inds entries
-X_data = X_data[inds,:]  # Here is where the magic happens!
-Y_data = Y_data[inds,:]  # Here as well!
+#nr_inds=500  # Nr. of Individuals to Check
+# 
+# inds=range(len(X_data))
+# shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+# inds=inds[:nr_inds]  # Only load first nr_inds
+# 
+# # Only load first nr_inds entries
+#X_data = X_data[inds,:]  # Here is where the magic happens!
+#Y_data = Y_data[inds,:]  # Here as well!
 
 # Read out the Dimensions
 N = X_data.shape[0]  # Load the dimensions
 k = X_data.shape[1]
-print("Dim. of X-data: %i x %i" % (N,k))
 M1 = Y_data.shape[0]
 nr_loci = Y_data.shape[1] 
 assert(len(X_data) == len(Y_data))   # Asserts that X- and Y-data have the same length.
@@ -209,11 +201,9 @@ with tf.device('/gpu:0'):
     hessian = tf.hessians(margL, hyper_params)  # Comment out to avoid computational overhead.
     
 ###########################################################################################
-
 config = tf.ConfigProto()
 config.gpu_options.per_process_gpu_memory_fraction = 0.1
 config.allow_soft_placement = True
-
 ############################################################################################ 
 
 
@@ -232,29 +222,28 @@ with tf.Session(config=config) as sess:
     
         
     def f(x):
-        print("\nParameters: ")
-        print(x)
-        
+        #print("\nParameters: ")
+        #print(x)
         for i in range(2):
             _, = sess.run([opt_op,], {hyper_params: x, hyper_params_means: mps})   # Optimize the F 2x (Very fast; quadratic convergence)
             
         f, = sess.run([margL,], {hyper_params: x, hyper_params_means: mps})    # Calculates the Likelihood
-        print("Likelihood: ")
-        print(f)
+        #rint("Likelihood: ")
+        #print(f)
         return -f # Returns the negative function Value
 
-    result = opt.fmin(f, hyper_paramss, disp=1, ftol=1.0)   # Do 1 iteration of bfgs_b
-    hyper_paramss_est=np.array([result[0], result[1], result[2]])
+    result = opt.fmin(f, hyper_paramss, disp=0, ftol=1.0)   # Do Nelder-Mead-Search for Optimum!
+    
+    hyper_paramss_est = np.array([result[0], result[1], result[2]])
     g, h = sess.run([grad, hessian], {hyper_params: hyper_paramss_est, hyper_params_means: mps})
     
     fisher_info = np.matrix(h[0])
     stds = np.sqrt(np.diag(-fisher_info.I)) # Calculates the Standard Deviations (Sqrt of Variance)
     
-    res=[result[:3]]
+    res=result[:3]
+    
     print(res)
     print(stds)
-    #return (res, stds)
-
 
 
 

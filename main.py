@@ -11,6 +11,7 @@ from forward_sim import Forward_sim
 from GPR_kernelfit import GPR_kernelfit
 from tf_analysis import TF_Analysis
 import numpy as np
+import cPickle as pickle  # @UnusedImport
 
 
 def main():
@@ -23,7 +24,7 @@ def main():
     
     while True:
         print("\nWhat do you want to do?")
-        inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate bunch of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
+        inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate multiple correlated allele frequencies \n (4) Simulate correlated allele frequencies"
                         "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple Genotypes with barrier"
                         "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save \n (10) Exit Program\n "))   
         
@@ -43,10 +44,53 @@ def main():
                 
             if inp3 == 4:
                 break
+        
+        if inp == 3:
+            nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
+            l = float(input("What length scale? \n"))
+            a = float(input("What absolute correlation?\n"))
+            c = float(input("What reflection factor? (c) \n"))
+            p_mean = float(input("What mean allele frequency? (p) \n"))
+            
+            x_data_list = []
+            y_data_list = []
+            
+            print("Doing: c=0.0")
+            for i in range(20):
+                position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, 0.0, p_mean)  # No Barrier
+                x_data_list.append(position_list)
+                y_data_list.append(genotype_matrix)
+                
+            print("Doing: c=0.3")
+            for i in range(20):
+                position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, 0.3, p_mean)  # A bit barrier
+                x_data_list.append(position_list)
+                y_data_list.append(genotype_matrix)
+                
+            print("Doing: c=0.6")
+            for i in range(20):
+                position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, 0.6, p_mean)
+                x_data_list.append(position_list)
+                y_data_list.append(genotype_matrix)
+             
+            print("Doing: c=0.95")   
+            for i in range(20):
+                position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, 0.95, p_mean)
+                x_data_list.append(position_list)
+                y_data_list.append(genotype_matrix)
+            
+            save_string="data_lists.p"
+            print("Saving")
+            pickle.dump((x_data_list, y_data_list), open(save_string, "wb"))  # Pickle the data    
+            print("Saving Complete")
             
         if inp == 4:
-            position_list, genotype_matrix = grid.draw_correlated_genotypes()
-            #position_list, genotype_matrix = grid.draw_correlated_genotypes_var_p()  # Simulate draws from)
+            nr_genotypes = int(input("How many genotypes? \n"))  # Nr of genotypes
+            l = float(input("What length scale? \n"))
+            a = float(input("What absolute correlation? \n"))
+            c = float(input("What reflection factor? (c) \n"))
+            p_mean = float(input("What mean allele frequency? (p) \n"))
+            position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, c, p_mean, show=True)
             
         if inp == 5:
             nr_loci = int(input("\nFor how many loci?\n")) 
@@ -145,13 +189,13 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("coordinates7.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("data_genotypes7.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("coordinates12.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("data_genotypes12.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./coordinates7.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./data_genotypes7.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./coordinates12.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./data_genotypes12.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")      
             
         if inp == 10:

@@ -7,7 +7,6 @@ The Grid class
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 class Grid(object):
 # Object for the Data-Grid. Contains matrix of lists for chromosomal pieces and methods to update it.    
     loci = 200
@@ -148,42 +147,54 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self):
+    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False):
         '''Draws correlated genotypes. l: Typical correlation length'''
-        nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
-        l = float(input("What length scale? \n"))
-        a = float(input("What absolute correlation?\n"))
-        p_mean = float(input("What mean allele frequency? (p) \n"))
+#         nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
+#         l = float(input("What length scale? \n"))
+#         a = float(input("What absolute correlation?\n"))
+#         p_mean = float(input("What mean allele frequency? (p) \n"))
         #f_mean = np.log(p_mean) - np.log(1 - p_mean)  # Do the logit transform
         f_mean= 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
-        print("Mean f: %.4f" % f_mean)
         
-        coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling: Originally 301
+        if show==True:
+            print("Mean f: %.4f" % f_mean)
+        
+        coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)]) # To have dense sampling on both sides of the HZ
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)
         mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
         # Add Identity matrix for numerical stability
-        cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term
-        # to make covariance matrix positive semidefinite.
-        print(np.linalg.eig(cov_mat)[0])
+        
+        cov_mat=full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term for numerical stability
+        
+        if show==True:
+            print(np.linalg.eig(cov_mat)[0])
         
         data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws
         data = np.transpose(data)  # Transpose, so that individual x locus matrix
-        #p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
         p = arc_sin_lin(data)  # Do an arc-sin transform
         
         genotypes = np.random.binomial(1, p)  # Draw the genotypes
         
-        
-        plt.figure()
-        plt.subplot(211)
-        plt.scatter(coords[:, 0], coords[:, 1], c=data[:, 0], s=100)
-        plt.colorbar()
-        
-        plt.subplot(212)
-        plt.scatter(coords[:, 0], coords[:, 1], c=genotypes[:, 0], s=100)
-        plt.colorbar()
-        plt.show()
+        if show==True:
+            plt.figure()
+            plt.subplot(211)
+            plt.scatter(coords[:, 0], coords[:, 1], c=data[:, 0], s=100)
+            plt.colorbar()
+            
+            plt.subplot(212)
+            plt.scatter(coords[:, 0], coords[:, 1], c=genotypes[:, 0], s=100)
+            plt.colorbar()
+            plt.show()
+            
+            plt.figure()
+            plt.title("Sample Distribution")
+            plt.scatter(coords[:,0], coords[:,1], label = "Samples")
+            plt.vlines(0, min(coords[:,1]), max(coords[:,1]), linewidth=2, color="red", label="Barrier")
+            plt.xlabel("X-Coordinate")
+            plt.ylabel("Y-Coordinate")
+            plt.legend()
+            plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
     
     def draw_correlated_genotypes_var_p(self):
@@ -253,4 +264,25 @@ def list_duplicates(seq):
             idx1 = seq.index(item)
             result.append([idx1, idx])  # Already seen, add the index to the result
     return result
+
+def full_kernel_function(coords, l, a, c):
+    '''Return barrier Kernel - describing reduced correlation across barrier
+    and increased correlation next to barrier. Coords is nx2 Numpy array'''
+    x = coords[:, 0]  # Extracts x-coords
+    coords_refl = np.copy(coords)
+    #print(coords[:10])
+    coords_refl[:, 0] = -coords_refl[:, 0]  # Reflects the samples
+    
+    g = np.sign(x)  # Calculates Signum of x
+    same_side = (g[:,None] * g + 1) / 2  # Whether the x-Values are on the same side
+    
+    r = np.linalg.norm(coords[:, None] - coords, axis=2)  # Calculates pairwise Distance
+    r_refl = np.linalg.norm(coords_refl[:, None] - coords, axis=2)  # Calculates the reflected Distance 
+    
+    # Calculate the normal Kernel:
+    cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2))  # Calculate the co-variance matrix. Added diagonal term
+    cov_mat_refl = a * np.exp((-r_refl ** 2) / (2. * l ** 2))  # Calculate the covariance matrix for reflected coordinates.
+    
+    cov_tot = same_side * (cov_mat + c * cov_mat_refl) + (1 - same_side) * (1 - c) * cov_mat + 0.000001 * np.identity(len(coords))
+    return cov_tot
 

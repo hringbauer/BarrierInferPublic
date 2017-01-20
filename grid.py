@@ -147,36 +147,47 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False):
+    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False):
         '''Draws correlated genotypes. l: Typical correlation length'''
-#         nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
-#         l = float(input("What length scale? \n"))
-#         a = float(input("What absolute correlation?\n"))
-#         p_mean = float(input("What mean allele frequency? (p) \n"))
-        #f_mean = np.log(p_mean) - np.log(1 - p_mean)  # Do the logit transform
-        f_mean= 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
         
-        if show==True:
+        # Set Sample Coordinates:
+        coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # To have dense sampling on both sides of the HZ
+
+        f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))                   # Do the Arc Sin Transformation (Reverse of the Link Function)
+        mean_p = np.array([f_mean for _ in range(len(coords))])     # Calculate the mean allele frequency
+        f_delta = 0                                                 # Initialize 0 deviations.
+        
+        if fluc_mean == True:
+            v = float(input("What should the standard deviation around the mean f be?\n"))
+            f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F
+            #print(f_delta)
+            print("Observed Standard Deviation: %.4f" % np.std(f_delta))
+            
+        if show == True:
             print("Mean f: %.4f" % f_mean)
         
-        coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)]) # To have dense sampling on both sides of the HZ
         
         r = np.linalg.norm(coords[:, None] - coords, axis=2)
-        mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
         # Add Identity matrix for numerical stability
         
-        cov_mat=full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(mean_p))  # Calculate the covariance matrix. Added diagonal term for numerical stability
+        cov_mat = full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(coords))  # Calculate the covariance matrix. Added diagonal term for numerical stability
         
-        if show==True:
-            print(np.linalg.eig(cov_mat)[0])
+        #if show == True:
+            #print(np.linalg.eig(cov_mat)[0])
         
-        data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws
+        data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws of the deviations from the mean
         data = np.transpose(data)  # Transpose, so that individual x locus matrix
+        data = data + f_delta[None, :]      # Add the fluctuations
+        #print(np.mean(data, axis=0))
+        
         p = arc_sin_lin(data)  # Do an arc-sin transform
         
         genotypes = np.random.binomial(1, p)  # Draw the genotypes
         
-        if show==True:
+        print("Mean Allele Frequencies: \n")
+        print(np.mean(genotypes, axis=0))
+        
+        if show == True:
             plt.figure()
             plt.subplot(211)
             plt.scatter(coords[:, 0], coords[:, 1], c=data[:, 0], s=100)
@@ -189,54 +200,14 @@ class Grid(object):
             
             plt.figure()
             plt.title("Sample Distribution")
-            plt.scatter(coords[:,0], coords[:,1], label = "Samples")
-            plt.vlines(0, min(coords[:,1]), max(coords[:,1]), linewidth=2, color="red", label="Barrier")
+            plt.scatter(coords[:, 0], coords[:, 1], label="Samples")
+            plt.vlines(0, min(coords[:, 1]), max(coords[:, 1]), linewidth=2, color="red", label="Barrier")
             plt.xlabel("X-Coordinate")
             plt.ylabel("Y-Coordinate")
             plt.legend()
             plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
-    
-    def draw_correlated_genotypes_var_p(self):
-        '''Draws correlated genotypes with varying p.'''
-        nr_genotypes = int(input("How many genotypes?\n "))  # Nr of genotypes
-        l = float(input("What length scale? \n"))
-        a = float(input("What absolute correlation?\n"))
-        v = float(input("What should the standard deviation around the mean f be?\n"))
-        
-        f_mean = np.random.normal(scale=v, size=nr_genotypes)
-        print("Observed Standard Deviation: %.4f" % np.std(f_mean))
-        
-        coords = np.array([(i, j) for i in range(0, 201, 10) for j in range(0, 201, 10)])  # To have denser sampling
-        r = np.linalg.norm(coords[:, None] - coords, axis=2)
-        
-        cov_mat = a * np.exp((-r ** 2) / (2. * l ** 2)) + 0.000001 * np.identity(len(r[:, 0]))  # Calculate the covariance matrix.
-        # Add Identity matrix for numerical stability
-        # to make covariance matrix positive semidefinite.
-        print(np.linalg.eig(cov_mat)[0])
-        
-        data = np.zeros((len(coords), nr_genotypes))   # Create individual x locus matrix
-        
-        for i in range(nr_genotypes):
-            mean= np.array([f_mean[i] for _ in range(len(coords))])         # Create the mean    
-            data[:,i] = np.random.multivariate_normal(mean, cov_mat)  # Do the random draws for the ith locus
 
-        p = 1.0 / (1.0 + np.exp(-data))  # Create the mean from which to draw
-        
-        genotypes = np.random.binomial(1, p)  # Draw the genotypes
-        
-        plt.figure()
-        plt.subplot(211)
-        plt.scatter(coords[:, 0], coords[:, 1], c=data[:, 0], s=100)
-        plt.colorbar()
-        
-        plt.subplot(212)
-        plt.scatter(coords[:, 0], coords[:, 1], c=genotypes[:, 0], s=100)
-        plt.colorbar()
-        plt.show()
-        np.savetxt("mean_f6.csv", f_mean, delimiter="$")  # Save the coordinates
-        return coords, genotypes[:]  # Returns the geographic list + Data 
-        
         
     def draw_corr_genotypes_replicates(self, coords, nr_genotypes, l=25, a=0.1, replicate_nr=100):
         '''Draws a number of replicates of correlated_genotypes'''
@@ -248,8 +219,8 @@ class Grid(object):
 
 def arc_sin_lin(x):
     '''Arcus-Sinus Link function'''
-    x=np.where(x<0, 0, x)       # If x smaller 0 make it 0
-    x=np.where(x>np.pi, np.pi, x) # If x bigger Pi keep it Pi
+    x = np.where(x < 0, 0, x)  # If x smaller 0 make it 0
+    x = np.where(x > np.pi, np.pi, x)  # If x bigger Pi keep it Pi
     y = np.sin(x / 2.0) ** 2
     return y   
                
@@ -270,11 +241,11 @@ def full_kernel_function(coords, l, a, c):
     and increased correlation next to barrier. Coords is nx2 Numpy array'''
     x = coords[:, 0]  # Extracts x-coords
     coords_refl = np.copy(coords)
-    #print(coords[:10])
+    # print(coords[:10])
     coords_refl[:, 0] = -coords_refl[:, 0]  # Reflects the samples
     
     g = np.sign(x)  # Calculates Signum of x
-    same_side = (g[:,None] * g + 1) / 2  # Whether the x-Values are on the same side
+    same_side = (g[:, None] * g + 1) / 2  # Whether the x-Values are on the same side
     
     r = np.linalg.norm(coords[:, None] - coords, axis=2)  # Calculates pairwise Distance
     r_refl = np.linalg.norm(coords_refl[:, None] - coords, axis=2)  # Calculates the reflected Distance 

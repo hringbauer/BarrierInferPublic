@@ -24,7 +24,7 @@ def main():
     
     while True:
         print("\nWhat do you want to do?")
-        inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate multiple correlated allele frequencies \n (4) Simulate correlated allele frequencies"
+        inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate multiple repl. of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
                         "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple Genotypes with barrier"
                         "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save \n (10) Exit Program\n "))   
         
@@ -90,7 +90,8 @@ def main():
             a = float(input("What absolute correlation? \n"))
             c = float(input("What reflection factor? (c) \n"))
             p_mean = float(input("What mean allele frequency? (p) \n"))
-            position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, c, p_mean, show=True)
+            f_m = int(input("Do you want to have fluctuating means? \n(1) Yes \n(0) No\n"))
+            position_list, genotype_matrix = grid.draw_correlated_genotypes(nr_genotypes, l, a, c, p_mean, show=True, fluc_mean=f_m)
             
         if inp == 5:
             nr_loci = int(input("\nFor how many loci?\n")) 

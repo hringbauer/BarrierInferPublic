@@ -148,19 +148,24 @@ class Grid(object):
         print("Todo")      
 
     def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False):
-        '''Draws correlated genotypes. l: Typical correlation length'''
+        '''Draw correlated genotypes
+        l: Typical correlation length, a: Absolute correlation, 
+        c: Strength of the Barrier, fluc_mean: Whether varying mean all. frequency is simulated'''
         
         # Set Sample Coordinates:
         coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # To have dense sampling on both sides of the HZ
 
-        f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))                   # Do the Arc Sin Transformation (Reverse of the Link Function)
-        mean_p = np.array([f_mean for _ in range(len(coords))])     # Calculate the mean allele frequency
-        f_delta = 0                                                 # Initialize 0 deviations.
+        f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
+        mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
+        f_delta = 0  # Initialize 0 deviations.
         
         if fluc_mean == True:
             v = float(input("What should the standard deviation around the mean f be?\n"))
-            f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F
-            #print(f_delta)
+            # f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
+            # f_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
+            f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
+            # f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+            
             print("Observed Standard Deviation: %.4f" % np.std(f_delta))
             
         if show == True:
@@ -172,13 +177,13 @@ class Grid(object):
         
         cov_mat = full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(coords))  # Calculate the covariance matrix. Added diagonal term for numerical stability
         
-        #if show == True:
-            #print(np.linalg.eig(cov_mat)[0])
+        # if show == True:
+            # print(np.linalg.eig(cov_mat)[0])
         
         data = np.random.multivariate_normal(mean_p, cov_mat, nr_genotypes)  # Do the random draws of the deviations from the mean
         data = np.transpose(data)  # Transpose, so that individual x locus matrix
-        data = data + f_delta[None, :]      # Add the fluctuations
-        #print(np.mean(data, axis=0))
+        data = data + f_delta[None, :]  # Add the allele frequency fluctuations
+        # print(np.mean(data, axis=0))
         
         p = arc_sin_lin(data)  # Do an arc-sin transform
         

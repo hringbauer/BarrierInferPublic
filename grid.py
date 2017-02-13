@@ -164,9 +164,10 @@ class Grid(object):
             # f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
             # f_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
             f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
-            # f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+            f_delta = np.random.uniform(0, high= v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
             
             print("Observed Standard Deviation: %.4f" % np.std(f_delta))
+            print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(f_delta**2)))
             
         if show == True:
             print("Mean f: %.4f" % f_mean)

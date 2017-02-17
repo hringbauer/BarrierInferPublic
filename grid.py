@@ -6,37 +6,53 @@ The Grid class
 
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
+import bisect
+from scipy.stats import binned_statistic
+from scipy.special import kv as kv
+from scipy.optimize.minpack import curve_fit
+# from kernels import fac 
 
 class Grid(object):
 # Object for the Data-Grid. Contains matrix of lists for chromosomal pieces and methods to update it.    
     loci = 200
     test = 100
-    gridsize_x = 105
-    gridsize_y = 105
+    gridsize_x = 100
+    gridsize_y = 100
     ind_list = []  # List of lists to which the initial genotypes correspond
     update_list = []  # List of individuals do update. Contains x and y positions
     position_list = []  # List of initial positions.
+    ancestry = []  # List of individuals that currently descent from individual i
+    final_ancestry = []  # List of final ancestry
+    mt_list = []  # List of times when individual was last checked for mutation
     genotypes = []  # List of the genotypes of every individuals
     genotype_mat = []  # List of the genotype matrix. In case multiple multiple markers are simulated
+    t = 0  # Current time back in generations.
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
-    sigma = 1.98
+    sigma = 0.965  # 1.98
+    ips = 20  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.01  # The Mutation rate.
     
     def __init__(self):  # Initializes an empty grid
         print("Initializing...")  # Actually all relevant things are set with set_samples
       
     def set_samples(self, position_list):
-        '''Sets samples to where they belong'''
+        '''Sets samples to where they belong. THE ONLY WAY TO SET SAMPLES'''
         self.update_list = position_list  # Set the update List
         print("Ancestry List initialized: ")
         print(self.update_list)
         self.ancestry = [[i] for i in range(len(position_list))]  # Set the list of ancestors
-        self.genotypes = [-1 for i in range(len(position_list))]  # -1 for not set
+        self.genotypes = [-1 for _ in range(len(position_list))]  # -1 for not set
         self.position_list = position_list
+        self.final_ancestry = []
         
     def update_grid_t(self, t, coalesce=1, barrier=0):
         '''Updates the grid for t generations'''
         for i in range(t):
+            t += 1  # Adds time to the generation clock!
+            self.drop_mutations()  # Drops mutations that moves lineages into their pension
+            
             if i % 10 == 0:
                 print("Doing generation: %i " % i)
             
@@ -45,10 +61,18 @@ class Grid(object):
             
             elif barrier == 1:  # In case of barrier
                 self.update_grid_barrier()
+                
+            else:
+                raise Exception("Only 1/0 Input allowed!")
             
             if coalesce == 1:
                 self.coal_inds()  # Coalesces individuals in the same position; and merges the off-spring indices
+        self.ancestry = self.ancestry + self.final_ancestry  # Gets non-active lineages back from Pension
         self.draw_genotypes()  # Draw genotypes
+        
+        # Some output for debugging:
+        # print("Number of individuals hit by mutation: %i" % np.sum([len(i) for i in self.final_ancestry]))
+        # print("Total length of ancestry: %i" % np.sum([len(i) for i in self.ancestry]))
         print("Run complete\n ")  
         
     def update_grid(self):
@@ -61,7 +85,6 @@ class Grid(object):
         new_coords = [self.update_individual_pos_barrier(pos[0], pos[1]) for pos in self.update_list]
         self.update_list = new_coords
         
-
     def update_individual_pos(self, x, y):
         '''Method that updates the position of an individual'''
         scale = self.sigma / np.sqrt(2)  # For Laplace Dispersal
@@ -92,8 +115,24 @@ class Grid(object):
         y1 = y1 % self.gridsize_y    
         return(x1, y1)
     
+    def drop_mutations(self):
+        '''Drops mutations. Moves lineages to final ancestry and deletes them from update List'''
+        inds = self.update_list
+        n = len(inds)
+        # print("Currently: %i Individuals" % n)
+        inds_mut = np.random.random(n) < self.mu  # Where mutations happen. mu is mutation rate per generation
+        del_list = np.where(inds_mut)[0]  # Get a list of Entries where mutations actually happen
+        
+        # Take the individuals where mutations happen and saves final ancestry
+        for i in del_list:
+            self.final_ancestry.append(self.ancestry[i])  # Saves the ancestry information to final Ancestry List
+         
+        # Sends lineages were mutation happen into Pension   
+        self.update_list = [i for j, i in enumerate(self.update_list) if j not in del_list]
+        self.ancestry = [i for j, i in enumerate(self.ancestry) if j not in del_list] 
+        
     def coal_inds(self):
-        '''Method to coalesce individuals'''
+        '''Method to coalesce individuals.'''
         inds = self.update_list
         
         dub_inds = list_duplicates(inds)
@@ -102,8 +141,9 @@ class Grid(object):
         for inds in dub_inds:
             '''Iterate over all individuals in dub_inds'''
             i, j = inds[0], inds[1]  # i < j. Always
-            self.ancestry[i] = self.ancestry[i] + self.ancestry[j]  # Pool the ancestry list 
-            del_list += [j]  # Update the list of which individuals to delete
+            if np.random.random() < 1.0 / (self.ips):  # Only in case if individuals fall an the same ancestor
+                self.ancestry[i] = self.ancestry[i] + self.ancestry[j]  # Pool the ancestry list 
+                del_list += [j]  # Update the list of which individuals to delete
 
         # Remove Individuals in Delete_List from update and ancestry List:    
         self.update_list = [i for j, i in enumerate(self.update_list) if j not in del_list]
@@ -114,10 +154,11 @@ class Grid(object):
         p is the frequency of the allele from which one has to draw.
         Sets genotype i to a certain allele.'''
         
+        print(self.ancestry)
         for lists in self.ancestry:
-            all_freq = np.random.random() < p
+            all_freq = np.random.random() < p  # Draws the allele Frequency
             for i in lists:
-                self.genotypes[i] = all_freq                  
+                self.genotypes[i] = all_freq  # Sets the Genotype to that allele Frequency              
         print(self.genotypes)
     
     def plot_grid(self):
@@ -142,6 +183,88 @@ class Grid(object):
         plt.scatter(x_cords, y_cords, c=self.genotypes, s=50) 
         plt.show()
         
+    def extract_F(self, n_bins=10, show=False):
+        '''Extracts a vector containing the fraction of Fs.
+        Group successful  F via np.hist in bins and calculate mean distance and probabilities'''
+        # Create array with the pairwise distance of all detected elements
+        
+        pairlist = []  # Creates List of all Pairs that coalesced (Pairs of indices)
+        for lis in self.ancestry:  # Ancestry List
+            for combs in itertools.combinations(lis, r=2):
+                pairlist.append(combs)
+                
+        pair_distance = [torus_distance(self.position_list[ind[0]], self.position_list[ind[1]], self.gridsize_x, self.gridsize_y) for ind in pairlist]
+                  
+        # Plot the result in a histogram:
+        # counts, bins, patches = plt.hist(pair_distance, n_bins, facecolor='g', alpha=0.9)  # @UnusedVariable Old Version (Matplotlib)
+        counts, bins = np.histogram(pair_distance, n_bins)
+        
+        # Find proper normalization factors:
+        distance_bins = np.zeros(len(bins) - 1)  # Create bins for every element in List; len(bins)=len(counts)+1
+        bins[-1] += 0.000001  # Hack to make sure that the distance exactly matching the max are counted
+#         for i in self.start_list[1:]:  # Calculate distance to the first element in start_list for all elements to get proxy for number of comparisons
+#             dist = torus_distance(i[0], i[1], self.start_list[0][0], self.start_list[0][1], self.gridsize)
+#                 
+#             j = bisect.bisect_right(bins, dist)
+#             if j < len(bins) and j > 0:  # So it actually falls into somewhere
+#                 distance_bins[j - 1] += 1
+                
+        # Calculate Distance for every possible pair to get proper normalization factor:
+        for (m, n) in itertools.combinations(self.position_list, r=2):
+            dist = torus_distance(m, n, self.gridsize_x, self.gridsize_y)   
+            j = bisect.bisect_right(bins, dist)
+            if j < len(bins) and j > 0:  # So it actually falls into somewhere
+                distance_bins[j - 1] += 1
+        
+        distance_mean, _, _ = binned_statistic(pair_distance, pair_distance, bins=n_bins, statistic='mean')  # Calculate mean distances for distance bins
+        # distance_mean=(bins[1:]+bins[:-1])/2.0
+        
+        distance_mean = distance_mean[counts != 0]  # Remove bins with no values / MAYBE UPDATE?
+        distance_bins = distance_bins[counts != 0]
+        counts = counts[counts != 0]
+        distance_mean[distance_mean == 0] = 1  # In deme case, to account for possibility of bins with dist=0    
+        
+        # Poisson-Error per bin:
+        error = np.sqrt(counts)
+        results = [counts[i] / distance_bins[i] for i in range(0, len(counts))]
+        error = [error[i] / distance_bins[i] for i in range(0, len(counts))]  # STD
+        
+        if show == True:
+            plt.figure()
+            plt.errorbar(distance_mean, results, error, fmt='o')
+            plt.ylabel("Fraction of F")
+            plt.xlabel("Distance")
+            # plt.xscale("log")
+            plt.show()
+        
+        return (distance_mean, results, error)   
+     
+    def fit_F(self, show = False):
+        '''Fits the underlying F-vector: '''
+        x, y, error = self.extract_F(20, show=False)  # First calculates the F Vector
+        
+        parameters, cov_matrix = curve_fit(bessel0, x, y, absolute_sigma=True, sigma=error)  # @UnusedVariable p0=(C / 10.0, -r)
+        std_param = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+        C1, r1 = parameters  # Fit with curve_fit:
+
+        print("Fitted Parameters + Errors")
+        print(parameters)
+        print(std_param)
+        
+        if show == True:  # Do a plot of the fit:
+            x_plot = np.linspace(min(x), max(x), 10000)
+            plt.figure()
+            #plt.yscale('log')
+            plt.errorbar(x, y, yerr=error, fmt='go', label="Observed F", linewidth=2)
+            # plt.semilogy(x, fit, 'y-.', label="Fitted exponential decay")  # Plot of exponential fit
+            plt.plot(x_plot, bessel0(x_plot, C1, r1), 'r-.', label="Fitted Bessel decay", linewidth=2)  # Plot of exact fit
+            plt.xlabel('Pairwise Distance', fontsize=25)
+            plt.ylabel('F', fontsize=25)
+            plt.tick_params(axis='x', labelsize=15)
+            plt.tick_params(axis='y', labelsize=15)
+            plt.legend(prop={'size':25})
+            plt.show()
+           
     def simulate_correlated_data(self, position_list, cov_func):
         '''Given a position list, simulate correlated data.
         Simulate as draws from a random Gaussian.'''
@@ -164,10 +287,10 @@ class Grid(object):
             # f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
             # f_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
             f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
-            f_delta = np.random.uniform(0, high= v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+            f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
             
             print("Observed Standard Deviation: %.4f" % np.std(f_delta))
-            print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(f_delta**2)))
+            print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(f_delta ** 2)))
             
         if show == True:
             print("Mean f: %.4f" % f_mean)
@@ -262,4 +385,31 @@ def full_kernel_function(coords, l, a, c):
     
     cov_tot = same_side * (cov_mat + c * cov_mat_refl) + (1 - same_side) * (1 - c) * cov_mat + 0.000001 * np.identity(len(coords))
     return cov_tot
+
+def torus_distance(pos1, pos2, torus_size_x, torus_size_y):
+    '''Calculates Torus Distance.
+    Takes 2d Position lists/arrays as Input'''
+    x0, y0 = pos1
+    x1, y1 = pos2
+    # Calculates the Euclidean distance on a Torus
+    dist_x = abs(x0 - x1)
+    dist_y = abs(y0 - y1)
+    distance = np.sqrt(min(dist_x, torus_size_x - dist_x) ** 2 + min(dist_y, torus_size_y - dist_y) ** 2)
+    return(distance)
+
+def bessel0(x, C, a):
+    '''Bessel Decay for IBD. Used for fitting.'''
+    return (C * kv(0, a * x)) 
+
+############################################################################################################
+
+position_list = [(i, j) for i in range(2, 100, 4) for j in range(2, 100, 4)]  # Position_List describing individual positions
+
+grid = Grid()
+grid.set_samples(position_list)  # Sets the samples
+grid.update_grid_t(5000)  # Updates for t Generations
+grid.fit_F(show=True)
+#grid.extract_F(20, show=True)
+
+
 

@@ -190,13 +190,13 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("coordinates15.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("data_genotypes15.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates15.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes15.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./coordinates15.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./data_genotypes15.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinates15.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./Data/data_genotypes15.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")      
             
         if inp == 10:

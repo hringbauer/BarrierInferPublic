@@ -7,6 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import itertools
 from scipy.stats import binned_statistic
+from scipy.stats import sem
+from kernels import fac_kernel  # Factory Method which yields Kernel Object
+from random import shuffle
+from scipy.optimize.minpack import curve_fit
 
 
 class Analysis(object):
@@ -34,13 +38,16 @@ class Analysis(object):
         f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
-    def ind_correlation(self, p = 0.5):
+    def ind_correlation(self, p=0.5):
         '''Analyze individual correlations.'''
-        positions = self.position_list
-        genotypes = self.genotypes
+        inds = range(len(self.position_list[:, 0]))  # Some Code to draw random samples
+        shuffle(inds)
+        inds = inds[:1000]
+        positions = self.position_list[inds, :]
+        genotypes = self.genotypes[inds, :]
         
-        distance = np.zeros(len(positions) * (len(positions) - 1) / 2.0)  # Empty container
-        correlation = np.zeros(len(positions) * (len(positions) - 1) / 2.0)  # Container for correlation
+        distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
+        correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
         entry = 0
         
         for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
@@ -49,24 +56,48 @@ class Analysis(object):
             entry += 1     
         self.vis_correlation(distance, correlation)  # Visualize the correlation
     
-    def vis_correlation(self, distance, correlation):
+    def vis_correlation(self, distance, correlation, bins = 50):
         '''Take pairwise correlation and distances as inputs and visualizes them'''
-        bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=16, statistic='mean')  # Calculate Bin Values
+        bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
+        stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
+        
         bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
         
-        # Fit the data
-        C, k, std_k = fit_log_linear(bin_dist[:8], bin_corr[:8])  # Fit first half of the distances bins
+        # Fit the data:
+        C, k, std_k = fit_log_linear(bin_dist[:bins/3], bin_corr[:bins/3])  # Fit first half of the distances bins
         Nb_est = 1 / (-k)
         Nb_std = (-std_k / k) * Nb_est
-        x_plot = np.linspace(min(bin_dist), bin_dist[13], 10000)
         
-        plt.plot(bin_dist[:12], bin_corr[:12], 'ro', label="Estimated Correlation per bin")
-        plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted decay")
+        # Fit Diffusion Kernel:
+        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+        
+        print("Fitted Parameters + Errors from least square fit: ")
+        print(params)
+        print(std_params)
+        
+        
+        x_plot = np.linspace(min(bin_dist), max(bin_dist)/2.0, 100)
+        y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
+        
+        
+        KC = fac_kernel("DiffusionK")
+        KC.set_parameters([1.0, 1.0, 0.001, 5.0])  # Diffusion; t0, mutation, density
+        
+        coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
+        kernel = KC.calc_kernel_mat(coords)
+        
+        plt.errorbar(bin_dist[:bins/2], bin_corr[:bins/2], stand_errors[:bins/2], fmt='ro', label="Binwise estimated Correlation")
+        plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted Log Decay")
+        
+        plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")
+        plt.plot(x_plot, kernel[0, 1:], 'bo', label="From Kernel; known parameters")
         plt.axhline(np.mean(bin_corr), label="Mean Value", color='k', linewidth=2)
-        plt.annotate(r'$\bar{N_b}=%.4G \pm %.2G$' % (Nb_est, Nb_std) , xy=(0.6, 0.7), xycoords='axes fraction', fontsize=25)
+        plt.annotate(r'$\bar{N_b}=%.4G \pm %.2G$' % (Nb_est, Nb_std) , xy=(0.6, 0.7), xycoords='axes fraction', fontsize=15)
         plt.legend()
-        plt.ylabel("Estimated Correlation")
+        plt.ylabel("F / Correlation")
         plt.xlabel("Distance")
+        #plt.xscale("log")
         plt.show()
         
     def geo_comparison(self, mean_all_freq=0.5):
@@ -165,11 +196,17 @@ def fit_log_linear(t, y):
     param, V = np.polyfit(t, y, 1, cov=True)  # Param has highest degree first
     return param[1], param[0], np.sqrt(V[0, 0])  # Returns parameters and STD
         
+def diffusion_kernel(r, nbh, L, t0): 
+    '''Function which is used to fit diffusion kernel'''
+    K0 = fac_kernel("DiffusionK0")  # Load the Diffusion Kernel
+    K0.set_parameters([nbh, L, t0])  # Set its parameters: diffusion, t0, mu, density
+    y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
+    return y
     
-
-        
-        
-    
-        
-        
-        
+def fit_diffusion_kernel(f, r, error, guess=[50, 0.002, 1.0]):
+    '''Fits vectors f,r and error to numerical Integration of
+    Diffusion Kernel - Using non-linear, weighted least square.'''    
+    parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,
+                            sigma=error, absolute_sigma=True, p0=guess, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
+    return parameters, cov_matrix
+         

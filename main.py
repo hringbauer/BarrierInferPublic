@@ -17,7 +17,7 @@ import cPickle as pickle  # @UnusedImport
 def main():
     '''Main loop of the program. Here we can control everything.'''
     grid = Grid()
-    position_list = [(i, j) for i in range(0, 101, 5) for j in range(0, 101, 5)]  # Position_List describing individual positions
+    position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
     genotype_matrix = []  # Matrix of multiple geno-types  
 
     print("Welcome back!")
@@ -25,7 +25,7 @@ def main():
     while True:
         print("\nWhat do you want to do?")
         inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate multiple repl. of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
-                        "\n (5) Run analysis for multiple Genotypes \n (6) Run analysis for multiple Genotypes with barrier"
+                        "\n (5) Run grid simulations; multiple Genotypes \n (6) Run grid simulations; multiple Genotypes with barrier"
                         "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save \n (10) Exit Program\n "))   
         
         if inp == 2:
@@ -190,14 +190,16 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates15.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes15.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates1.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes1.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./Data/coordinates15.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./Data/data_genotypes15.csv', delimiter='$').astype('float64')
-                print("Loading Complete.")      
+                position_list = np.loadtxt('./Data/coordinates1.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./Data/data_genotypes1.csv', delimiter='$').astype('float64')
+                print("Loading Complete.")   
+                print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
+                print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   
             
         if inp == 10:
             print("Future Harald: Keep your shit together - I believe in you. Do not think too much - that just hurts") 

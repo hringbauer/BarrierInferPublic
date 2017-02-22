@@ -11,14 +11,14 @@ import bisect
 from scipy.stats import binned_statistic
 from scipy.special import kv as kv
 from scipy.optimize.minpack import curve_fit
+from kernels import fac_kernel    # Factory Method which yields Kernel Object
 # from kernels import fac 
 
 class Grid(object):
 # Object for the Data-Grid. Contains matrix of lists for chromosomal pieces and methods to update it.    
-    loci = 200
     test = 100
-    gridsize_x = 100
-    gridsize_y = 100
+    gridsize_x = 1000
+    gridsize_y = 1000
     ind_list = []  # List of lists to which the initial genotypes correspond
     update_list = []  # List of individuals do update. Contains x and y positions
     position_list = []  # List of initial positions.
@@ -31,8 +31,8 @@ class Grid(object):
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
     sigma = 0.965  # 1.98
-    ips = 20  # Number of haploid Individuals per Node (For D_e divide by 2)
-    mu = 0.01  # The Mutation rate.
+    ips = 1  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.001  # The Mutation rate.
     
     def __init__(self):  # Initializes an empty grid
         print("Initializing...")  # Actually all relevant things are set with set_samples
@@ -251,18 +251,32 @@ class Grid(object):
         print(parameters)
         print(std_param)
         
+        # Fit the Diffusion Kernel
+        KC=fac_kernel("DiffusionK")
+        KC.set_parameters([1.0, 1.0, 0.001, 1.0])   # Diffusion; t0, mutation, density 
+        print(KC.give_parameters())
+        x_plot = np.linspace(min(x), max(x), 100)    
+        coords = [[0,0],] + [[0, i] for i in x_plot] # Coords-Vector. Begin with [0,0]!!
+        kernel = KC.calc_kernel_mat(coords)
+        
+        #y_vec= [KC.num_integral(r) for r in x_plot] # 0 Difference along the y-Axis ;
+        
         if show == True:  # Do a plot of the fit:
-            x_plot = np.linspace(min(x), max(x), 10000)
+            
             plt.figure()
             #plt.yscale('log')
             plt.errorbar(x, y, yerr=error, fmt='go', label="Observed F", linewidth=2)
             # plt.semilogy(x, fit, 'y-.', label="Fitted exponential decay")  # Plot of exponential fit
             plt.plot(x_plot, bessel0(x_plot, C1, r1), 'r-.', label="Fitted Bessel decay", linewidth=2)  # Plot of exact fit
+            plt.plot(x_plot, kernel[1:,0], label="From Kernel Function")
+            plt.plot(x_plot, bessel0(x_plot, 1/(np.pi*4*1.0), np.sqrt(2*0.001)),'g-.', label="Ideal Bessel decay", linewidth=2)
+            #plt.plot(x_plot, y_vec, 'm-.', label="Direct numerical Integration")
+            
             plt.xlabel('Pairwise Distance', fontsize=25)
             plt.ylabel('F', fontsize=25)
             plt.tick_params(axis='x', labelsize=15)
             plt.tick_params(axis='y', labelsize=15)
-            plt.legend(prop={'size':25})
+            plt.legend(prop={'size':15})
             plt.show()
            
     def simulate_correlated_data(self, position_list, cov_func):
@@ -280,7 +294,7 @@ class Grid(object):
 
         f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
         mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
-        f_delta = 0  # Initialize 0 deviations.
+        f_delta = np.zeros(nr_genotypes)  # Initialize 0 deviations.
         
         if fluc_mean == True:
             v = float(input("What should the standard deviation around the mean f be?\n"))
@@ -336,6 +350,11 @@ class Grid(object):
             plt.legend()
             plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
+    
+    #def draw_correlated_genotypes(self, p_mean, a, l):
+    #    '''Draws Genotypes DIRECTLY from adding noise without link function. '''
+        
+    #    return "implement"
 
         
     def draw_corr_genotypes_replicates(self, coords, nr_genotypes, l=25, a=0.1, replicate_nr=100):
@@ -403,13 +422,21 @@ def bessel0(x, C, a):
 
 ############################################################################################################
 
-position_list = [(i, j) for i in range(2, 100, 4) for j in range(2, 100, 4)]  # Position_List describing individual positions
 
-grid = Grid()
-grid.set_samples(position_list)  # Sets the samples
-grid.update_grid_t(5000)  # Updates for t Generations
-grid.fit_F(show=True)
-#grid.extract_F(20, show=True)
+def test_fit_f():
+    '''Function to fit F'''
+    position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
+    #position_list = [(i, j) for i in range(2, 100, 4) for j in range(2, 100, 4)]  # Position_List describing individual positions
+    
+    grid = Grid()
+    grid.set_samples(position_list)  # Sets the samples
+    grid.update_grid_t(5000)  # Updates for t Generations
+    grid.fit_F(show=True)
+    
+    
+    #grid.extract_F(20, show=True)
+
+#test_fit_f()   # Runs the actual testing Function
 
 
 

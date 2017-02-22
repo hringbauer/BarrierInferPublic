@@ -38,11 +38,11 @@ class Analysis(object):
         f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
-    def ind_correlation(self, p=0.5):
+    def ind_correlation(self, p=0.1, nr_inds=10000):
         '''Analyze individual correlations.'''
         inds = range(len(self.position_list[:, 0]))  # Some Code to draw random samples
         shuffle(inds)
-        inds = inds[:1000]
+        inds = inds[:nr_inds]
         positions = self.position_list[inds, :]
         genotypes = self.genotypes[inds, :]
         
@@ -68,8 +68,10 @@ class Analysis(object):
         Nb_est = 1 / (-k)
         Nb_std = (-std_k / k) * Nb_est
         
-        # Fit Diffusion Kernel:
-        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        # Fit Diffusion/RBF Kernel; Comment out depending on what is need:
+        #params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
         print("Fitted Parameters + Errors from least square fit: ")
@@ -78,11 +80,11 @@ class Analysis(object):
         
         
         x_plot = np.linspace(min(bin_dist), max(bin_dist)/2.0, 100)
-        y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
-        
+        #y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
+        y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK")
-        KC.set_parameters([1.0, 1.0, 0.001, 5.0])  # Diffusion; t0, mutation, density
+        KC.set_parameters([1.0, 1.0, 0.001, 5])  # Diffusion; t0, mutation, density
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         kernel = KC.calc_kernel_mat(coords)
@@ -202,6 +204,13 @@ def diffusion_kernel(r, nbh, L, t0):
     K0.set_parameters([nbh, L, t0])  # Set its parameters: diffusion, t0, mu, density
     y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
     return y
+
+def rbf_kernel(r, l, a):
+    '''Function which is used to fit RBF kernel'''
+    K1 = fac_kernel("RBFBarrierK")
+    K1.set_parameters([l, a, 0, 0]) # l, a, c, s,
+    y = [K1.calc_r(i) for i in r]
+    return y
     
 def fit_diffusion_kernel(f, r, error, guess=[50, 0.002, 1.0]):
     '''Fits vectors f,r and error to numerical Integration of
@@ -209,4 +218,13 @@ def fit_diffusion_kernel(f, r, error, guess=[50, 0.002, 1.0]):
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,
                             sigma=error, absolute_sigma=True, p0=guess, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
     return parameters, cov_matrix
+
+def fit_rbf_kernel(f, r, error, guess=[25, 0.2]):
+    '''Fits vectors f,r and error to numerical Integration of
+    Diffusion Kernel - Using non-linear, weighted least square.'''    
+    parameters, cov_matrix = curve_fit(rbf_kernel, r, f,
+                            sigma=error, absolute_sigma=True, p0=guess, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
+    return parameters, cov_matrix
+
+
          

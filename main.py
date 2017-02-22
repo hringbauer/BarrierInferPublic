@@ -123,7 +123,8 @@ def main():
                                  "(6) Gaussian Process analysis\n (7) Back to main menu\n "))
                 
                 if inp1 == 1:
-                    analysis.ind_correlation()
+                    nr_inds = int(input("How many random individuals?\n"))
+                    analysis.ind_correlation(nr_inds=nr_inds)
                     
                 if inp1 == 2:
                     print("To implement")
@@ -132,8 +133,8 @@ def main():
                     analysis.geo_comparison()
                     
                 if inp1 == 4:
-                    np.savetxt("coordinates2.csv", analysis.position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("data_genotypes2.csv", analysis.genotypes, delimiter="$")  # Save the data 
+                    np.savetxt("coordinates1.csv", analysis.position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("data_genotypes1.csv", analysis.genotypes, delimiter="$")  # Save the data 
                     print("Saving Complete...")
                     
                 if inp1 == 5:

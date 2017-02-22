@@ -150,7 +150,9 @@ class DiffusionBarrierK(Kernel):
         '''Given List of Coordinates; calculate the full covariance Kernel'''
         kernel_mat = [[self.num_integral_barrier(i[1] - j[1],
                             i[0], j[0]) for i in coords] for j in coords]
-        return np.array(kernel_mat)
+        
+        K1 = 0.0000001 * np.eye(len(coords))  # Add Identity Matrix to make numerically stable
+        return np.array(kernel_mat) + K1
 
 
 # In[86]:
@@ -212,8 +214,10 @@ class DiffusionK(Kernel):
         dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # First set up the Distance Matrix
         
         num_integral_v = np.vectorize(self.num_integral)  # Vectorizes the integral; maybe later parallelize
-        kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function       
-        return kernel
+        kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function   
+        
+        K1 = 0.0000001 * np.eye(len(coords))  # Add Identity Matrix to make numerically stable    
+        return kernel + K1
 
 
 
@@ -244,13 +248,13 @@ class DiffusionK0(Kernel):
         self.t0 = params[2]
         
     def give_nr_parameters(self):
-        return(4)
+        return(3)
     
     def give_parameter_names(self):
-        return(["D", "t0", "mu", "Density"])
+        return(["Neighborhood Size", "L", "t0"])
         
     def give_parameters(self):
-        return([self.D, self.t0, self.mu, self.density]) 
+        return([self.nbh, self.L, self.t0]) 
     
     def integrand(self, t, r):
         '''Transformed integrand t'= D t'''
@@ -268,8 +272,9 @@ class DiffusionK0(Kernel):
         dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # First set up the Distance Matrix
         
         num_integral_v = np.vectorize(self.num_integral)  # Vectorizes the integral; maybe later parallelize
-        kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function       
-        return kernel
+        kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function  
+        K1 = 0.0000001 * np.eye(len(coords))  # Add Identity Matrix to make numerically stable
+        return kernel + K1
 # In[98]:
 
 class RBFBarrierK(Kernel):
@@ -286,12 +291,12 @@ class RBFBarrierK(Kernel):
         self.l = l
         self.a = a
         self.c = c
-	self.sigma_sqr = ss
+        self.sigma_sqr = ss
     
     def give_nr_parameters(self):
         return 4
         
-    def set_parameters(self, params=[15.0, 0.02, 0.5]):
+    def set_parameters(self, params=[15.0, 0.02, 0.5, 0.1]):
         '''Method to set Parameters'''
         self.l = params[0]
         self.a = params[1]
@@ -303,6 +308,10 @@ class RBFBarrierK(Kernel):
     
     def give_parameter_names(self):
         return(["Length Scale", "Absolute Correlation", "Boundary Reduction, Sigma Sqr"])
+    
+    def calc_r(self, r):
+        '''Calculate the RBF-Kernel (NO BARRIER) for a given distance r'''
+        return self.a * np.exp(-r ** 2 / (2. * self.l ** 2))  # Calculate the RBF Kernel!
     
     def calc_kernel_mat(self, coords):
         '''Return Kernel for Individuals at Coords
@@ -328,7 +337,7 @@ class RBFBarrierK(Kernel):
         # K1 = sigma_sqrd * np.ones((nr_inds,nr_inds),dtype=tf.float64)
 
         # Calculate the full Covariance Matrix
-	K1 = self.sigma_sqr * np.eye(nr_inds)  # Due to Deviations from the mean
+        K1 = self.sigma_sqr * np.ones(np.shape(cov_mat)) + 0.0000001 * np.eye(nr_inds)  # Due to Deviations from the mean
         K = same_side * (cov_mat + self.c * cov_mat_refl) + (1 - same_side) * (1 - self.c) * cov_mat + K1
         return K
 
@@ -414,6 +423,3 @@ def kernel_test():
 #  
 # print(k0.num_integral(0.1))
 # print(k1.num_integral(0.1))
-
-
-

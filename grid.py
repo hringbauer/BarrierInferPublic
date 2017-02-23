@@ -11,7 +11,8 @@ import bisect
 from scipy.stats import binned_statistic
 from scipy.special import kv as kv
 from scipy.optimize.minpack import curve_fit
-from kernels import fac_kernel    # Factory Method which yields Kernel Object
+from kernels import fac_kernel  # Factory Method which yields Kernel Object
+from time import time
 # from kernels import fac 
 
 class Grid(object):
@@ -31,7 +32,7 @@ class Grid(object):
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
     sigma = 0.965  # 1.98
-    ips = 1  # Number of haploid Individuals per Node (For D_e divide by 2)
+    ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
     mu = 0.001  # The Mutation rate.
     
     def __init__(self):  # Initializes an empty grid
@@ -40,8 +41,7 @@ class Grid(object):
     def set_samples(self, position_list):
         '''Sets samples to where they belong. THE ONLY WAY TO SET SAMPLES'''
         self.update_list = position_list  # Set the update List
-        print("Ancestry List initialized: ")
-        print(self.update_list)
+        print("Ancestry List initialized.")
         self.ancestry = [[i] for i in range(len(position_list))]  # Set the list of ancestors
         self.genotypes = [-1 for _ in range(len(position_list))]  # -1 for not set
         self.position_list = position_list
@@ -239,7 +239,7 @@ class Grid(object):
         
         return (distance_mean, results, error)   
      
-    def fit_F(self, show = False):
+    def fit_F(self, show=False):
         '''Fits the underlying F-vector: '''
         x, y, error = self.extract_F(20, show=False)  # First calculates the F Vector
         
@@ -252,25 +252,25 @@ class Grid(object):
         print(std_param)
         
         # Fit the Diffusion Kernel
-        KC=fac_kernel("DiffusionK")
-        KC.set_parameters([1.0, 1.0, 0.001, 1.0])   # Diffusion; t0, mutation, density 
+        KC = fac_kernel("DiffusionK")
+        KC.set_parameters([1.0, 1.0, 0.001, 1.0])  # Diffusion; t0, mutation, density 
         print(KC.give_parameters())
         x_plot = np.linspace(min(x), max(x), 100)    
-        coords = [[0,0],] + [[0, i] for i in x_plot] # Coords-Vector. Begin with [0,0]!!
+        coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coords-Vector. Begin with [0,0]!!
         kernel = KC.calc_kernel_mat(coords)
         
-        #y_vec= [KC.num_integral(r) for r in x_plot] # 0 Difference along the y-Axis ;
+        # y_vec= [KC.num_integral(r) for r in x_plot] # 0 Difference along the y-Axis ;
         
         if show == True:  # Do a plot of the fit:
             
             plt.figure()
-            #plt.yscale('log')
+            # plt.yscale('log')
             plt.errorbar(x, y, yerr=error, fmt='go', label="Observed F", linewidth=2)
             # plt.semilogy(x, fit, 'y-.', label="Fitted exponential decay")  # Plot of exponential fit
             plt.plot(x_plot, bessel0(x_plot, C1, r1), 'r-.', label="Fitted Bessel decay", linewidth=2)  # Plot of exact fit
-            plt.plot(x_plot, kernel[1:,0], label="From Kernel Function")
-            plt.plot(x_plot, bessel0(x_plot, 1/(np.pi*4*1.0), np.sqrt(2*0.001)),'g-.', label="Ideal Bessel decay", linewidth=2)
-            #plt.plot(x_plot, y_vec, 'm-.', label="Direct numerical Integration")
+            plt.plot(x_plot, kernel[1:, 0], label="From Kernel Function")
+            plt.plot(x_plot, bessel0(x_plot, 1 / (np.pi * 4 * 1.0), np.sqrt(2 * 0.001)), 'g-.', label="Ideal Bessel decay", linewidth=2)
+            # plt.plot(x_plot, y_vec, 'm-.', label="Direct numerical Integration")
             
             plt.xlabel('Pairwise Distance', fontsize=25)
             plt.ylabel('F', fontsize=25)
@@ -284,13 +284,14 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False):
+    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False, coords = None):
         '''Draw correlated genotypes
         l: Typical correlation length, a: Absolute correlation, 
         c: Strength of the Barrier, fluc_mean: Whether varying mean all. frequency is simulated'''
         
         # Set Sample Coordinates:
-        coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # To have dense sampling on both sides of the HZ
+        if coords==None:
+            coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # To have dense sampling on both sides of the HZ
 
         f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
         mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
@@ -298,10 +299,10 @@ class Grid(object):
         
         if fluc_mean == True:
             v = float(input("What should the standard deviation around the mean f be?\n"))
-            # f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
+            f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
             # f_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
-            f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
-            f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+            # f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
+            # f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
             
             print("Observed Standard Deviation: %.4f" % np.std(f_delta))
             print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(f_delta ** 2)))
@@ -314,6 +315,16 @@ class Grid(object):
         # Add Identity matrix for numerical stability
         
         cov_mat = full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(coords))  # Calculate the covariance matrix. Added diagonal term for numerical stability
+        
+        # Function for Covariance Matrix from Diffusion Kernel:
+        ##KC = fac_kernel("DiffusionK0")
+        ##KC.set_parameters([62.8, 0.002, 1.0])
+        ##start = time()
+        ##cov_mat = KC.calc_kernel_mat(coords)
+        ##end = time()
+        ##print("Runtime: %.4f: " % (end - start))
+        
+        
         
         # if show == True:
             # print(np.linalg.eig(cov_mat)[0])
@@ -351,7 +362,7 @@ class Grid(object):
             plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
     
-    #def draw_correlated_genotypes(self, p_mean, a, l):
+    # def draw_correlated_genotypes(self, p_mean, a, l):
     #    '''Draws Genotypes DIRECTLY from adding noise without link function. '''
         
     #    return "implement"
@@ -426,7 +437,7 @@ def bessel0(x, C, a):
 def test_fit_f():
     '''Function to fit F'''
     position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
-    #position_list = [(i, j) for i in range(2, 100, 4) for j in range(2, 100, 4)]  # Position_List describing individual positions
+    # position_list = [(i, j) for i in range(2, 100, 4) for j in range(2, 100, 4)]  # Position_List describing individual positions
     
     grid = Grid()
     grid.set_samples(position_list)  # Sets the samples
@@ -434,9 +445,9 @@ def test_fit_f():
     grid.fit_F(show=True)
     
     
-    #grid.extract_F(20, show=True)
+    # grid.extract_F(20, show=True)
 
-#test_fit_f()   # Runs the actual testing Function
+# test_fit_f()   # Runs the actual testing Function
 
 
 

@@ -17,7 +17,8 @@ import cPickle as pickle  # @UnusedImport
 def main():
     '''Main loop of the program. Here we can control everything.'''
     grid = Grid()
-    position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
+    #position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
+    position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])
     genotype_matrix = []  # Matrix of multiple geno-types  
 
     print("Welcome back!")
@@ -191,13 +192,13 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates1.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes1.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates5.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes5.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./Data/coordinates1.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./Data/data_genotypes1.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinates5.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./Data/data_genotypes5.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

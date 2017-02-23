@@ -11,6 +11,7 @@ from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
 from random import shuffle
 from scipy.optimize.minpack import curve_fit
+from time import time
 
 
 class Analysis(object):
@@ -38,7 +39,7 @@ class Analysis(object):
         f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
-    def ind_correlation(self, p=0.1, nr_inds=10000):
+    def ind_correlation(self, p=0.5, nr_inds=10000):
         '''Analyze individual correlations.'''
         inds = range(len(self.position_list[:, 0]))  # Some Code to draw random samples
         shuffle(inds)
@@ -69,8 +70,8 @@ class Analysis(object):
         Nb_std = (-std_k / k) * Nb_est
         
         # Fit Diffusion/RBF Kernel; Comment out depending on what is need:
-        #params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
-        params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        #params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
         
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
@@ -80,11 +81,12 @@ class Analysis(object):
         
         
         x_plot = np.linspace(min(bin_dist), max(bin_dist)/2.0, 100)
-        #y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
-        y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
+        y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
+        #y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
-        KC = fac_kernel("DiffusionK")
-        KC.set_parameters([1.0, 1.0, 0.001, 5])  # Diffusion; t0, mutation, density
+        KC = fac_kernel("DiffusionK0")
+        KC.set_parameters([64.73, 0.00227, 1.0])  # Nbh Sz, Mu0, t0
+        #KC.set_parameters([1.0, 1.0, 0.001, 5])  # Diffusion; t0, mutation, density
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         kernel = KC.calc_kernel_mat(coords)

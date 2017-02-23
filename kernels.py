@@ -12,7 +12,9 @@ from scipy.special import kv as kv  # Import Bessel Function
 from scipy.integrate import quad  # Import function to do the integral
 from scipy.special import erfc
 from time import time
+from functools import partial
 import matplotlib.pyplot as plt
+import multiprocessing as mp  # Library for Multiprocessing
 # get_ipython().magic(u'matplotlib notebook')
 
 
@@ -266,7 +268,7 @@ class DiffusionK0(Kernel):
         return quad(self.integrand,
             self.t0, np.inf, args=(r))[0]         
         
-    def calc_kernel_mat(self, coords):
+    def calc_kernel_mat_old(self, coords):
         '''Given List of Coordinates; calculate the full covariance Kernel'''
         coords = np.array(coords)  # Make Coordinates a Numpy Array!
         dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # First set up the Distance Matrix
@@ -275,6 +277,37 @@ class DiffusionK0(Kernel):
         kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function  
         K1 = 0.0000001 * np.eye(len(coords))  # Add Identity Matrix to make numerically stable
         return kernel + K1
+    
+    def calc_kernel_mat(self, coords):
+        '''Calculates Full Covariance Kernel
+        Calculates only upper triangular Matrix; and used multi-processing'''
+        coords = np.array(coords)  # Make Coordinates a Numpy Array!
+        nr_inds = len(coords)
+        
+        dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # Calculates the distances matrix
+        
+        ind_ut = np.triu_indices(nr_inds)  # Indices for upper triangular array
+        dist_vec = dist_mat[ind_ut]
+        argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in dist_vec]  # Create vector with all arguments
+        #argument_vec = zip([self.t0] * nr_inds, [np.inf] * nr_inds, , ,dist_vec)  
+        
+        # Do the Multiprocessing Action
+        pool_size = mp.cpu_count() * 2
+        pool = mp.Pool(processes=pool_size)
+        pool_outputs = pool.map(numerical_integration_mr, argument_vec)
+        pool.close()
+        pool.join()
+        
+        # Fills up upper triangel again
+        kernel=np.zeros((nr_inds,nr_inds))
+        kernel[ind_ut]=pool_outputs  
+        
+        # Symmetrizes again and fill up everything:
+        kernel = np.triu(kernel) + np.triu(kernel,-1).T - np.diag(np.diag(kernel))   
+        K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
+        return kernel + K1
+        
+        
 # In[98]:
 
 class RBFBarrierK(Kernel):
@@ -341,8 +374,25 @@ class RBFBarrierK(Kernel):
         K = same_side * (cov_mat + self.c * cov_mat_refl) + (1 - same_side) * (1 - self.c) * cov_mat + K1
         return K
 
+def integrand(t, r, nbh, L):
+    '''Integrand for numerical integration'''
+    res = 1 / (2 * t * nbh) * np.exp(-(r ** 2) / (4 * t) - L * t)
+    return res
 
-# In[112]:
+def numerical_integration(lb, ub, nbh, L, r):
+    '''Function for numerical Integration.
+    Main reason: It is outside a class so multiprocessing can access it.
+    Arguments is tuple or a list'''
+    #print([lb, ub, r, nbh, L]))
+    return quad(integrand,
+        lb, ub, args=(r, nbh, L))[0]  # Returns only the Integration, not the uncertainty
+
+def numerical_integration_mr(arg):
+    '''Wrapper for numerical integration; so that it works with one argument
+    Needed for parallelization.'''
+    return numerical_integration(*arg)
+        
+    
 
 # Factory Method that produces the Kernel:
 def fac_kernel(kernel_type):
@@ -404,22 +454,30 @@ def kernel_test():
     plt.legend()
     plt.show()
 
+def test_parallel():
+    k0 = fac_kernel("DiffusionK")
+    k0.set_parameters([2.0, 2.0, 0.001, 5.0])  # Diffusion; t0, mutation, density
+ 
+ 
+    k1 = fac_kernel("DiffusionK0")
+    k1.set_parameters([4 * np.pi * 2.0 * 5, 0.002 / 2.0, 2 * 2.0])
+    coords = [[0, i] for i in range(200)]
+    
+    start = time()
+    k1.calc_kernel_mat_old(coords)
+    end = time()
+    print("Normal Runtime:")
+    print(end - start)
+    
+    start = time()
+    k1.calc_kernel_mat(coords)
+    end = time()
+    print("Runtime Parallelized:")
+    print(end - start)
+    
+    
+    print("Max Difference: ")
+    print(np.max(k1.calc_kernel_mat_old(coords) - k1.calc_kernel_mat(coords)))
+
 # kernel_test()
-# k0 = fac_kernel("DiffusionK")
-# k0.set_parameters([2.0, 2.0, 0.001, 5.0])  # Diffusion; t0, mutation, density
-# 
-# 
-# k1 = fac_kernel("DiffusionK0")
-# k1.set_parameters([4 * np.pi * 2.0 * 5, 0.002 / 2.0, 2 * 2.0])
-# start = time()
-# 
-# k0.num_integral(15)
-# end = time()
-# print(end - start)
-# start = time()
-# k1.num_integral(15)
-# end = time()
-# print(end - start)
-#  
-# print(k0.num_integral(0.1))
-# print(k1.num_integral(0.1))
+#test_parallel()

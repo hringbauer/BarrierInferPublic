@@ -85,7 +85,7 @@ class Analysis(object):
         #y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        KC.set_parameters([64.73, 0.00227, 1.0])  # Nbh Sz, Mu0, t0
+        KC.set_parameters([64.73, 0.00227, 1.0, 0])  # Nbh Sz, Mu0, t0, ss
         #KC.set_parameters([1.0, 1.0, 0.001, 5])  # Diffusion; t0, mutation, density
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
@@ -203,7 +203,7 @@ def fit_log_linear(t, y):
 def diffusion_kernel(r, nbh, L, t0): 
     '''Function which is used to fit diffusion kernel'''
     K0 = fac_kernel("DiffusionK0")  # Load the Diffusion Kernel
-    K0.set_parameters([nbh, L, t0])  # Set its parameters: diffusion, t0, mu, density
+    K0.set_parameters([nbh, L, t0, 0])  # Set its parameters: diffusion, t0, mu, density
     y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
     return y
 

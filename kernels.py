@@ -166,25 +166,28 @@ class DiffusionK(Kernel):
     Numerically integrates what f should be.
     Throughout y is the STARTING point and x the end point'''
     # Parameters of the Covariance
-    nr_parameters = 4
+    nr_parameters = 5
     D = 1.0  # Diffusion Constant; equals sigma**2. Sets how quickly stuff decays
     t0 = 1  # Starting Point of Integration; i.e. where to start integration. Sets the minimum "local" scale.
     mu = 0.001  # Long Distance/Migration rate; sets the max scale of identity
     density = 1.0  # Density of Diploids
+    ss = 0
     
-    def __init__(self, D=1, t0=1.0, mu=0.001, density=1.0):
+    def __init__(self, D=1, t0=1.0, mu=0.001, density=1.0, ss=0):
         '''Initialize to set desired values!'''
         self.D = D
         self.t0 = t0
         self.mu = mu
         self.density = density
+        self.ss=ss
         
-    def set_parameters(self, params=[1.0, 0.001, 1, 1]):
+    def set_parameters(self, params=[1.0, 0.001, 1, 1, 0]):
         assert(len(params) == self.nr_parameters)  # Check whether right length
         self.D = params[0]
         self.t0 = params[1]
         self.mu = params[2]
         self.density = params[3]
+        self.ss = params[4]
         
     def give_nr_parameters(self):
         return(4)
@@ -219,7 +222,8 @@ class DiffusionK(Kernel):
         kernel = num_integral_v(dist_mat)  # Calculate the kernel via vectorized function   
         
         K1 = 0.0000001 * np.eye(len(coords))  # Add Identity Matrix to make numerically stable    
-        return kernel + K1
+        K2 = self.ss * np.ones(np.shape(kernel)) # Add the kernel from Deviations from the Mean:
+        return kernel + K1 + K2
 
 
 
@@ -231,26 +235,29 @@ class DiffusionK0(Kernel):
     Numerically integrates what f should be.
     Throughout y is the STARTING point and x the end point'''
     # Parameters of the Covariance
-    nr_parameters = 3
-    nbh = 100.0  # Neighborhood Size: 4 pi De D
+    nr_parameters = 4
+    nbh = 100.0  # Neighborhood Size: 4*pi*De*D
     L = 0.002  # 2mu/D
     t0 = 1  # Starting Point of Integration; i.e. where to start integration. Sets the minimum "local" scale.
+    ss = 0
     
-    def __init__(self, nbh=100, L=0.002, t0=1):
+    def __init__(self, nbh=100, L=0.002, ss=0, t0=1):
         '''Initialize to set desired values!'''
         self.nbh = nbh
         self.L = L
+        self.ss = ss
         self.t0 = t0
         
-    def set_parameters(self, params=[100, 0.002, 1]):
+    def set_parameters(self, params=[100, 0.002, 1, 0]):
         '''Nbh, L, t0'''
         assert(len(params) == self.nr_parameters)  # Check whether right length
         self.nbh = params[0]
         self.L = params[1]
-        self.t0 = params[2]
+        self.ss = params[2]
+        self.t0 = params[3]
         
     def give_nr_parameters(self):
-        return(3)
+        return(self.nr_parameters)
     
     def give_parameter_names(self):
         return(["Neighborhood Size", "L", "t0"])
@@ -305,7 +312,8 @@ class DiffusionK0(Kernel):
         # Symmetrizes again and fill up everything:
         kernel = np.triu(kernel) + np.triu(kernel,-1).T - np.diag(np.diag(kernel))   
         K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
-        return kernel + K1
+        K2 = self.ss * np.ones(np.shape(kernel)) # Add the kernel from Deviations from the Mean:
+        return kernel + K1 + K2
         
         
 # In[98]:

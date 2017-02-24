@@ -17,7 +17,7 @@ import cPickle as pickle  # @UnusedImport
 def main():
     '''Main loop of the program. Here we can control everything.'''
     grid = Grid()
-    #position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
+    # position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
     position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])
     genotype_matrix = []  # Matrix of multiple geno-types  
 
@@ -80,7 +80,7 @@ def main():
                 x_data_list.append(position_list)
                 y_data_list.append(genotype_matrix)
             
-            save_string="data_lists.p"
+            save_string = "data_lists.p"
             print("Saving")
             pickle.dump((x_data_list, y_data_list), open(save_string, "wb"))  # Pickle the data    
             print("Saving Complete")
@@ -97,12 +97,30 @@ def main():
         if inp == 5:
             nr_loci = int(input("\nFor how many loci?\n")) 
             t = int(input("\nFor how long?\n"))
+            p_m = float(input("Mean allele frequency?\n"))
+            f_m = int(input("Do you want to have fluctuating means? \n(1) Yes \n(0) No\n"))
+            
+            p_mean = np.ones(nr_loci) * p_m  # Sets the mean allele Frequency
+            
+            if f_m == 1:
+                if f_m == True:
+                    v = float(input("What should the standard deviation around the mean p be?\n"))
+                    p_delta = np.random.normal(scale=v, size=nr_loci)  # Draw some random Delta F from a normal distribution
+                    # p_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
+                    # p_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
+                    # p_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+                    print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+                    print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+                    p_mean = p_mean + p_delta
+            
+            print("Mean Allele Frequencies:")
+            print(p_mean)
             genotype_matrix = np.zeros((len(position_list), nr_loci))
             
             for i in range(nr_loci):
                 print("Doing run %i: " % i)
                 grid.set_samples(position_list)
-                grid.update_grid_t(t)
+                grid.update_grid_t(t, p=p_mean[i])  # Uses p_mean[i] as mean allele Frequency.
                 genotype_matrix[:, i] = grid.genotypes
         
         if inp == 6:
@@ -192,13 +210,13 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates5.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes5.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates6.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes6.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./Data/coordinates5.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./Data/data_genotypes5.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinates6.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./Data/data_genotypes6.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

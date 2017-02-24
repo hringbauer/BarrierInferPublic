@@ -28,6 +28,7 @@ class Grid(object):
     mt_list = []  # List of times when individual was last checked for mutation
     genotypes = []  # List of the genotypes of every individuals
     genotype_mat = []  # List of the genotype matrix. In case multiple multiple markers are simulated
+    p_mean = 0.5
     t = 0  # Current time back in generations.
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
@@ -47,7 +48,7 @@ class Grid(object):
         self.position_list = position_list
         self.final_ancestry = []
         
-    def update_grid_t(self, t, coalesce=1, barrier=0):
+    def update_grid_t(self, t, coalesce=1, barrier=0, p=0.5):
         '''Updates the grid for t generations'''
         for i in range(t):
             t += 1  # Adds time to the generation clock!
@@ -68,7 +69,7 @@ class Grid(object):
             if coalesce == 1:
                 self.coal_inds()  # Coalesces individuals in the same position; and merges the off-spring indices
         self.ancestry = self.ancestry + self.final_ancestry  # Gets non-active lineages back from Pension
-        self.draw_genotypes()  # Draw genotypes
+        self.draw_genotypes(p)  # Draw genotypes
         
         # Some output for debugging:
         # print("Number of individuals hit by mutation: %i" % np.sum([len(i) for i in self.final_ancestry]))
@@ -153,7 +154,7 @@ class Grid(object):
         '''Method that draws genotypes from pool of allele freqs.
         p is the frequency of the allele from which one has to draw.
         Sets genotype i to a certain allele.'''
-        
+        self.p_mean = p  # Sets the mean allele Frequency
         print(self.ancestry)
         for lists in self.ancestry:
             all_freq = np.random.random() < p  # Draws the allele Frequency

@@ -367,7 +367,7 @@ class DiffusionK0(Kernel):
     t0 = 1  # Starting Point of Integration; i.e. where to start integration. Sets the minimum "local" scale.
     ss = 0
     
-    def __init__(self, nbh=100, L=0.002, ss=0, t0=1):
+    def __init__(self, nbh=100, L=0.002, t0=1, ss=0):
         '''Initialize to set desired values!'''
         self.nbh = nbh
         self.L = L
@@ -379,8 +379,8 @@ class DiffusionK0(Kernel):
         assert(len(params) == self.nr_parameters)  # Check whether right length
         self.nbh = params[0]
         self.L = params[1]
-        self.ss = params[2]
-        self.t0 = params[3]
+        self.t0 = params[2]
+        self.ss = params[3]
         
     def give_nr_parameters(self):
         return(self.nr_parameters)
@@ -575,7 +575,6 @@ def kernel_test():
     y_vec = [kc.num_integral_barrier(0, -1, -1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
     y_vec2 = [kc.num_integral_barrier(0, 1, 1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
      
-    
     y_vec01 = np.array([k0.num_integral(r) for r in x_vec])  # Numerical Integral no barrier
     # y_vec1=np.array([num_integral(x, t0=1, sigma=sigma, mu=mu) for x in x_vec])
     # y_vec20=np.array([num_integral(x, t0=2, sigma=sigma, mu=mu) for x in x_vec])
@@ -634,6 +633,9 @@ def test_diffusion_barrier():
 def test_parallel():
     k0 = fac_kernel("DiffusionK")
     k0.set_parameters([1.0, 1.0, 0.001, 5.0, 0.0])  # Diffusion; t0, mutation, density
+    
+    k1 = fac_kernel("DiffusionK0")
+    k1.set_parameters([])  # To be implemented
  
  
     coords = [[0, i] for i in range(200)]
@@ -654,6 +656,6 @@ def test_parallel():
     print("Max Difference: ")
     print(np.max(k1.calc_kernel_mat_old(coords) - k1.calc_kernel_mat(coords)))
 
-# kernel_test()
+#kernel_test()
 # test_parallel()
-test_diffusion_barrier()
+# test_diffusion_barrier()

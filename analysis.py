@@ -85,10 +85,10 @@ class Analysis(object):
         #y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        KC.set_parameters([64.73, 0.00227, 1.0, 0])  # Nbh Sz, Mu0, t0, ss
-        #KC.set_parameters([1.0, 1.0, 0.001, 5])  # Diffusion; t0, mutation, density
+        KC.set_parameters([64.73, 0.00227, 1.0, 0.0])  # Nbh Sz, Mu0, t0, ss
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
+        print(coords[:5])
         kernel = KC.calc_kernel_mat(coords)
         
         plt.errorbar(bin_dist[:bins/2], bin_corr[:bins/2], stand_errors[:bins/2], fmt='ro', label="Binwise estimated Correlation")

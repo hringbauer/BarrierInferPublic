@@ -25,19 +25,31 @@ class Grid(object):
     position_list = []  # List of initial positions.
     ancestry = []  # List of individuals that currently descent from individual i
     final_ancestry = []  # List of final ancestry
-    mt_list = []  # List of times when individual was last checked for mutation
     genotypes = []  # List of the genotypes of every individuals
     genotype_mat = []  # List of the genotype matrix. In case multiple multiple markers are simulated
     p_mean = 0.5
     t = 0  # Current time back in generations.
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
-    sigma = 0.965  # 1.98
+    sigma = 1.98  # 1.98 # 0.965
     ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
     mu = 0.001  # The Mutation rate.
     
     def __init__(self):  # Initializes an empty grid
         print("Initializing...")  # Actually all relevant things are set with set_samples
+        
+    def set_parameters(self, gridsize_x, gridsize_y, sigma, ips, mu):
+        '''Sets all important Grid Parameters'''
+        self.gridsize_x = gridsize_x
+        self.gridsize_y = gridsize_y
+        self.sigma = sigma
+        self.ips = ips
+        self.mu = mu
+        
+    def set_barrier_parameters(self, barrier, barrier_strength):
+        '''Sets important Barrier Parameters'''
+        self.barrier = barrier  # Where to actually find the Barrier.
+        self.barrier_strength = barrier_strength  # How strong the barrier actually is.
       
     def set_samples(self, position_list):
         '''Sets samples to where they belong. THE ONLY WAY TO SET SAMPLES'''
@@ -54,7 +66,7 @@ class Grid(object):
             t += 1  # Adds time to the generation clock!
             self.drop_mutations()  # Drops mutations that moves lineages into their pension
             
-            if i % 10 == 0:
+            if i % 100 == 0:
                 print("Doing generation: %i " % i)
             
             if barrier == 0:
@@ -285,13 +297,13 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False, coords = None):
+    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False, coords=None):
         '''Draw correlated genotypes
         l: Typical correlation length, a: Absolute correlation, 
         c: Strength of the Barrier, fluc_mean: Whether varying mean all. frequency is simulated'''
         
         # Set Sample Coordinates:
-        if coords==None:
+        if coords == None:
             coords = np.array([(i, j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # To have dense sampling on both sides of the HZ
 
         f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
@@ -318,12 +330,12 @@ class Grid(object):
         cov_mat = full_kernel_function(coords, l, a, c) + 0.000001 * np.identity(len(coords))  # Calculate the covariance matrix. Added diagonal term for numerical stability
         
         # Function for Covariance Matrix from Diffusion Kernel:
-        ##KC = fac_kernel("DiffusionK0")
-        ##KC.set_parameters([62.8, 0.002, 1.0])
-        ##start = time()
-        ##cov_mat = KC.calc_kernel_mat(coords)
-        ##end = time()
-        ##print("Runtime: %.4f: " % (end - start))
+        # #KC = fac_kernel("DiffusionK0")
+        # #KC.set_parameters([62.8, 0.002, 1.0])
+        # #start = time()
+        # #cov_mat = KC.calc_kernel_mat(coords)
+        # #end = time()
+        # #print("Runtime: %.4f: " % (end - start))
         
         
         

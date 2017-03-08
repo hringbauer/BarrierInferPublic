@@ -210,13 +210,13 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates6.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes6.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates7.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes7.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./Data/coordinates6.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./Data/data_genotypes6.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinates7.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./Data/data_genotypes7.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

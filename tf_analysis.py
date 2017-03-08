@@ -142,7 +142,7 @@ class TF_Analysis(object):
             K = k_rbf(a, l , X, N)  # Test
             #K = k_classical(a, l , X, N)
             
-            p = tf.nn.sigmoid(F)  # Calculate probabilities(assuming sigmoid link function)
+            p = tf.nn.sigmoid(F)            # Calculate probabilities(assuming sigmoid link function)
             Kinv_F = tf.matrix_solve(K, F)  # Calculate K^(-1)*F
              
             data_fit = -tf.reduce_sum(tf.log(1 + tf.exp(-Y * F)), reduction_indices=[0])  # Calculate Data Fit: Check  

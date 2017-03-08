@@ -25,11 +25,14 @@ class MLE_estimator(GenericLikelihoodModel):
     estimates = []  # Array for the fitted estimates
     start_params = []  # The starting Parameters for the Fit
     kernel = 0  # Class that can calculate the Kernel
+    fixed_params = np.array([200, 0.001, 1.0, 0.04])  # Full array
+    param_mask = np.array([0, 1, 3])  # Parameter Mask used to change specific Parameters
     nr_params = 0
     parameter_names = []
     mps = [] 
     
-    def __init__(self, kernel_class, coords, genotypes, start_params=None, **kwds):
+    def __init__(self, kernel_class, coords, genotypes, start_params=None,
+                 param_mask=None, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         exog = coords  # The exogenous Variables are the coordinates
@@ -44,6 +47,8 @@ class MLE_estimator(GenericLikelihoodModel):
         self.parameter_names = self.kernel.give_parameter_names()
         if start_params != None:
             self.start_params = start_params 
+        if param_mask != None:
+            self.param_mask = param_mask
         assert(len(self.start_params) == self.nr_params)  # Check whether the length of the start parameters is actually right.
         
         # Some Output that everything loaded successfully:
@@ -55,6 +60,7 @@ class MLE_estimator(GenericLikelihoodModel):
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype Matrix given Coordinate Matrix.'''
         # First some out-put what the current Parameters are:
+        params = self.expand_params(params)  # Expands Parameters to full array
         print("Calculating Likelihood:")
         for i in xrange(self.nr_params):
             print(self.parameter_names[i] + ":\t %.4f" % params[i])
@@ -98,6 +104,12 @@ class MLE_estimator(GenericLikelihoodModel):
         self.estimates = fit.params
         return fit    
     
+    def expand_params(self, params):
+        '''Method to expand subparameters as defined in self.param_mask to full parameters'''
+        all_params = self.fixed_params
+        all_params[self.param_mask] = params  # Set the subarray
+        return all_params
+        
     def likelihood_surface(self, range1, range2, wp1, wp2, fix_params, true_vals):
         '''Method for creating and visualizing likelihood surface.
         Range1 and Range2 are vectors'''
@@ -282,12 +294,12 @@ if __name__ == "__main__":
     params = [200, 0.001, 1.0, 0.04]
     true_vals = [251.33, 0.001]
     
-    #res = pickle.load(open("temp_save.p", "rb")) # Load the Pickle Data
-    #MLE_obj.likelihood_surface(nbh_list, L_list, 0, 1, params, true_vals) # create the likelihood surface
-    #MLE_obj.plot_loglike_surface(nbh_list, L_list, true_vals, res)  # Plots the Data
+    # res = pickle.load(open("temp_save.p", "rb")) # Load the Pickle Data
+    # MLE_obj.likelihood_surface(nbh_list, L_list, 0, 1, params, true_vals) # create the likelihood surface
+    # MLE_obj.plot_loglike_surface(nbh_list, L_list, true_vals, res)  # Plots the Data
     
     
     # Do the actual Fitting: 
-    fit=MLE_obj.fit(start_params=[200, 0.001, 1, 0.04])  # Could alter method here.
+    fit = MLE_obj.fit(start_params=[200, 0.001, 0.04])  # Could alter method here.
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     print(fit.summary())

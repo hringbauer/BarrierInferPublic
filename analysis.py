@@ -57,7 +57,7 @@ class Analysis(object):
             entry += 1     
         self.vis_correlation(distance, correlation)  # Visualize the correlation
     
-    def vis_correlation(self, distance, correlation, bins = 50):
+    def vis_correlation(self, distance, correlation, bins=50):
         '''Take pairwise correlation and distances as inputs and visualizes them'''
         bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
         stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
@@ -65,33 +65,34 @@ class Analysis(object):
         bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
         
         # Fit the data:
-        C, k, std_k = fit_log_linear(bin_dist[:bins/3], bin_corr[:bins/3])  # Fit first half of the distances bins
+        C, k, std_k = fit_log_linear(bin_dist[:bins / 3], bin_corr[:bins / 3])  # Fit first half of the distances bins
         Nb_est = 1 / (-k)
         Nb_std = (-std_k / k) * Nb_est
         
         # Fit Diffusion/RBF Kernel; Comment out depending on what is need:
-        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
-        #params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
+        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins / 2], bin_dist[:bins / 2], stand_errors[:bins / 2])
+        # params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
         
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
-        print("Fitted Parameters + Errors from least square fit: ")
+        # print("Fitted Parameters + Errors from least square fit: ")
         print(params)
         print(std_params)
         
         
-        x_plot = np.linspace(min(bin_dist), max(bin_dist)/2.0, 100)
+        x_plot = np.linspace(min(bin_dist), max(bin_dist) / 2.0, 100)
         y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
-        #y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
+        # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        KC.set_parameters([64.73, 0.00227, 1.0, 0.0])  # Nbh Sz, Mu0, t0, ss
+        #KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
+        KC.set_parameters([54.7, 0.0407, 1.0, 0.0378])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         print(coords[:5])
         kernel = KC.calc_kernel_mat(coords)
         
-        plt.errorbar(bin_dist[:bins/2], bin_corr[:bins/2], stand_errors[:bins/2], fmt='ro', label="Binwise estimated Correlation")
+        plt.errorbar(bin_dist[:bins / 2], bin_corr[:bins / 2], stand_errors[:bins / 2], fmt='ro', label="Binwise estimated Correlation")
         plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted Log Decay")
         
         plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")
@@ -101,7 +102,7 @@ class Analysis(object):
         plt.legend()
         plt.ylabel("F / Correlation")
         plt.xlabel("Distance")
-        #plt.xscale("log")
+        # plt.xscale("log")
         plt.show()
         
     def geo_comparison(self, mean_all_freq=0.5):
@@ -200,21 +201,23 @@ def fit_log_linear(t, y):
     param, V = np.polyfit(t, y, 1, cov=True)  # Param has highest degree first
     return param[1], param[0], np.sqrt(V[0, 0])  # Returns parameters and STD
         
-def diffusion_kernel(r, nbh, L, t0): 
+def diffusion_kernel(r, nbh, L, t0, ss): 
     '''Function which is used to fit diffusion kernel'''
+    #print([nbh, L, 1, ss])  # Print were the fit is
     K0 = fac_kernel("DiffusionK0")  # Load the Diffusion Kernel
-    K0.set_parameters([nbh, L, t0, 0])  # Set its parameters: diffusion, t0, mu, density
+    K0.set_parameters([nbh, L, 1.0, ss])  # Set its parameters: diffusion, t0, mu, density
+    print(K0.give_parameters())
     y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
-    return y
+    return y+ss # As ss is not yet included in num_integral
 
 def rbf_kernel(r, l, a):
     '''Function which is used to fit RBF kernel'''
     K1 = fac_kernel("RBFBarrierK")
-    K1.set_parameters([l, a, 0, 0]) # l, a, c, s,
+    K1.set_parameters([l, a, 0, 0])  # l, a, c, s,
     y = [K1.calc_r(i) for i in r]
     return y
     
-def fit_diffusion_kernel(f, r, error, guess=[50, 0.002, 1.0]):
+def fit_diffusion_kernel(f, r, error, guess=[4*np.pi*6, 0.02, 1.0, 0.035]):
     '''Fits vectors f,r and error to numerical Integration of
     Diffusion Kernel - Using non-linear, weighted least square.'''    
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,

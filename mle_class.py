@@ -9,6 +9,7 @@ from kernels import fac_kernel
 from time import time
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_nn_ops
+from random import shuffle 
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,7 +50,8 @@ class MLE_estimator(GenericLikelihoodModel):
             self.start_params = start_params 
         if param_mask != None:
             self.param_mask = param_mask
-        assert(len(self.start_params) == self.nr_params)  # Check whether the length of the start parameters is actually right.
+
+        
         
         # Some Output that everything loaded successfully:
         nr_inds, nr_loci = np.shape(genotypes)
@@ -64,10 +66,13 @@ class MLE_estimator(GenericLikelihoodModel):
         print("Calculating Likelihood:")
         for i in xrange(self.nr_params):
             print(self.parameter_names[i] + ":\t %.4f" % params[i])
-            
-        tic = time()            
-        params = np.abs(params)  # we only take positive Parameters here. Take the absolute value here.
-        # params = params + [1,0]  # Do some shennenigans for the Kernel
+        
+        if np.min(params) <= 0:  # If any Parameters non-positive - return infinite negative ll
+            ll = -np.inf
+            print("Total log likelihood: %.4f \n" % ll)
+            return ll  # Return the log likelihood
+                   
+        tic = time()     
         
         (config, update, opt_op, logL, margL, F, K, mean_param) = self.set_tf_model()  # Sets the tensorflow Model.
         
@@ -77,7 +82,7 @@ class MLE_estimator(GenericLikelihoodModel):
         kernel_mat = self.kernel.calc_kernel_mat(coords) 
         
         toc = time()
-        print("Runtime Caluclation Kernel: %.4f" % (toc - tic))
+        print("Runtime Calculation Kernel: %.4f" % (toc - tic))
         
 
         with tf.Session(config=config) as sess:
@@ -94,10 +99,14 @@ class MLE_estimator(GenericLikelihoodModel):
         print("Total log likelihood: %.4f \n" % ll)
         return ll  # Return the log likelihood
     
-    def fit(self, start_params=None, maxiter=10000, maxfun=5000, **kwds):
+    def fit(self, start_params=None, maxiter=1000, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
         if start_params == None:
             start_params = self.start_params  # Set the starting parameters for the fit
+        
+        # Check whether the length of the start parameters is actually right:
+        assert(len(start_params) == len(self.param_mask))  
+        
         fit = super(MLE_estimator, self).fit(start_params=start_params,
                                      maxiter=maxiter, maxfun=maxfun,
                                      **kwds)
@@ -281,11 +290,22 @@ def _LogdetGrad(op, grad):
    
 ######################### Some lines to test the code and make plots
 if __name__ == "__main__":
-    nr_inds_analysis = 500
-    X_data = np.loadtxt('./Data/coordinates7.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    Y_data = np.loadtxt('./Data/data_genotypes7.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    start_params = [200.0, 0.001, 1, 0.04]  # nbh, mu, t0, ss
-    MLE_obj = MLE_estimator("DiffusionK0", X_data[:nr_inds_analysis, :], Y_data[:nr_inds_analysis, :], start_params) 
+    X_data = np.loadtxt('./Data/coordinates00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    Y_data = np.loadtxt('./Data/data_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    # Extract some information regarding the mean allele frequency:
+    p_means = np.mean(Y_data, axis=0)
+    print("Standard Deviation of mean allele frequencies: %.4f" % np.std(p_means))
+    
+    nr_inds_analysis = 1000
+    inds = range(len(X_data))
+    shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+    inds = inds[:nr_inds_analysis]  # Only load first nr_inds
+    
+
+    position_list = X_data[inds, :]
+    genotype_mat = Y_data[inds, :]
+    start_params = [75.0, 0.02, 0.04]  # nbh, mu, t0, ss
+    MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, start_params) 
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
     # Run a likelihood surface
@@ -300,6 +320,6 @@ if __name__ == "__main__":
     
     
     # Do the actual Fitting: 
-    fit = MLE_obj.fit(start_params=[200, 0.001, 0.04])  # Could alter method here.
+    fit = MLE_obj.fit(start_params=[75, 0.02, 0.035])  # Could alter method here.
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     print(fit.summary())

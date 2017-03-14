@@ -31,9 +31,9 @@ class Grid(object):
     t = 0  # Current time back in generations.
     barrier = 50
     barrier_strength = 1  # The strength of the barrier
-    sigma = 0.965  # 1.98 # 0.965
-    ips = 12  # Number of haploid Individuals per Node (For D_e divide by 2)
-    mu = 0.01  # The Mutation/Long Distance Migration rate.
+    sigma = 1.98 #0.965  # 1.98 # 0.965
+    ips = 8  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.005  # The Mutation/Long Distance Migration rate.
     
     def __init__(self):  # Initializes an empty grid
         print("Initializing...")  # Actually all relevant things are set with set_samples

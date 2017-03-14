@@ -65,7 +65,6 @@ class MultiRun(object):
         '''Method that creates all data sets.
         Could be parallelized'''
         for i in xrange(self.nr_data_sets):
-            print("BlubBlub")
             self.create_data_set(i)
         
     def analyze_all_data_sets(self):
@@ -124,24 +123,24 @@ class MultiNbh(MultiRun):
     '''First simple class to test whether everything works.
     The Full Goal is to find out at which Neighborhood Size the method to estimate IBD works best.'''
     def __init__(self, folder, nr_data_sets=100, nr_params=4, **kwds):
-        super(TestRun, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
-        self.name = "test_file"
+        super(MultiNbh, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        self.name = "nbh_file"
         # self.data_folder = folder
         
     def create_data_set(self, data_set_nr):
         '''Create a Data_Set. Override method.'''
         print("Craeting Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        ips_list = 25*[4] + 25*[8] + 25*[12] + 25*[16]
+        ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
         ips = ips_list[data_set_nr]  # Number of haploid Individuals per Node (For D_e divide by 2)  Loads the right Neighborhood Size
         
         
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])
-        nr_loci = 100
-        t = 10000
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
+        nr_loci = 200
+        t = 5000
         gridsize_x, gridsize_y = 1000, 1000
         sigma = 0.965  # 0.965 # 1.98
-        mu = 0.01  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
         sd_p = 0.1
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
@@ -163,14 +162,20 @@ class MultiNbh(MultiRun):
         
             
         # Now Pickle Some additional Information:
-        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "ss", "Position List"]
-        ps = [nr_loci, t, p_mean, sigma, mu, ips, ss, position_list]
+        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
+        ps = [nr_loci, t, p_mean, sigma, mu, ips, sd_p, position_list]
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=500):
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000):
         '''Create Data Set. Override Method.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+        
+        # Creates the "right" starting parameters:
+        ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
+        ips_list = np.array(ips_list)
+        nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
+        start_list = [[nbh_sizes, 0.003, 0.04] for nbh_sizes in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
         inds = range(len(position_list))
@@ -180,27 +185,26 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        start_params = [100.0, 0.01, 0.04]  # Sets the Start Parameters
         MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat) 
-        fit = MLE_obj.fit(start_params=[100.0, 0.01, 0.04])
-        
-        
-        print(fit.summary())
-    
-        # results0 = ml_estimator.fit(method="BFGS")  # Do the actual fit. method="BFGS" possible
-        params= fit.params
-        conf_ind=fit.con_int()
+        fit = MLE_obj.fit(start_params=start_list[data_set_nr])
+
+        params = fit.params
+        conf_ind = fit.conf_int()
         
         # Saves the Parameter Estimates
-        self.param_estimates[data_set_nr, :] = fit.params
-        self.uncertain_estimates[data_set_nr, :] = fit.conf_int
+        # self.param_estimates[data_set_nr, :] = fit.params
+        # self.uncertain_estimates[data_set_nr, :] = fit.conf_int
+        
+        # Pickles the parameters and confidence intervalls
+        path = self.data_folder + "result" + str(data_set_nr).zfill(2) + ".p"
+        pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
     def visualize_results(self):
         '''Load and visualize the Results'''
-        param_estimates, uncert_estimates = self.load_analysis() # Loads and saves Parameter Estimates and Uncertainty estimates
+        param_estimates, uncert_estimates = self.load_analysis()  # Loads and saves Parameter Estimates and Uncertainty estimates
         
         plt.figure()
-        plt.errorbar()     # Fully Implement this plotting.
+        plt.errorbar()  # Fully Implement this plotting.
         plt.show()
         
         
@@ -272,17 +276,22 @@ class TestRun(MultiRun):
         print(fit.summary())
     
         # results0 = ml_estimator.fit(method="BFGS")  # Do the actual fit. method="BFGS" possible
-        params= fit.params
-        conf_ind=fit.con_int()
+        params = fit.params
+        conf_ind = fit.conf_int()
         
-        print(np.shape(conf_ind))
+        print(np.shape(conf_int))
         print(params)  # Print Parameter Estimates
         print(conf_ind)  # Print Confidence Intervals
         
         
         print("Trying to save. uhuhuh.")
+        # Saves the results of Analysis to local object
         self.param_estimates[data_set_nr, :] = fit.params
         self.uncertain_estimates[data_set_nr, :] = fit.conf_int
+        
+        # Pickles the parameters and confidence intervalls
+        path = self.data_folder + "result" + str(date_set_nr).zfill(2) + ".p"
+        pickle.dump((params, conf_int), open(path, "wb"))  # Pickle the Info
         
         # self.param_estimates=fit.
         # self.uncertain_estimates=fit.
@@ -292,7 +301,7 @@ def fac_method(method, folder):
     if method == "testrun":
         return TestRun(folder)
     
-    elif method== "multi_nbh":
+    elif method == "multi_nbh":
         return MultiNbh(folder, nr_data_sets=1)
 
 #########################################################################################
@@ -304,7 +313,7 @@ def fac_method(method, folder):
 def run_mult_nbh(folder):
     '''Method that can be run to simulate multiple Neighborhood Sizes'''
     MultiRun = fac_method("multi_nbh", folder)
-    MultiRun.create_all_data_sets()  # Create all the Datasets
+    MultiRun.create_all_data_sets()  # Create all Datasets
     print("Creation of all Data Sets finished...")
     
     
@@ -324,20 +333,23 @@ def vis_mult_nbh(folder):
 # Run all data-sets
     
 if __name__ == "__main__":
-    Test = fac_method("multi_nbh", "./testfolder/")
-    Test.create_all_data_sets()  # Creates all Datasets and saves them
-    print("Finished!")
-    Test.analyze_all_data_sets()  # Analyze all Datasets
-    Test.save_analysis()  # Saves the Analysis
+    # Test = fac_method("multi_nbh", "./testfolder/")
+    # Test.create_all_data_sets()  # Create all Datasets and saves them
+    # print("Finished!")
+    # Test.analyze_all_data_sets()  # Analyze all Datasets
+    # Test.save_analysis()  # Saves the Analysis
     
     # Test.load_analysis()
     # print(Test.param_estimates)
     # print(Test.uncert_estimates)
     
     ####Method to Run Multiple Neighborhood Sizes:
-    #run_mult_nbh()
+    run_mult_nbh("./nbh_folder/")
     
     ####Method to Analyze Multiple Neighborhood Sizes:
-    #a-_mult_nbh()
+    # an_mult_nbh("./nbh_folder/")
+    
+    
+
 
 

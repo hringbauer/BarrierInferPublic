@@ -29,10 +29,14 @@ class Analysis(object):
         self.position_list = position_list  # Sets the position_list
         self.genotypes = genotype_list  # Sets the geno-type Matrix (n inds x k loci)
         self.barrier = barrier  # Where the barrier sits
-        print(self.genotypes)
-        print(self.position_list)
+
         print("Nr. of loci: %i" % len(genotype_list[0, :]))
         print("Nr. of individuals: % i" % len(genotype_list[:, 0]))
+        
+        # Calculate standard deviations among means:
+        means=np.mean(self.genotypes, axis=0)   # 
+        print("\nMean of Allele Frequencies: %.6f: " % np.mean(means))
+        print("Standard Deviations of Allele Frequencies: %.6f" % np.std(means))
         
     def kinship_coeff(self, p1, p2, p):
         '''Takes two allele frequencies as input and calculates their correlation.'''
@@ -86,7 +90,7 @@ class Analysis(object):
         
         KC = fac_kernel("DiffusionK0")
         #KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
-        KC.set_parameters([54.7, 0.0407, 1.0, 0.0378])
+        KC.set_parameters([4*np.pi*4*4, 0.005, 1.0, 0.048])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         print(coords[:5])
@@ -217,7 +221,7 @@ def rbf_kernel(r, l, a):
     y = [K1.calc_r(i) for i in r]
     return y
     
-def fit_diffusion_kernel(f, r, error, guess=[4*np.pi*6, 0.02, 1.0, 0.035]):
+def fit_diffusion_kernel(f, r, error, guess=[4*np.pi*4, 0.02, 1.0, 0.035]):
     '''Fits vectors f,r and error to numerical Integration of
     Diffusion Kernel - Using non-linear, weighted least square.'''    
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,

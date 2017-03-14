@@ -32,10 +32,11 @@ class MLE_estimator(GenericLikelihoodModel):
     parameter_names = []
     mps = [] 
     
-    def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                 param_mask=None, **kwds):
+    def __init__(self, kernel_class, coords, genotypes, start_params = None,
+                 param_mask=None, multi_processing=0, **kwds):
         '''Initializes the Class.'''
-        self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
+        self.kernel = fac_kernel(kernel_class)                  # Loads the kernel object. Use factory funciton to branch
+        self.kernel.multiprocessing = multi_processing          # Whether to do multi-processing: 1 yes / 0 no
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
@@ -99,7 +100,7 @@ class MLE_estimator(GenericLikelihoodModel):
         print("Total log likelihood: %.4f \n" % ll)
         return ll  # Return the log likelihood
     
-    def fit(self, start_params=None, maxiter=1000, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
+    def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
         if start_params == None:
             start_params = self.start_params  # Set the starting parameters for the fit
@@ -305,7 +306,7 @@ if __name__ == "__main__":
     position_list = X_data[inds, :]
     genotype_mat = Y_data[inds, :]
     start_params = [75.0, 0.02, 0.04]  # nbh, mu, t0, ss
-    MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, start_params) 
+    MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, start_params, multi_processing=1) 
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
     # Run a likelihood surface

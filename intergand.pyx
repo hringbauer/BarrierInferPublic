@@ -36,7 +36,9 @@ def integrand_barrier_c(t, dy, x0, x1, nbh, L, k):
         
         # 1D Contribution from x-Axis (barrier)
         exponent = 2 * k * (x0 + x1 + 2 * k * t)
-        if exponent > 700:
+        erfc_argument = (x0 + x1 + 4 * k * t) / (2 * np.sqrt(t))
+
+        if exponent > 700 or erfc_argument > 26:   # Checks for numerical Instabilities
             pdfx = gaussian(t, x0, x1)  # Fall back to Gaussian (to which one converges)
 
         else:
@@ -44,7 +46,7 @@ def integrand_barrier_c(t, dy, x0, x1, nbh, L, k):
             d1 = np.sqrt(4 * np.pi * t)
             
             a2 = k * np.exp(exponent)
-            b2 = erfc((x0 + x1 + 4 * k * t) / (2 * np.sqrt(t)))
+            b2 = erfc(erfc_argument)
             pdfx = n1 / d1 - a2 * b2
         
         #if np.isnan(pdfx) or np.isinf(pdfx):  # Check if numerical instability
@@ -65,13 +67,14 @@ def integrand_barrier_c(t, dy, x0, x1, nbh, L, k):
         
         # 1D Contribution from x-Axis (barrier)
         exponent = 2 * k * (x0 - x1 + 2 * k * t)
+        erfc_argument = (x0 - x1 + 4 * k * t) / (2 * np.sqrt(t))
 
-        if exponent>700:
-            pdfx = gaussian(t, x0, x1)        # Fall back to Gaussian (to which one converges)
+        if exponent > 700 or erfc_argument > 26:  # Checks for cases when numerical instabilities kick in.
+            pdfx = gaussian(t, x0, x1)        # Fall back to Gaussian (to which one converges).
 
         else:
             a1 = k * np.exp(exponent)  # First Term Barrier
-            b1 = erfc((x0 - x1 + 4 * k * t) / (2 * np.sqrt(t)))  # Second Term Barrier
+            b1 = erfc(erfc_argument)  # Second Term Barrier
             pdfx = a1 * b1
         
         #if np.isnan(pdfx) or np.isinf(pdfx):  # Check if numerical instability

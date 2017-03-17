@@ -29,16 +29,18 @@ class MultiRun(object):
     param_estimates = 0  # Will be matrix for parameters
     uncert_estimates = 0  # Will be matrix for parameter uncertainties
     nr_data_sets = 0  # Number of the datasets
+    multi_processing = 0  # Whether to actually use multi-processing
 
     
-    def __init__(self, data_folder, nr_data_sets, nr_params):
+    def __init__(self, data_folder, nr_data_sets, nr_params, multi_processing = 0):
         '''
         Constructor. Sets the Grid class to produce and the MLE class to analyze the Data
         '''
         self.data_folder = data_folder
         self.nr_data_sets = nr_data_sets
         self.param_estimates = np.zeros((nr_data_sets, nr_params))  # Creates array for Parameter Estimates
-        self.uncert_estimates = np.zeros((nr_data_sets, nr_params * 2))  # Creates array for Uncertainty Estimates 
+        self.uncert_estimates = np.zeros((nr_data_sets, nr_params * 2))  # Creates array for Uncertainty Estimates
+        self.multi_processing = multi_processing 
         
     def set_grid_params(self, grid, run_nr):
         '''Sets the Parameters for the grid depending on the run-nr'''
@@ -121,7 +123,8 @@ class MultiRun(object):
 
 class MultiNbh(MultiRun):
     '''First simple class to test whether everything works.
-    The Full Goal is to find out at which Neighborhood Size the method to estimate IBD works best.'''
+    The Full Goal is to find out at which Neighborhood Size the method to estimate IBD works best.
+    Everything set so that 100 Data-Sets are run.'''
     def __init__(self, folder, nr_data_sets=100, nr_params=4, **kwds):
         super(MultiNbh, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
         self.name = "nbh_file"
@@ -175,7 +178,7 @@ class MultiNbh(MultiRun):
         ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
         ips_list = np.array(ips_list)
         nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
-        start_list = [[nbh_sizes, 0.003, 0.04] for nbh_sizes in nbh_sizes]  # General Vector for Start-Lists
+        start_list = [[nbh_sizes, 0.005, 0.04] for nbh_sizes in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
         inds = range(len(position_list))
@@ -185,7 +188,7 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat) 
+        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing = self.multi_processing) 
         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
 
         params = fit.params
@@ -296,13 +299,13 @@ class TestRun(MultiRun):
         # self.param_estimates=fit.
         # self.uncertain_estimates=fit.
         
-def fac_method(method, folder):
+def fac_method(method, folder, multi_processing=0):
     '''Factory Method to give the right Class which creates and analyzes the data-set'''
     if method == "testrun":
-        return TestRun(folder)
+        return TestRun(folder, multi_processing=multi_processing)
     
     elif method == "multi_nbh":
-        return MultiNbh(folder, nr_data_sets=1)
+        return MultiNbh(folder, multi_processing=multi_processing)
 
 #########################################################################################
 #########################################################################################       
@@ -338,7 +341,6 @@ if __name__ == "__main__":
     # print("Finished!")
     # Test.analyze_all_data_sets()  # Analyze all Datasets
     # Test.save_analysis()  # Saves the Analysis
-    
     # Test.load_analysis()
     # print(Test.param_estimates)
     # print(Test.uncert_estimates)

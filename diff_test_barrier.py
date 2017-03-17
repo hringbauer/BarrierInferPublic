@@ -158,7 +158,7 @@ def create_2x2_plot(c_values, initial_position=-15,
         
     # Do the actual plot:
     x_vec = np.linspace(-100, 100, 1000)  # Creates the positions for x-Array: -100 to 100
-    f, axarr = plt.subplots(2, 2, sharex=True, sharey=True)  # Create sub-plots
+    f, axarr = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(10,20))  # Create sub-plots
     for i in range(4):  # Loop through interval list
         curr_plot = axarr[i / 2, i % 2]  # Set current plot
         #curr_plot.set_yscale('log')  # Set Log-Scale
@@ -199,7 +199,7 @@ def create_2x2_plot(c_values, initial_position=-15,
     
 
 #test_diffusion()     # Single test
-create_2x2_plot([0.001,0.01,0.1,0.5], nr_steps=1000, nr_replicates=500000)    # Creates 2x2 Plot
+create_2x2_plot([0.001, 0.01, 0.1, 0.5], nr_steps=1000, nr_replicates=500000)    # Creates 2x2 Plot
 
     
 

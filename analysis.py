@@ -90,7 +90,7 @@ class Analysis(object):
         
         KC = fac_kernel("DiffusionK0")
         #KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
-        KC.set_parameters([4*np.pi*4*4, 0.005, 1.0, 0.048])
+        KC.set_parameters([4*np.pi*4*4, 0.005, 1.0, 0.0467])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         print(coords[:5])
@@ -106,6 +106,7 @@ class Analysis(object):
         plt.legend()
         plt.ylabel("F / Correlation")
         plt.xlabel("Distance")
+        #plt.ylim([0,0.05])
         # plt.xscale("log")
         plt.show()
         

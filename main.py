@@ -215,8 +215,8 @@ def main():
                 print("Saving Complete.")
                 
             elif inp9 == 2:       
-                position_list = np.loadtxt('./Data/coordinates00.csv', delimiter='$').astype('float64')
-                genotype_matrix = np.loadtxt('./Data/data_genotypes00.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./nbh_folder/nbh_file_coords30.csv', delimiter='$').astype('float64')  #nbh_file_coords30.csv # ./Data/coordinates00.csv
+                genotype_matrix = np.loadtxt('./nbh_folder/nbh_file_genotypes30.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

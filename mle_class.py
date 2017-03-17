@@ -36,7 +36,7 @@ class MLE_estimator(GenericLikelihoodModel):
                  param_mask=None, multi_processing=0, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)                  # Loads the kernel object. Use factory funciton to branch
-        self.kernel.multiprocessing = multi_processing          # Whether to do multi-processing: 1 yes / 0 no
+        self.kernel.multi_processing = multi_processing          # Whether to do multi-processing: 1 yes / 0 no
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
@@ -59,6 +59,8 @@ class MLE_estimator(GenericLikelihoodModel):
         print("Successfully Loaded MLE-Object.")
         print("Nr inds: %i" % nr_inds)
         print("Nr loci: %i \n" % nr_loci)
+        
+        print("MultiProcessing for Kernel: %i" % self.kernel.multi_processing)
         
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype Matrix given Coordinate Matrix.'''

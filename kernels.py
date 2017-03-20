@@ -15,6 +15,7 @@ from scipy.special import erfc
 from time import time
 from functools import partial
 
+
 import matplotlib.pyplot as plt
 import multiprocessing as mp  # Library for Multiprocessing
 import intergand  # Import the Integrand Watch the type

@@ -124,6 +124,8 @@ class MLE_estimator(GenericLikelihoodModel):
         
     def likelihood_surface(self, range1, range2, wp1, wp2, fix_params, true_vals):
         '''Method for creating and visualizing likelihood surface.
+        w p ...which parameters.
+        fix_params: Fixed Parameters.
         Range1 and Range2 are vectors'''
         res = []  # Vector for the results.
         

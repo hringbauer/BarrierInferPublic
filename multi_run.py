@@ -32,7 +32,7 @@ class MultiRun(object):
     multi_processing = 0  # Whether to actually use multi-processing
 
     
-    def __init__(self, data_folder, nr_data_sets, nr_params, multi_processing = 0):
+    def __init__(self, data_folder, nr_data_sets, nr_params, multi_processing=0):
         '''
         Constructor. Sets the Grid class to produce and the MLE class to analyze the Data
         '''
@@ -188,7 +188,7 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing = self.multi_processing) 
+        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
 
         params = fit.params
@@ -202,6 +202,7 @@ class MultiNbh(MultiRun):
         path = self.data_folder + "result" + str(data_set_nr).zfill(2) + ".p"
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
+        
     def visualize_results(self):
         '''Load and visualize the Results'''
         param_estimates, uncert_estimates = self.load_analysis()  # Loads and saves Parameter Estimates and Uncertainty estimates
@@ -210,8 +211,50 @@ class MultiNbh(MultiRun):
         plt.errorbar()  # Fully Implement this plotting.
         plt.show()
         
+    def temp_visualize(self):
+        '''Temporary Function to plot the Estimates
+        that were run on cluster.'''
         
         
+        # First quick function to unpickle the data:
+        def load_pickle_data(i, arg_nr):
+            '''Function To load pickled Data.
+            Also visualizes it.'''
+            data_folder = self.data_folder
+            path = data_folder + "result" + str(i).zfill(2) + ".p"
+            res = pickle.load(open(path, "rb"))  # Loads the Data
+            return res[arg_nr]
+        
+        res_numbers = range(0, 7) + range(8, 28)
+        res_vec = np.array([load_pickle_data(i, 0) for i in res_numbers])
+        unc_vec = np.array([load_pickle_data(i, 1) for i in res_numbers])
+        
+        for i in res_numbers[:-1]:
+            print("\nRun: %i" % i)
+            for j in range(3):
+                print("Parameter: %i" % j)
+                print("Value: %f (%f,%f)" % (res_vec[i, j], unc_vec[i, j, 0], unc_vec[i, j, 1]))
+                
+        
+        
+        # plt.figure()
+        f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
+        
+        ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
+        ax1.hlines(4*np.pi * 5, 25, 27, linewidth=2, color="r")
+        ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+        ax1.legend()
+        
+        ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
+        ax2.hlines(0.006, 0, 27, linewidth=2)
+        ax2.legend()
+        
+        ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
+        ax3.hlines(0.04, 0, 27, linewidth=2)
+        ax3.legend()
+        plt.show()
+        
+    
         
 ###############################################################################################################################
         
@@ -330,7 +373,7 @@ def an_mult_nbh(folder):
 def vis_mult_nbh(folder):
     '''Visualize the analysis of Multiple Neighborhood Sizes.'''
     MultiRun = fac_method("multi_nbh", folder)
-    MultiRun.visualize_results()
+    MultiRun.temp_visualize()
     
 ##########################################################################################
 # Run all data-sets
@@ -346,10 +389,13 @@ if __name__ == "__main__":
     # print(Test.uncert_estimates)
     
     ####Method to Run Multiple Neighborhood Sizes:
-    run_mult_nbh("./nbh_folder/")
+    # run_mult_nbh("./nbh_folder/")
     
     ####Method to Analyze Multiple Neighborhood Sizes:
     # an_mult_nbh("./nbh_folder/")
+    
+    ####Method to Visualize Multiple Neighborhood Sizes:
+    vis_mult_nbh("./nbh_folder/")
     
     
 

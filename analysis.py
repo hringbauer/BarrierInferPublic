@@ -34,7 +34,7 @@ class Analysis(object):
         print("Nr. of individuals: % i" % len(genotype_list[:, 0]))
         
         # Calculate standard deviations among means:
-        means=np.mean(self.genotypes, axis=0)   # 
+        means = np.mean(self.genotypes, axis=0)  # 
         print("\nMean of Allele Frequencies: %.6f: " % np.mean(means))
         print("Standard Deviations of Allele Frequencies: %.6f" % np.std(means))
         
@@ -89,8 +89,8 @@ class Analysis(object):
         # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        #KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
-        KC.set_parameters([4*np.pi*4*4, 0.005, 1.0, 0.0467])
+        # KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
+        KC.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.04])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         print(coords[:5])
@@ -106,7 +106,7 @@ class Analysis(object):
         plt.legend()
         plt.ylabel("F / Correlation")
         plt.xlabel("Distance")
-        #plt.ylim([0,0.05])
+        # plt.ylim([0,0.05])
         # plt.xscale("log")
         plt.show()
         
@@ -208,12 +208,12 @@ def fit_log_linear(t, y):
         
 def diffusion_kernel(r, nbh, L, t0, ss): 
     '''Function which is used to fit diffusion kernel'''
-    #print([nbh, L, 1, ss])  # Print were the fit is
+    # print([nbh, L, 1, ss])  # Print were the fit is
     K0 = fac_kernel("DiffusionK0")  # Load the Diffusion Kernel
     K0.set_parameters([nbh, L, 1.0, ss])  # Set its parameters: diffusion, t0, mu, density
     print(K0.give_parameters())
     y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
-    return y+ss # As ss is not yet included in num_integral
+    return y + ss  # As ss is not yet included in num_integral
 
 def rbf_kernel(r, l, a):
     '''Function which is used to fit RBF kernel'''
@@ -222,7 +222,7 @@ def rbf_kernel(r, l, a):
     y = [K1.calc_r(i) for i in r]
     return y
     
-def fit_diffusion_kernel(f, r, error, guess=[4*np.pi*4, 0.02, 1.0, 0.035]):
+def fit_diffusion_kernel(f, r, error, guess=[4 * np.pi * 4, 0.02, 1.0, 0.035]):
     '''Fits vectors f,r and error to numerical Integration of
     Diffusion Kernel - Using non-linear, weighted least square.'''    
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,

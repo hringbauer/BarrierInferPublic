@@ -13,7 +13,9 @@ from kernels import fac_kernel
 from time import time
 from grid import Grid
 from mle_class import MLE_estimator
+from mle_pairwise import MLE_pairwise
 from random import shuffle 
+from analysis import Analysis
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -170,8 +172,8 @@ class MultiNbh(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000):
-        '''Create Data Set. Override Method.'''
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, mle_pw=0):
+        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Liklihood'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
@@ -188,19 +190,34 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+        if mle_pw==0:
+            MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+        elif mle_pw==1:
+            MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_list = [[nbh_sizes, 0.006, 0.01] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
+        elif mle_pw==2: # Do the fitting based on binned data
+            MLE_obj = Analysis(position_list, genotype_mat) 
+            
+            
+        else: raise ValueError("Wrong Input for mle_pw")
+        
         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
 
         params = fit.params
         conf_ind = fit.conf_int()
         
-        # Saves the Parameter Estimates
-        # self.param_estimates[data_set_nr, :] = fit.params
-        # self.uncertain_estimates[data_set_nr, :] = fit.conf_int
+        # Pickle Parameter Estimates:
+        subfolder_meth="estimate" + str(mle_pw) + "/"
+        path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
         
-        # Pickles the parameters and confidence intervalls
-        path = self.data_folder + "result" + str(data_set_nr).zfill(2) + ".p"
+        directory = os.path.dirname(path)  # Extract Directory
+        if not os.path.exists(directory):  # Creates Folder if not already existing
+            os.makedirs(directory)
+            
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+
+        
+        
         
         
     def visualize_results(self):
@@ -221,11 +238,15 @@ class MultiNbh(MultiRun):
             '''Function To load pickled Data.
             Also visualizes it.'''
             data_folder = self.data_folder
-            path = data_folder + "result" + str(i).zfill(2) + ".p"
+            #path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
+            
+            subfolder_meth="estimate" + str(2) + "/"  # Path to binned Estimates
+            path=self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+            
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
-        res_numbers = range(0, 7) + range(8, 28)
+        res_numbers = range(0, 7) + range(8, 67)
         res_vec = np.array([load_pickle_data(i, 0) for i in res_numbers])
         unc_vec = np.array([load_pickle_data(i, 1) for i in res_numbers])
         
@@ -241,17 +262,22 @@ class MultiNbh(MultiRun):
         f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
         
         ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax1.hlines(4*np.pi * 5, 25, 27, linewidth=2, color="r")
+        ax1.hlines(4*np.pi * 5, 25, 50, linewidth=2, color="r")
+        ax1.hlines(4*np.pi * 9, 50, 66, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-        ax1.legend()
+        ax1.set_ylabel("Nbh", fontsize=18)
+        #ax1.legend()
         
         ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
-        ax2.hlines(0.006, 0, 27, linewidth=2)
-        ax2.legend()
+        ax2.hlines(0.006, 0, 66, linewidth=2)
+        ax2.set_ylabel("L", fontsize=18)
+        #ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.04, 0, 27, linewidth=2)
-        ax3.legend()
+        ax3.hlines(0.04, 0, 66, linewidth=2)
+        ax3.set_ylabel("SS", fontsize=18)
+        #ax3.legend()
+        plt.xlabel("Dataset")
         plt.show()
         
     
@@ -341,7 +367,7 @@ class TestRun(MultiRun):
         
         # self.param_estimates=fit.
         # self.uncertain_estimates=fit.
-        
+    
 def fac_method(method, folder, multi_processing=0):
     '''Factory Method to give the right Class which creates and analyzes the data-set'''
     if method == "testrun":

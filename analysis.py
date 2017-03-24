@@ -13,6 +13,21 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
+class Fit_class(object):
+    '''Simple class that contains the results of a fit'''
+    params = []  # Vector of estimated Parameters
+    std = []  # Vector of estimated Standard Deviations
+    
+    def __init__(self, params, std):
+        self.params = params
+        self.std = std
+        
+    def conf_int(self):
+        '''Method that gives back Confidence Intervals.
+        Calculates it as best estimates plus/minus 3 standard deviations'''
+        conf_int = [[self.params[i] - 3 * self.std[i], self.params[i] + 3 * self.std[i]] for i in xrange(len(self.params))]
+        return conf_int
+            
 
 class Analysis(object):
     '''
@@ -43,6 +58,38 @@ class Analysis(object):
         f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
+    def fit(self, p=0.5, nr_inds=10000, bins=50, start_params=[50, 0.005, 0.04]):
+        '''Fits pairwise co-variance matrices'''
+        # Some Code to draw random samples
+        inds = range(len(self.position_list[:, 0]))  
+        shuffle(inds)
+        inds = inds[:nr_inds]
+        
+        positions = self.position_list[inds, :]
+        genotypes = self.genotypes[inds, :]
+        
+        # First Calculate all individuals correlations
+        distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
+        correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
+        entry = 0
+        
+        print("Calculating pairwise Correlation...")
+        for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
+            distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
+            correlation[entry] = self.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff per pair, averaged over loci  
+            entry += 1     
+        
+        # Bin the data
+        bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
+        stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
+        bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
+        
+        # Do the fitting.
+        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins / 2], bin_dist[:bins / 2], stand_errors[:bins / 2], guess=start_params)
+        std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+        Fit = Fit_class(params, std_params)
+        return Fit
+        
     def ind_correlation(self, p=0.5, nr_inds=10000):
         '''Analyze individual correlations.'''
         inds = range(len(self.position_list[:, 0]))  # Some Code to draw random samples
@@ -89,8 +136,8 @@ class Analysis(object):
         # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        # KC.set_parameters([4*np.pi*6, 0.02, 1, 0.035])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
-        KC.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.04])
+        KC.set_parameters([73.25, 0.0031, 1, 0.041])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
+        # KC.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.04])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
         print(coords[:5])
@@ -206,11 +253,11 @@ def fit_log_linear(t, y):
     param, V = np.polyfit(t, y, 1, cov=True)  # Param has highest degree first
     return param[1], param[0], np.sqrt(V[0, 0])  # Returns parameters and STD
         
-def diffusion_kernel(r, nbh, L, t0, ss): 
+def diffusion_kernel(r, nbh, L, ss, t0=1): 
     '''Function which is used to fit diffusion kernel'''
     # print([nbh, L, 1, ss])  # Print were the fit is
     K0 = fac_kernel("DiffusionK0")  # Load the Diffusion Kernel
-    K0.set_parameters([nbh, L, 1.0, ss])  # Set its parameters: diffusion, t0, mu, density
+    K0.set_parameters([nbh, L, t0, ss])  # Set its parameters: diffusion, t0, mu, density
     print(K0.give_parameters())
     y = [K0.num_integral(i) for i in r]  # Calculates vector of outputs
     return y + ss  # As ss is not yet included in num_integral
@@ -222,7 +269,7 @@ def rbf_kernel(r, l, a):
     y = [K1.calc_r(i) for i in r]
     return y
     
-def fit_diffusion_kernel(f, r, error, guess=[4 * np.pi * 4, 0.02, 1.0, 0.035]):
+def fit_diffusion_kernel(f, r, error, guess=[4 * np.pi * 4, 0.02, 0.035]):
     '''Fits vectors f,r and error to numerical Integration of
     Diffusion Kernel - Using non-linear, weighted least square.'''    
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,

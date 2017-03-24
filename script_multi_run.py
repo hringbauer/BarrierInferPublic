@@ -21,7 +21,10 @@ data_set_nr = 30
 
 ########### For analyzing the data sets###############
 #i = int(sys.argv[i])           # Which data-set to use
-MultiRun.analyze_data_set(data_set_nr)   # Analyses the results and pickles them.
+#MultiRun.analyze_data_set(data_set_nr)   # Analyses the results and pickles them.
+
+for i in xrange(100):
+    MultiRun.analyze_data_set(i, mle_pw=2)   # Analyses the results and pickles them.
 
 
 

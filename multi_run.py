@@ -182,7 +182,7 @@ class MultiNbh(MultiRun):
         ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
         ips_list = np.array(ips_list)
         nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
-        start_list = [[nbh_sizes, 0.005, 0.04] for nbh_sizes in nbh_sizes]  # General Vector for Start-Lists
+        start_list = [[nbh_size, 0.005, 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
         inds = range(len(position_list))
@@ -196,10 +196,10 @@ class MultiNbh(MultiRun):
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
         elif method == 1:
             MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_sizes, 0.006, 0.01] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
+            start_list = [[nbh_size, 0.006, 0.01] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
         elif method == 2:
             MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_sizes, 0.006, 0.5] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
+            start_list = [[nbh_size, 0.006, 0.5] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
         else: raise ValueError("Wrong Input for Method!!")

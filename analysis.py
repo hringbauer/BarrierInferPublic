@@ -13,6 +13,8 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
+parameters_fit = [48.20, 0.00953, 1.0, 0.0405] # Parameters used in manual Kernel Plot
+
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
     params = []  # Vector of estimated Parameters
@@ -136,7 +138,9 @@ class Analysis(object):
         # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
-        KC.set_parameters([73.25, 0.0031, 1, 0.041])  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
+        
+        
+        KC.set_parameters(parameters_fit)  # Nbh Sz, Mu0, t0, ss. Sets known Parameters #[4*np.pi*6, 0.02, 1.0, 0.04]
         # KC.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.04])
         
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector

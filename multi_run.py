@@ -14,6 +14,7 @@ from time import time
 from grid import Grid
 from mle_class import MLE_estimator
 from mle_pairwise import MLE_pairwise
+from mle_pairwise import MLE_f_emp
 from random import shuffle 
 from analysis import Analysis
 import matplotlib.pyplot as plt
@@ -172,8 +173,9 @@ class MultiNbh(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, mle_pw=0):
-        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Liklihood'''
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, method=0):
+        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Liklihood
+        method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curved fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
@@ -190,16 +192,17 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        if mle_pw==0:
+        if method==0:
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-        elif mle_pw==1:
+        elif method==1:
             MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_list = [[nbh_sizes, 0.006, 0.01] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
-        elif mle_pw==2: # Do the fitting based on binned data
+        elif method==2:
+            MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_list = [[nbh_sizes, 0.006, 0.5] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
+        elif method==3: # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
-            
-            
-        else: raise ValueError("Wrong Input for mle_pw")
+        else: raise ValueError("Wrong Input for Method!!")
         
         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
 
@@ -207,7 +210,7 @@ class MultiNbh(MultiRun):
         conf_ind = fit.conf_int()
         
         # Pickle Parameter Estimates:
-        subfolder_meth="estimate" + str(mle_pw) + "/"
+        subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
         path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
         
         directory = os.path.dirname(path)  # Extract Directory
@@ -216,9 +219,6 @@ class MultiNbh(MultiRun):
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
 
-        
-        
-        
         
     def visualize_results(self):
         '''Load and visualize the Results'''
@@ -243,10 +243,18 @@ class MultiNbh(MultiRun):
             subfolder_meth="estimate" + str(2) + "/"  # Path to binned Estimates
             path=self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
+            
+            # Coordinates for more :
+            #subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
+            #path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+            
+            
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
         res_numbers = range(0, 7) + range(8, 67)
+        #res_numbers = range(30,31)# To analyze Dataset 30
+        
         res_vec = np.array([load_pickle_data(i, 0) for i in res_numbers])
         unc_vec = np.array([load_pickle_data(i, 1) for i in res_numbers])
         

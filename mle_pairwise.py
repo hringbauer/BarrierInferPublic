@@ -13,6 +13,8 @@ from tensorflow.python.framework import ops
 from tensorflow.python.ops import gen_nn_ops
 from random import shuffle 
 from scipy.stats import sem
+from analysis import Fit_class
+from scipy.optimize.minpack import curve_fit
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -220,8 +222,8 @@ class MLE_f_emp(GenericLikelihoodModel):
     Class for MLE estimation. Inherits from GenericLikelihoodModel.
     This there to automatically run Maximum Likelihood Estimation.
     coords (nx2) and genotypes (nxk) are saved in self.exog and self.endog.
-    This MLE-Model is based on ML Fitting the empirical F between pairs of Individuals.
-    The standard error is used as error estimate in the MLE-Model.
+    One does a curve Fit via the Scipy model to fit all pairwise empirical estimates of F.
+    The error is then estimated via taking the residuals (and curve fit assumes them equally distributed)
     '''
     # Diverse variables:
     estimates = []  # Array for the fitted estimates
@@ -233,6 +235,7 @@ class MLE_f_emp(GenericLikelihoodModel):
     parameter_names = []
     mps = [] 
     min_distance = 0  # The minimum pairwise Distance that is analyzed
+    inds = []  # Which indices to use based on min pw. distance
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
                  param_mask=None, multi_processing=0, **kwds):
@@ -244,7 +247,7 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         self.mps = np.array([np.pi / 2.0 for _ in range(np.shape(genotypes)[1])])  # Set everything corresponding to p=0.5 (in f_space for ArcSin Model)
         
-        super(MLE_pairwise, self).__init__(endog, exog, **kwds)  # Run initializer of full MLE object.
+        super(MLE_f_emp, self).__init__(endog, exog, **kwds)  # Run initializer of full MLE object.
         
         # Load Parameters and Parameter names
         self.nr_params = self.kernel.give_nr_parameters()
@@ -263,88 +266,88 @@ class MLE_f_emp(GenericLikelihoodModel):
         print("Nr loci: %i \n" % nr_loci)
         
         print("MultiProcessing for Kernel: %i" % self.kernel.multi_processing)
-        
-    def loglike(self, params):
-        '''Return Log Likelihood of the Genotype-Matrix given Coordinate-Matrix.'''
-        # First some out-put what the current Parameters are:
-        params = self.expand_params(params)  # Expands Parameters to full array
-        print("Calculating Likelihood:")
-        for i in xrange(self.nr_params):
-            print(self.parameter_names[i] + ":\t %.4f" % params[i])
-        
-        if np.min(params) < 0:  # If any Parameters non-positive - return infinite negative ll
-            ll = -np.inf
-            print("Total log likelihood: %.4f \n" % ll)
-            return ll  # Return the log likelihood
-                   
-        tic = time()     
-        
-        # Calculate Kernel matrix
-        coords = self.exog
-        self.kernel.set_parameters(params)
-        kernel_mat = self.kernel.calc_kernel_mat(coords) 
-        
-        var = params[-1]  # Assumes that the last parameter of the param-vector gives the all. freq. Variance.
-        # Calculate Log Likelihood
-        ll = self.likelihood_function(kernel_mat, var)
-        
-        toc = time()
-        print("Total runtime: %.4f " % (toc - tic))
-        print("Total log likelihood: %.4f \n" % ll)
-        return ll  # Return the log likelihood
-    
-    def kinship_coeff(self, p1, p2, p):
-        '''Takes two allele frequencies as input and calculates their correlation.
-        p1...allele Frequency individual 1; p2...allele Frequency individual 2, p... mean allele Frequency'''
-        corr_vec = (p1 - p) * (p2 - p) / (p * (1 - p))
-        
-        f = np.mean(corr_vec)  # Calculate the mean f
-        f_se = sem(corr_vec)  # Calculate the standard error
-        return f, f_se
-    
-    def likelihood_function(self, kernel_mat):
-        '''Function to calculate pairwise likelihood directly from simple model'''
-        genotypes = self.endog
-        positions = self.exog
-        nr_inds, nr_loci = np.shape(genotypes)
-        
-        # First Calculate all individuals correlations
-        distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
-        correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
-        corr_se = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
-        kernel_vec = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Vector for the Kernel
-        
-        entry = 0
-        
-        print("Calculating pairwise Correlation...")
-        for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
-            distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
-            correlation[entry], corr_se[entry] = self.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff per pair, averaged over loci. Also standard error
-            kernel_vec[entry] = kernel_mat[i, j] 
-            entry += 1   
             
-        # Could Filter here for pairwise minimum Distance (i.e. what one thinks is sigma)...
-        # inds = np.where(distance)> self.min_distance)[0]
-        # distance=distance[inds]
-        # correlation=correlation[inds]
-        # kernel_vec=kernel_vec[inds]
+
+    def fit_function(self, coords, *args):
+        '''Function that calculates the expected ratio of homozygotes based on Parameters
+        *args for Kernel Function
+        Return the Vector of fitted Values'''
+        print(args)  # Prints arguments so that one knows where one is
+        args = np.array(args)  # Make Arguments Numpy array so that it everything is fluent
+        var = args[-1]  # Gets the variance Parameter
+        args[-1] = 1  # Sets t0 
+        args = np.append(args, 0)  # appends ss=0
+        # Sets the variance Parameter 0; so that one can calculate the Kernel fluently
+        assert(self.kernel.give_nr_parameters() == len(args))  # Checks whether Nr. of Parameters is right.
+        self.kernel.set_parameters(args)  # Sets the kernel parameters
         
-        print("To Iimplement...")
+        tic = time()   
+        kernel_mat = self.kernel.calc_kernel_mat(coords)  # Calculates the full kernel matrix
+        kernel_vec = kernel_mat[self.inds]  # Extracts the Kernel as Vector for the right indices
+        toc = time()
+        print("Runtime Kernel: %.4f" % (toc - tic))
         
-    
+        predictor = kernel_vec + (1 - kernel_vec) * var
+        
+        return predictor
+
+        
+    def extract_right_indices(self, coords):
+        '''Given Coords, calculates pw. Distance Matrix and then extracts
+        indices where bigger than self.min_distance'''
+        nr_inds = len(coords)  # How many individual data points
+        inds = np.triu_indices(nr_inds, 1)  # Only take everything above diagonal.
+        inds0, inds1 = inds
+        
+        pw_dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # Calculates Pw. Distances.
+        pw_dist_list = pw_dist_mat[inds]
+        inds_md = np.where(pw_dist_list > self.min_distance)[0]  # Extract indices where greater than min. Distance
+        inds = (inds0[inds_md], inds1[inds_md])  # Extracts right Matrix indices
+        self.inds = inds  # Remembers so that class
+        return inds
+           
+    def calc_mean_indentical(self, genotypes):
+        '''Function to calculate matrix with counts how many Genotypes
+        are identical'''
+        genotypes11 = genotypes[:, None] * genotypes[None, :]  # Where both genotypes are 1.
+        genotypes00 = (1 - genotypes[:, None]) * (1 - genotypes[None, :])  # Where both genotypes are 0.
+        
+        # Whats the right fract
+        frac_genotypes_id = np.mean(genotypes11 + genotypes00, axis=2)  # Calculate Fraction shared
+        frac_genotypes_sem = sem(genotypes11 + genotypes00, axis=2)  # Calculates SEMs
+        
+        return frac_genotypes_id, frac_genotypes_sem
+           
     def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
         if start_params == None:
             start_params = self.start_params  # Set the starting parameters for the fit
         
-        # Check whether the length of the start parameters is actually right:
-        assert(len(start_params) == len(self.param_mask))  
+        # First extract and calculate pairwise distances;
+        coords = self.exog
+        inds = self.extract_right_indices(coords)
         
-        fit = super(MLE_pairwise, self).fit(start_params=start_params,
-                                     maxiter=maxiter, maxfun=maxfun,
-                                     **kwds)
-        self.estimates = fit.params
-        return fit    
+        # Calculate Matrix with fraction of identical genotypes per pair
+        genotypes = self.endog
+        frac_genotypes_id, sems = self.calc_mean_indentical(genotypes)
+        y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
+        y_errors = sems[inds]  # Makes vector out of standard errors.
+        
+        print("Doing the Fitting...")
+        
+        parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,
+                    sigma=y_errors, absolute_sigma=True, p0=start_params, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
+        
+        std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+        
+        print("Parameters:")
+        print(parameters)
+        print("Unc. Estimates: ")
+        print(std_params)
+        
+        # Create and fill up Fit object
+        fit = Fit_class(parameters, std_params)
+        return fit
     
     def expand_params(self, params):
         '''Method to expand subparameters as defined in self.param_mask to full parameters'''
@@ -352,68 +355,16 @@ class MLE_f_emp(GenericLikelihoodModel):
         all_params[self.param_mask] = params  # Set the subarray
         return all_params
         
-    def likelihood_surface(self, range1, range2, wp1, wp2, fix_params, true_vals):
-        '''Method for creating and visualizing likelihood surface.
-        w p ...which parameters.
-        fix_params: Fixed Parameters.
-        Range1 and Range2 are vectors'''
-        res = []  # Vector for the results.
-        
-        for val1 in range1:
-            for val2 in range2:
-                # Set the Parameters
-                fix_params[wp1] = val1
-                fix_params[wp2] = val2
-                ll = self.loglike(params)
-                res.append(ll)
-                
-        pickle.dump(res, open("temp_save.p", "wb"))  # Pickle
-        self.plot_loglike_surface(range1, range2, true_vals, res)  # Plots the Data
-    
-    def plot_loglike_surface(self, range1, range2, true_vals, res):
-        '''Method to plot the loglikelihood surface'''
-        surface = np.array(res).reshape((len(range1), len(range2)))
-        
-        plt.figure()
-        plt.pcolormesh(range2, range1, surface)  # L and nbh
-        # pylab.pcolormesh(, a_list, surface)
-        plt.xscale('log')
-        plt.yscale('log')
-        # pylab.xlabel('L')
-        # pylab.ylabel('Nbh Size')
-        plt.colorbar()
-        # pylab.plot(25, 0.1, 'ko', linewidth=5)
-        plt.plot(true_vals[1], true_vals[0], 'ko', linewidth=5)
-        plt.show()
-        
-        # Now one Plot were the 
-        plt.figure()
-        levels = np.arange(max(res) - 30, max(res) + 1, 2)  # Every two likelihood units
-        # ax=pylab.contourf(l_list, a_list, surface, alpha=0.9, levels=levels)
-        ax = plt.contourf(range2, range1, surface, alpha=0.9, levels=levels)
-        
-        cb = plt.colorbar(ax, format="%i")
-        cb.ax.tick_params(labelsize=16)
-        plt.title("Log Likelihood Surface", fontsize=20)
-        plt.xlabel("L", fontsize=20)  # l
-        plt.ylabel("NBH", fontsize=20)  # a
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        plt.xscale('log')
-        plt.yscale('log')
-        plt.plot(0.001, 62.8 * 4, 'ko', linewidth=5, label="True Value")
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
+
 
    
 ######################### Some lines to test the code and make plots
 if __name__ == "__main__":
-    X_data = np.loadtxt('./nbh_folder/nbh_file_coords400.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    Y_data = np.loadtxt('./nbh_folder/nbh_file_genotypes400.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    X_data = np.loadtxt('./nbh_folder/nbh_file_coords03.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    Y_data = np.loadtxt('./nbh_folder/nbh_file_genotypes03.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     
     # Load only certain Number of Individuals
-    nr_inds_analysis = 400
+    nr_inds_analysis = 1000
     inds = range(len(X_data))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
     inds = inds[:nr_inds_analysis]  # Only load first nr_inds
@@ -421,12 +372,14 @@ if __name__ == "__main__":
 
     position_list = X_data[inds, :]
     genotype_mat = Y_data[inds, :]
-    MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
+    # MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
+    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1)
+    
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
     # Run a likelihood surface
     nbh_list = np.logspace(0.5, 2.5, 10)  # Neighborhood List
-    L_list = np.logspace(-3.5, -1.5, 10)  # Lengthscale List
+    L_list = np.logspace(-3.5, -1.5, 10)  # Length-Scale List
     # params = [4*np.pi*5, 0.001, 1.0, 0]
     # true_vals = [4*np.pi*5, 0.001]
     
@@ -436,6 +389,5 @@ if __name__ == "__main__":
     
     
     # Do the actual Fitting: 
-    fit = MLE_obj.fit(start_params=[75, 0.01, 0.01])  # Could alter method here. nbh, mu
+    fit = MLE_obj.fit(start_params=[65, 0.005, 0.5])  # Could alter method here. nbh, mu
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
-    print(fit.summary())

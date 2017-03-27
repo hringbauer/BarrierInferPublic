@@ -174,8 +174,8 @@ class MultiNbh(MultiRun):
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, method=0):
-        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Liklihood
-        method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curved fit.'''
+        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
+        method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
@@ -192,15 +192,15 @@ class MultiNbh(MultiRun):
         position_list = position_list[inds, :]
         genotype_mat = genotype_mat[inds, :]
         
-        if method==0:
+        if method == 0:
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-        elif method==1:
+        elif method == 1:
             MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_list = [[nbh_sizes, 0.006, 0.01] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
-        elif method==2:
+        elif method == 2:
             MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_list = [[nbh_sizes, 0.006, 0.5] for nbh_sizes in nbh_sizes]  # Update Vector of Start Lists
-        elif method==3: # Do the fitting based on binned data
+        elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
         else: raise ValueError("Wrong Input for Method!!")
         
@@ -210,8 +210,8 @@ class MultiNbh(MultiRun):
         conf_ind = fit.conf_int()
         
         # Pickle Parameter Estimates:
-        subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
-        path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+        subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
         
         directory = os.path.dirname(path)  # Extract Directory
         if not os.path.exists(directory):  # Creates Folder if not already existing
@@ -238,22 +238,22 @@ class MultiNbh(MultiRun):
             '''Function To load pickled Data.
             Also visualizes it.'''
             data_folder = self.data_folder
-            #path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
+            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
             
-            subfolder_meth="estimate" + str(2) + "/"  # Path to binned Estimates
-            path=self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+            subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
+            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             
             # Coordinates for more :
-            #subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
-            #path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+            # subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
+            # path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
             
             
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
         res_numbers = range(0, 7) + range(8, 67)
-        #res_numbers = range(30,31)# To analyze Dataset 30
+        # res_numbers = range(30,31)# To analyze Dataset 30
         
         res_vec = np.array([load_pickle_data(i, 0) for i in res_numbers])
         unc_vec = np.array([load_pickle_data(i, 1) for i in res_numbers])
@@ -270,21 +270,21 @@ class MultiNbh(MultiRun):
         f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
         
         ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax1.hlines(4*np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax1.hlines(4*np.pi * 9, 50, 66, color="r")
+        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
+        ax1.hlines(4 * np.pi * 9, 50, 66, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
         ax1.set_ylabel("Nbh", fontsize=18)
-        #ax1.legend()
+        # ax1.legend()
         
         ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
         ax2.hlines(0.006, 0, 66, linewidth=2)
         ax2.set_ylabel("L", fontsize=18)
-        #ax2.legend()
+        # ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
         ax3.hlines(0.04, 0, 66, linewidth=2)
         ax3.set_ylabel("SS", fontsize=18)
-        #ax3.legend()
+        # ax3.legend()
         plt.xlabel("Dataset")
         plt.show()
         

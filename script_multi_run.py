@@ -28,7 +28,9 @@ from the folder before so it saves cleanly.'''
 '''Mr. AK: Run this for data-sets 10-12, 40-42, 60-62, and 80-82.
 One time for method=1 and one time for method=2'''
 data_set_nr = int(sys.argv[1])  # Which data-set to use
+MultiRun.analyze_data_set(data_set_nr, method=1)
 MultiRun.analyze_data_set(data_set_nr, method=2)  # Analyzes the results and pickles them.
+    
 
 
 

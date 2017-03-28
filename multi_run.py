@@ -126,7 +126,7 @@ class MultiRun(object):
 
 class MultiNbh(MultiRun):
     '''First simple class to test whether everything works.
-    The Full Goal is to find out at which Neighborhood Size the method to estimate IBD works best.
+    The Full Goal is to find out at which Neighborhood Size the Method to estimate IBD works best.
     Everything set so that 100 Data-Sets are run.'''
     def __init__(self, folder, nr_data_sets=100, nr_params=4, **kwds):
         super(MultiNbh, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
@@ -228,41 +228,42 @@ class MultiNbh(MultiRun):
         plt.errorbar()  # Fully Implement this plotting.
         plt.show()
         
-    def temp_visualize(self):
+    def temp_visualize(self, method=0):
         '''Temporary Function to plot the Estimates
         that were run on cluster.'''
         
         
         # First quick function to unpickle the data:
-        def load_pickle_data(i, arg_nr):
+        def load_pickle_data(i, arg_nr, method=2):
             '''Function To load pickled Data.
             Also visualizes it.'''
             data_folder = self.data_folder
             # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
             
-            subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
-            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
+            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
+            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             # Coordinates for more :
-            # subfolder_meth="method" + str(methdod) + "/"   # Sets subfolder on which Method to use.
-            # path=self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
-        res_numbers = range(0, 7) + range(8, 67)
+        # res_numbers = range(0, 7) + range(8, 67)
+        res_numbers = range(10, 13) + range(30, 33) + range(60, 63) #+ range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
         
-        res_vec = np.array([load_pickle_data(i, 0) for i in res_numbers])
-        unc_vec = np.array([load_pickle_data(i, 1) for i in res_numbers])
+        res_vec = np.array([load_pickle_data(i, 0, method) for i in res_numbers])
+        unc_vec = np.array([load_pickle_data(i, 1, method) for i in res_numbers])
         
-        for i in res_numbers[:-1]:
+        for l in range(len(res_numbers)):
+            i = res_numbers[l]
             print("\nRun: %i" % i)
             for j in range(3):
                 print("Parameter: %i" % j)
-                print("Value: %f (%f,%f)" % (res_vec[i, j], unc_vec[i, j, 0], unc_vec[i, j, 1]))
+                print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
                 
         
         
@@ -271,18 +272,19 @@ class MultiNbh(MultiRun):
         
         ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
         ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 9, 50, 66, color="r")
+        ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
+        ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
         ax1.set_ylabel("Nbh", fontsize=18)
         # ax1.legend()
         
         ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
-        ax2.hlines(0.006, 0, 66, linewidth=2)
+        ax2.hlines(0.006, 0, 100, linewidth=2)
         ax2.set_ylabel("L", fontsize=18)
         # ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.04, 0, 66, linewidth=2)
+        ax3.hlines(0.04, 0, 100, linewidth=2)
         ax3.set_ylabel("SS", fontsize=18)
         # ax3.legend()
         plt.xlabel("Dataset")

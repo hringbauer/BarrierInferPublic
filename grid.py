@@ -29,11 +29,11 @@ class Grid(object):
     genotype_mat = []  # List of the genotype matrix. In case multiple multiple markers are simulated
     p_mean = 0.5
     t = 0  # Current time back in generations.
-    barrier = 50
-    barrier_strength = 1  # The strength of the barrier
-    sigma = 1.98 #0.965  # 1.98 # 0.965
-    ips = 8  # Number of haploid Individuals per Node (For D_e divide by 2)
-    mu = 0.005  # The Mutation/Long Distance Migration rate.
+    barrier = 500.5
+    barrier_strength = 1  # The strength of the barrier # 1 Everything migrates; 0 Nothing Migrates
+    sigma = 0.965  # 0.965  # 1.98 # 0.965
+    ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.003  # The Mutation/Long Distance Migration rate.
     
     def __init__(self):  # Initializes an empty grid
         print("Initializing...")  # Actually all relevant things are set with set_samples
@@ -53,6 +53,7 @@ class Grid(object):
       
     def set_samples(self, position_list):
         '''Sets samples to where they belong. THE ONLY WAY TO SET SAMPLES'''
+        # print(position_list)  # For Debugging
         self.update_list = position_list  # Set the update List
         print("Ancestry List initialized.")
         self.ancestry = [[i] for i in range(len(position_list))]  # Set the list of ancestors
@@ -107,22 +108,25 @@ class Grid(object):
     
     def update_individual_pos_barrier(self, x, y):
         '''Method that updates individual positions with barrier'''
-        scale = self.sigma / np.sqrt(2)
-        delta_x = np.around(np.random.laplace(scale=scale))  # Draw the random off-set
-        delta_y = np.around(np.random.laplace(scale=scale))  # Draw the ranodm off-set
+        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
+        delta_x = np.around(np.random.laplace(scale=scale))  # Draw random off-set
+        delta_y = np.around(np.random.laplace(scale=scale))  # Draw random off-set
         
-        x1 = (x + delta_x)  
+        x1 = (x + delta_x)
+        # print("Old/New: %.2f %.2f" % (x,x1))   For Debugging...
         y1 = (y + delta_y)
         
         if (x > self.barrier and x1 <= self.barrier):
-            if np.random.random() < self.barrier_strength:  # In case of reflection
+            if np.random.random() > self.barrier_strength:  # In case of reflection
+                x1 = x  # Nothing happens
                 # x1 = self.barrier + (self.barrier - x1)  # x1 gets reflected#
-                x1 = self.barrier + 1 
+                # x1 = self.barrier + 1 
             
         elif (x < self.barrier and x1 >= self.barrier):
-            if np.random.random() < self.barrier_strength:  # In case of reflection           
+            if np.random.random() > self.barrier_strength:  # In case of reflection 
+                x1 = x  # Nothing happens       
                 # x1 = self.barrier - (x1 - self.barrier)  # x1 gets reflected
-                x1 = self.barrier - 1 
+                # x1 = self.barrier - 1 
         
         x1 = x1 % self.gridsize_x
         y1 = y1 % self.gridsize_y    

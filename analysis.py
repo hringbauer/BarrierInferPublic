@@ -13,7 +13,7 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [48.20, 0.00953, 1.0, 0.0405] # Parameters used in manual Kernel Plot
+parameters_fit = [59.57, 0.0054, 1.0, 0.035]  # Parameters used in manual Kernel Plot
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
@@ -39,7 +39,7 @@ class Analysis(object):
     genotypes = []  # List of all genotypes (nxk matrix. n: Individuals k: Genotypes)
     barrier = 0  # Where one can find the barrier
 
-    def __init__(self, position_list, genotype_list, barrier=50):
+    def __init__(self, position_list, genotype_list, barrier=0):
         '''
         Constructor
         '''
@@ -49,6 +49,7 @@ class Analysis(object):
 
         print("Nr. of loci: %i" % len(genotype_list[0, :]))
         print("Nr. of individuals: % i" % len(genotype_list[:, 0]))
+        print("Barrier assumed at: %.2f" % self.barrier)
         
         # Calculate standard deviations among means:
         means = np.mean(self.genotypes, axis=0)  # 
@@ -160,6 +161,35 @@ class Analysis(object):
         # plt.ylim([0,0.05])
         # plt.xscale("log")
         plt.show()
+       
+    def plot_positions(self, row=1):
+        '''Method to plot position of Samples'''
+        plt.figure()
+        plt.title("Sample Distribution", fontsize=30)
+        color = self.genotypes[:, row].astype("float")
+        plt.scatter(self.position_list[:, 0], self.position_list[:, 1], label="Samples", c=color)
+        # pylab.vlines(0, min(X_data[:,1]), max(X_data[:,1]), linewidth=2, color="red", label="Barrier")
+        plt.xlabel("X-Coordinate", fontsize=30)
+        plt.ylabel("Y-Coordinate", fontsize=30)
+        plt.show()
+        
+    def plot_all_freqs(self):
+        '''Plot Figure of allele Frequency distribution'''
+        p_mean = np.mean(self.genotypes, axis=0)  # Empirical average for every loci
+        print(len(p_mean))
+        print("Mean allele frequency: %.6f" % np.mean(p_mean))
+        print("Empirical Standard Deviation of Allele Frequency: %.6f" % np.std(p_mean))
+        fig = plt.figure()
+        ax1 = fig.add_subplot(121)
+        ax1.bar(range(len(p_mean)), p_mean, width=1.0)
+        ax1.set_ylabel("Mean")
+        ax1.axhline(y=0.5, c="r", linewidth=2)
+        
+        ax2 = fig.add_subplot(122)
+        ax2.hist(p_mean)
+        ax2.axvline(x=0.5, c="r")
+        plt.title("Distribution of mean all. freqs")
+        plt.show()
         
     def geo_comparison(self, mean_all_freq=0.5):
         '''Compares kinship coefficients based on geography'''
@@ -249,6 +279,38 @@ class Analysis(object):
         plt.ylabel("Mean f", fontsize=25)
         plt.legend(prop={'size':20})
         plt.show() 
+        
+    def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10):
+        '''Function that groups indviduals into demes and gives back mean deme position
+        and mean deme genotype'''
+        nr_inds, nr_markers = np.shape(genotypes)
+        
+        x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+        
+        x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
+        y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
+        
+        x_inds = np.digitize(x_coords, x_bins)
+        y_inds = np.digitize(y_coords, y_bins)
+        
+        nr_demes = demes_x * demes_y
+        
+        position_list_new = np.zeros((nr_demes, 2)) - 1.0
+        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0
+        
+        # Iterate over every deme
+        for i in xrange(1, demes_x + 1):
+            for j in range(1, demes_y + 1):
+                inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
+                
+                row = (i - 1) * demes_y + (j - 1)  # Which row to set the data         
+                position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
+                
+                matching_genotypes = genotypes[inds, :]
+                genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
+        
+        self.position_list, self.genotypes = position_list_new, genotypes_new
+        return position_list_new, genotypes_new
                 
         
 def fit_log_linear(t, y):

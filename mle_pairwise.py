@@ -233,7 +233,6 @@ class MLE_f_emp(GenericLikelihoodModel):
     param_mask = np.array([0, 1, 3])  # Parameter Mask used to change specific Parameters
     nr_params = 0
     parameter_names = []
-    mps = [] 
     min_distance = 0  # The minimum pairwise Distance that is analyzed
     inds = []  # Which indices to use based on min pw. distance
     
@@ -245,7 +244,6 @@ class MLE_f_emp(GenericLikelihoodModel):
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
-        self.mps = np.array([np.pi / 2.0 for _ in range(np.shape(genotypes)[1])])  # Set everything corresponding to p=0.5 (in f_space for ArcSin Model)
         
         super(MLE_f_emp, self).__init__(endog, exog, **kwds)  # Run initializer of full MLE object.
         
@@ -359,21 +357,45 @@ class MLE_f_emp(GenericLikelihoodModel):
 
    
 ######################### Some lines to test the code and make plots
-if __name__ == "__main__":
-    X_data = np.loadtxt('./nbh_folder/nbh_file_coords03.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    Y_data = np.loadtxt('./nbh_folder/nbh_file_genotypes03.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+def analyze_barrier():
+    '''Test Method that analyzes a barrier'''
+    #position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    #genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_barrier = 0.0
+    
+    nr_inds_analysis = 200
+    inds = range(len(position_list))
+    shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+    inds = inds[:nr_inds_analysis]  # Only load first nr_inds
+    #position_list = position_list[inds, :]
+    #genotype_mat = genotype_mat[inds, :]
+    
+    MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, start_params=[65, 0.006, 0.5, 0.5], multi_processing=1)
+    MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier
+    tic=time()
+    fit = MLE_obj.fit(start_params=[65, 0.006, 0.5, 0.5])
+    pickle.dump(fit, open("fitbarrier.p", "wb"))
+    toc=time()
+    print("Total Running Time of Fitting: %.4f" % (toc-tic))
+    
+def analyze_normal():
+    '''Method that analyzes data without a barrier.'''
+    X_data = np.loadtxt('./nbh_folder/nbh_file_coords30.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    Y_data = np.loadtxt('./nbh_folder/nbh_file_genotypes30.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     
     # Load only certain Number of Individuals
-    nr_inds_analysis = 1000
+    nr_inds_analysis = 200
     inds = range(len(X_data))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
     inds = inds[:nr_inds_analysis]  # Only load first nr_inds
     
 
-    position_list = X_data[inds, :]
-    genotype_mat = Y_data[inds, :]
+    #position_list = X_data[inds, :]
+    #genotype_mat = Y_data[inds, :]
     # MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
-    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1)
+    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.5], multi_processing=1)
     
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
@@ -391,3 +413,9 @@ if __name__ == "__main__":
     # Do the actual Fitting: 
     fit = MLE_obj.fit(start_params=[65, 0.005, 0.5])  # Could alter method here. nbh, mu
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
+    
+if __name__ == "__main__":
+    analyze_barrier()
+    # analyze_normal()
+    
+#########################################

@@ -1588,11 +1588,11 @@ static PyObject *__pyx_pf_9intergand_4integrand_barrier_c(CYTHON_UNUSED PyObject
   /* "intergand.pyx":28
  * 
  *     #######################################################################################
- *     if x1 > 0:  # Same side of Barrier             # <<<<<<<<<<<<<<
+ *     if x1 >= 0:  # Same side of Barrier             # <<<<<<<<<<<<<<
  *         '''The integrand for cases of different sides on the barrier.
  *         Product of 1d Gaussian along y-Axis
  */
-  __pyx_t_1 = PyObject_RichCompare(__pyx_v_x1, __pyx_int_0, Py_GT); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
+  __pyx_t_1 = PyObject_RichCompare(__pyx_v_x1, __pyx_int_0, Py_GE); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 28, __pyx_L1_error)
   __pyx_t_2 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 28, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   if (__pyx_t_2) {
@@ -2379,7 +2379,7 @@ static PyObject *__pyx_pf_9intergand_4integrand_barrier_c(CYTHON_UNUSED PyObject
     /* "intergand.pyx":28
  * 
  *     #######################################################################################
- *     if x1 > 0:  # Same side of Barrier             # <<<<<<<<<<<<<<
+ *     if x1 >= 0:  # Same side of Barrier             # <<<<<<<<<<<<<<
  *         '''The integrand for cases of different sides on the barrier.
  *         Product of 1d Gaussian along y-Axis
  */

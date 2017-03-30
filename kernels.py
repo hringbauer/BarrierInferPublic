@@ -185,34 +185,36 @@ class DiffusionBarrierK0(Kernel):
     Here: Integral transformed after dimension analysis to get rid of redundant parameters'''
     # Parameters of the Covariance
     nr_parameters = 5
+    nbh = 100  # 1/(4 Pi De D)
+    position_barrier = 0  # Gives the Position of the Barrier - where on the x-Axis
+    
+    L = 0.002  # mu/D
     k = 0.2  # 2k/D
     t0 = 1  # Starting Point of Integration; i.e. where to start integration. Sets the "local" scale.
-    nbh = 100  # 1/(4 Pi De D)
-    L = 0.002  # mu/D
     ss = 0
     
-    def __init__(self, k=0.5, t0=1.0, nbh=50.0, L=0.002, ss=0, multi_processing=0):
+    def __init__(self, nbh=50.0, L=0.002, k=0.5, t0=1.0, ss=0, position_barrier=0, multi_processing=0):
         '''Initialize to set desired values!'''
         self.set_parameters([k, t0, nbh, L, ss])
         self.multi_processing = multi_processing
 
         
-    def set_parameters(self, params=[0.5, 1.0, 0.001, 1, 1]):
+    def set_parameters(self, params=[50, 0.002, 0.5, 1, 0]):
         assert(len(params) == self.nr_parameters)  # Check whether right length
-        self.k = params[0]
-        self.t0 = params[1]  # Starting Point of Integration; i.e. where to start integration. Sets the "local" scale.
-        self.nbh = params[2]
-        self.L = params[3]
+        self.nbh = params[0]
+        self.L = params[1]  # Starting Point of Integration; i.e. where to start integration. Sets the "local" scale.
+        self.k = params[2]
+        self.t0 = params[3]
         self.ss = params[4]
         
     def give_nr_parameters(self):
         return(5)
     
     def give_parameter_names(self):
-        return(["k", "D", "mu", "t0", "loc_rate"])
+        return(["nbh", "L", "k", "t0", "ss"])
         
     def give_parameters(self):
-        return([self.k, self.D, self.t0, self.mu, self.density]) 
+        return([self.nbh, self.L, self.k, self.t0, self.ss]) 
 
     def gaussian(self, t, y, x):
         '''The normal thing without a barrier'''
@@ -300,6 +302,8 @@ class DiffusionBarrierK0(Kernel):
    
     def calc_kernel_mat_old(self, coords):
         '''Given List of Coordinates; calculate the full covariance Kernel'''
+        coords = coords.astype("float")
+        coords[:, 0] = coords[:, 0] - self.position_barrier
         kernel_mat = [[self.num_integral_barrier_old(i[1] - j[1],
                             i[0], j[0]) for i in coords] for j in coords]
         
@@ -310,7 +314,7 @@ class DiffusionBarrierK0(Kernel):
         
     def calc_kernel_mat(self, coords):
         # Do the Multiprocessing Action
-        coords = np.array(coords)  # Make Coordinates a Numpy Array!
+        coords = np.array(coords).astype("float")  # Make Coordinates a Numpy Array!
         nr_inds = len(coords)
         
         # Gets the upper triangular Indices
@@ -321,15 +325,16 @@ class DiffusionBarrierK0(Kernel):
         rel_ycoord_mat = y_coords[:, None] - y_coords[None, :]  # Matrix of relative coordinates
         
        
-        x_vec0 = coords[inds0, 0]  # Calculate the complete vector of x0 vals
-        x_vec1 = coords[inds1, 0]  # Calculate the complete vector of x1 vals
+        x_vec0 = coords[inds0, 0] - self.position_barrier  # Calculate the complete vector of x0 Vals
+        x_vec1 = coords[inds1, 0] - self.position_barrier  # Calculate the complete vector of x1 Vals
         rel_vec_y = rel_ycoord_mat[inds]  # Calculates the vector of relative y-indices      
+        
         
         argument_vec = [[self.t0, np.inf, rel_vec_y[i], x_vec0[i], x_vec1[i], self.nbh, self.L, self.k] 
                           for i in xrange(len(x_vec0))]  # Create vector with all arguments    #  lb, ub, dy, x0, x1, nbh, L, k
         
         # Do the Multiprocessing Action
-        if self.multi_processing==1:
+        if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
             pool = mp.Pool(processes=pool_size)
             pool_outputs = pool.map(numerical_integration_barrier_mr, argument_vec)  # map
@@ -634,10 +639,15 @@ def fac_kernel(kernel_type):
 # Test the factory method and everything.
 def kernel_test():
     '''Method to test the Kernel'''
-    kc = fac_kernel("DiffusionBarrierK")
-    kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens
-    k0 = fac_kernel("DiffusionK")
-    k0.set_parameters([1.0, 1.0, 0.001, 5.0, 0.0])  # Diffusion; t0; mutation; density; ss 
+    kc = fac_kernel("DiffusionBarrierK0")
+    # Density: 5, mu=0.003, t0=1, Diff=1, k=0.5
+    # kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens; In old ordering
+    k = 0.5
+    kc.set_parameters([4 * np.pi * 5, 0.006, k, 1.0, 0.0])  # Nbh, L, k, t0, ss
+    
+    k0 = fac_kernel("DiffusionK0")
+    # k0.set_parameters([1.0, 1.0, 0.001, 5.0, 0.0])  # Diffusion; t0; mutation; density; ss 
+    k0.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.0])
     
     print("Parameters Barrier: ")
     print(kc.give_parameter_names())
@@ -646,11 +656,11 @@ def kernel_test():
     print("Parameters No Barrier: ")
     print(k0.give_parameter_names())
     print(k0.give_parameters())
-    mu = k0.give_parameters()[2]  # Set Mutation Rate
+    mu = 0.003  # Set Mutation Rate
     # dens = k0.give_parameters
     
     # x_vec = np.logspace(-2, 2.0, 100) + 2.0
-    x_vec = np.linspace(1.0, 10, 100)
+    x_vec = np.linspace(1.0, 10, 100) + 0.0001
     y_vec = [kc.num_integral_barrier(0, -1, -1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
     y_vec2 = [kc.num_integral_barrier(0, 1, 1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
      
@@ -662,10 +672,12 @@ def kernel_test():
     
     
     plt.figure(figsize=(8, 8))
-    plt.plot(x_vec, y_vec01, label="Numerical Integral no barrier")
-    plt.plot(x_vec, y_bessel, alpha=0.8, label="Bessel Decay K0")
-    plt.plot(x_vec, y_vec, alpha=0.8, label="Num. Integral DS")
-    plt.plot(x_vec, y_vec2, alpha=0.8, label="Num. Integral SS")
+    plt.plot(x_vec, y_vec01, label="Numerical Integral no barrier", linewidth=4)
+    plt.plot(x_vec, y_bessel, alpha=0.8, label="Bessel Decay K0", linewidth=4)
+    plt.plot(x_vec, y_vec, alpha=0.8, label="Num. Integral DS", linewidth=4)
+    plt.plot(x_vec, y_vec2, alpha=0.8, label="Num. Integral SS", linewidth=4)
+    plt.xlabel("x1 (x0=1/-1), dy=0")
+    plt.ylabel("F")
     
     # plt.xscale("log")
     plt.legend()
@@ -676,8 +688,7 @@ def test_diffusion_barrier():
     kc = fac_kernel("DiffusionBarrierK")
     kc.set_parameters([0, 2.0, 1.0, 0.01, 5.0])  # k, Diff, t0, mu, dens
     k0 = fac_kernel("DiffusionBarrierK0")
-    k0.set_parameters([0.0, 1.0 * 2.0, 4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.0])  # k', t0, nbh, L, ss
-    
+    k0.set_parameters([4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.5, 1, 0.0])  # Nbh, L, k, t0, ss   
     delta_y = 0  # Some Parameters to play around with
     x0 = -5
     x_vec = np.linspace(-20, 20, 200)
@@ -713,7 +724,7 @@ def test_diffusion_barrier():
 def test_parallel():
     '''Tests old vrs new Kernel'''
     k1 = fac_kernel("DiffusionBarrierK0")
-    k1.set_parameters([5, 1.0, 100, 0.005, 0.04])  # k, t0, L, Nbh, ss
+    k1.set_parameters([100, 0.006, 0.5, 1, 0.04])  # Nbh, L, k, t0, ss
     
     # k1 = fac_kernel("DiffusionK0")
     # k1.set_parameters([100, 0.005, 1.0, 0.04])
@@ -763,8 +774,8 @@ def timer_kernel_diff(nr_runs):
     
 
 if __name__ == "__main__":
-    # kernel_test()
-    test_parallel()  # Tests; but also has timer
+    kernel_test()
+    # test_parallel()  # Tests; but also has timer
     # test_diffusion_barrier()
     # plot_samples()
     

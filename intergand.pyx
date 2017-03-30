@@ -25,7 +25,7 @@ def integrand_barrier_c(t, dy, x0, x1, nbh, L, k):
         x1 = -x1
 
     #######################################################################################
-    if x1 > 0:  # Same side of Barrier
+    if x1 >= 0:  # Same side of Barrier
         '''The integrand for cases of different sides on the barrier.
         Product of 1d Gaussian along y-Axis
         And a term for the long - distance migration.

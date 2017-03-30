@@ -1,8 +1,6 @@
 '''
 Created on 17.10.2014
 This is the main file.
-TEST
-TEST1
 @author: Harald Ringbauer
 '''
 from grid import Grid
@@ -12,14 +10,18 @@ from GPR_kernelfit import GPR_kernelfit
 from tf_analysis import TF_Analysis
 import numpy as np
 import cPickle as pickle  # @UnusedImport
+import matplotlib.pyplot as plt
 
 
 def main():
     '''Main loop of the program. Here we can control everything.'''
     grid = Grid()
     # position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
-    position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 1) for j in range(-25, 25, 1)])
-    genotype_matrix = []  # Matrix of multiple geno-types  
+    position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])
+    print(position_list)
+    barrier_position = 500.5  # Where is the Barrier
+    # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 1) for j in range(-25, 25, 1)])
+    genotype_matrix = []  # Matrix of multiple genotypes  
 
     print("Welcome back!")
     
@@ -124,29 +126,58 @@ def main():
                 genotype_matrix[:, i] = grid.genotypes
         
         if inp == 6:
+            print(position_list)
             nr_loci = int(input("\nFor how many loci?\n")) 
             t = int(input("\nFor how long?\n"))
+            p_m = float(input("Mean allele frequency?\n"))
+            c = float(input("Strength of the barrier?\n"))
+            f_m = int(input("Do you want to have fluctuating means? \n(1) Yes \n(0) No\n"))
+            
+            p_mean = np.ones(nr_loci) * p_m  # Sets the mean allele Frequency
+            
+            if f_m == 1:
+                if f_m == True:
+                    v = float(input("What should the standard deviation around the mean p be?\n"))
+                    p_delta = np.random.normal(scale=v, size=nr_loci)  # Draw some random Delta F from a normal distribution
+                    # p_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
+                    # p_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
+                    # p_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
+                    print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+                    print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+                    p_mean = p_mean + p_delta
+            
+            print("Mean Allele Frequencies:")
+            print(p_mean)
             genotype_matrix = np.zeros((len(position_list), nr_loci))
             
             for i in range(nr_loci):
                 print("Doing run %i: " % i)
+                grid.set_barrier_parameters(barrier_position, c)  # Where to set the Barrier and its strength
+                print(position_list)
                 grid.set_samples(position_list)
-                grid.update_grid_t(t, barrier=1)
+                grid.update_grid_t(t, p=p_mean[i], barrier=1)  # Uses p_mean[i] as mean allele Frequency.
                 genotype_matrix[:, i] = grid.genotypes
+                
+            # # Modify position List so that barrier at 0 (as in the model):
+            position_list = position_list.astype("float")  # Make it float so that subtraction with float barrier works
+            position_list[:, 0] = position_list[:, 0]  # Only works once!!
                 
         if inp == 7:
             analysis = Analysis(position_list, genotype_matrix)
             while True:
-                inp1 = int(input("What analysis?\n (1) Correlation Analysis\n (2) Barrier Analysis\n (3) Geographic Comparison "
+                inp1 = int(input("What analysis?\n (1) Correlation Analysis\n (2) Group Individuals\n (3) Geographic Comparison "
                                  "\n (4) Extract Data\n (5) Correlation Analysis where mean is also estimated\n "
-                                 "(6) Gaussian Process analysis\n (7) Back to main menu\n "))
+                                 "(6) Gaussian Process analysis\n (7) Plot Positions \n (8) Plot Mean allele freq. Distribution "
+                                 "\n (9) Back to main menu\n "))
                 
                 if inp1 == 1:
                     nr_inds = int(input("How many random individuals?\n"))
                     analysis.ind_correlation(nr_inds=nr_inds)
                     
                 if inp1 == 2:
-                    print("To implement")
+                    x_demes = int(input("How many Demes along x-axis?\n"))
+                    y_demes = int(input("How many Demes along y-axis?\n"))
+                    analysis.group_inds(analysis.position_list, analysis.genotypes, x_demes, y_demes)
                     
                 if inp1 == 3:
                     analysis.geo_comparison()
@@ -177,8 +208,16 @@ def main():
                             gpr.plot_loglike_sf()
                         if inp2 == 4:
                             break
-                    
+                
                 if inp1 == 7:
+                    # Plot the data
+                    row = int(input("What genotype raw? \n"))
+                    analysis.plot_positions(row)
+
+                if inp1 == 8:
+                    analysis.plot_all_freqs()
+  
+                if inp1 == 9:
                     break                                     
         
         if inp == 8:
@@ -210,15 +249,20 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates00.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes00.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates00b.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes00b.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
-            elif inp9 == 2:       
-                position_list = np.loadtxt('./nbh_folder/nbh_file_coords30.csv', delimiter='$').astype('float64')  #nbh_file_coords30.csv # ./Data/coordinates00.csv
-                genotype_matrix = np.loadtxt('./nbh_folder/nbh_file_genotypes30.csv', delimiter='$').astype('float64')
+            elif inp9 == 2:
+                # position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                # genotype_matrix = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')     
+                # Some commonly used file paths: nbh_file_coords30.csv, ./Data/coordinates00b.csv
+                # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
+                
+                position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                genotype_matrix = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
-                print("Nr. of samples:\t\t %i" % np.shape(genotype_matrix)[0])
+                print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   
             
         if inp == 10:

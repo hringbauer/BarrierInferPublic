@@ -13,7 +13,7 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [59.57, 0.0054, 1.0, 0.035]  # Parameters used in manual Kernel Plot
+parameters_fit = [79.74, 0.003186, 1.0, 0.035]  # Parameters used in manual Kernel Plot
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
@@ -191,14 +191,16 @@ class Analysis(object):
         plt.title("Distribution of mean all. freqs")
         plt.show()
         
-    def geo_comparison(self, mean_all_freq=0.5):
+    def geo_comparison(self, mean_all_freq=0.5, barrier=None):
         '''Compares kinship coefficients based on geography'''
+        if barrier==None:
+            barrier=self.barrier
         y_comps = []  # Comparisons among yellow
         m_comps = []  # Comparisons among magenta
         h_comps = []  # Comparisons among hybrids
         ym_comps = []  # Comparisons in-between yellow/magenta
         
-        genotypes, positions, barrier = self.genotypes, self.position_list, self.barrier
+        genotypes, positions = self.genotypes, self.position_list
         p = mean_all_freq
         
         geo_tag = np.zeros(len(positions))

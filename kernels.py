@@ -322,7 +322,7 @@ class DiffusionBarrierK0(Kernel):
         inds = np.triu_indices(nr_inds)
         
         y_coords = coords[:, 1]  # Array of all the y-Coordinates
-        rel_ycoord_mat = y_coords[:, None] - y_coords[None, :]  # Matrix of relative coordinates
+        rel_ycoord_mat = np.abs(y_coords[:, None] - y_coords[None, :])  # Matrix of relative coordinates. Due to symmetry take absolute value
         
        
         x_vec0 = coords[inds0, 0] - self.position_barrier  # Calculate the complete vector of x0 Vals
@@ -333,15 +333,20 @@ class DiffusionBarrierK0(Kernel):
         argument_vec = [[self.t0, np.inf, rel_vec_y[i], x_vec0[i], x_vec1[i], self.nbh, self.L, self.k] 
                           for i in xrange(len(x_vec0))]  # Create vector with all arguments    #  lb, ub, dy, x0, x1, nbh, L, k
         
+        #Extracts unique values and indices to reconstruct to avoid double calculation
+        argument_vec_unique, indices = unique_rows(np.array(argument_vec))
+        
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
             pool = mp.Pool(processes=pool_size)
-            pool_outputs = pool.map(numerical_integration_barrier_mr, argument_vec)  # map
+            pool_outputs = pool.map(numerical_integration_barrier_mr, argument_vec_unique)  # map
             pool.close()
             pool.join()
             
-        else: pool_outputs = map(numerical_integration_barrier_mr, argument_vec)
+        else: pool_outputs = map(numerical_integration_barrier_mr, argument_vec_unique)
+        
+        pool_outputs = np.array(pool_outputs)[indices]  # Restores full array.
         
         # Fills up upper triangle again
         kernel = np.zeros((nr_inds, nr_inds))
@@ -495,15 +500,20 @@ class DiffusionK0(Kernel):
         argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in dist_vec]  # Create vector with all arguments
         # argument_vec = zip([self.t0] * nr_inds, [np.inf] * nr_inds, , ,dist_vec)  
         
+        #Extracts unique values and indices to reconstruct to avoid double calculation
+        argument_vec_unique, indices = unique_rows(np.array(argument_vec))
+        
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
             pool = mp.Pool(processes=pool_size)
-            pool_outputs = pool.map(numerical_integration_mr, argument_vec)
+            pool_outputs = pool.map(numerical_integration_mr, argument_vec_unique)
             pool.close()
             pool.join()
             
-        else: pool_outputs = map(numerical_integration_mr, argument_vec)
+        else: pool_outputs = map(numerical_integration_mr, argument_vec_unique)
+        
+        pool_outputs = np.array(pool_outputs)[indices]  # Restores the full result vector
         
         # Fills up upper triangle again
         kernel = np.zeros((nr_inds, nr_inds))
@@ -609,6 +619,11 @@ def numerical_integration_barrier_mr(arg):
     '''Does the numerical Integration; so that it works with one argument.
     Needed for Parallelization'''
     return numerical_integration_barrier(*arg)
+
+def unique_rows(data):
+    '''Gives back unique rows in data and the indices needed to reconstruct the original thing'''
+    uniq, indices = np.unique(data.view(data.dtype.descr * data.shape[1]), return_inverse=True)
+    return uniq.view(data.dtype).reshape(-1, data.shape[1]), indices
         
     
 

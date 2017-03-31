@@ -126,7 +126,6 @@ def main():
                 genotype_matrix[:, i] = grid.genotypes
         
         if inp == 6:
-            print(position_list)
             nr_loci = int(input("\nFor how many loci?\n")) 
             t = int(input("\nFor how long?\n"))
             p_m = float(input("Mean allele frequency?\n"))
@@ -180,7 +179,8 @@ def main():
                     analysis.group_inds(analysis.position_list, analysis.genotypes, x_demes, y_demes)
                     
                 if inp1 == 3:
-                    analysis.geo_comparison()
+                    barrier_pos = float(input("Where is the barrier?\n"))
+                    analysis.geo_comparison(barrier=barrier_pos)
                     
                 if inp1 == 4:
                     np.savetxt("coordinates00.csv", analysis.position_list, delimiter="$")  # Save the coordinates
@@ -249,8 +249,8 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates00b.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes00b.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinates01b.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/data_genotypes01b.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:
@@ -259,8 +259,8 @@ def main():
                 # Some commonly used file paths: nbh_file_coords30.csv, ./Data/coordinates00b.csv
                 # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
                 
-                position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                genotype_matrix = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinates01b.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                genotype_matrix = np.loadtxt('./Data/data_genotypes01b.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

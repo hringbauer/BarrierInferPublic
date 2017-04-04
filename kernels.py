@@ -302,7 +302,7 @@ class DiffusionBarrierK0(Kernel):
    
     def calc_kernel_mat_old(self, coords):
         '''Given List of Coordinates; calculate the full covariance Kernel'''
-        coords = coords.astype("float")
+        coords = np.array(coords).astype("float")
         coords[:, 0] = coords[:, 0] - self.position_barrier
         kernel_mat = [[self.num_integral_barrier_old(i[1] - j[1],
                             i[0], j[0]) for i in coords] for j in coords]
@@ -703,7 +703,7 @@ def test_diffusion_barrier():
     kc = fac_kernel("DiffusionBarrierK")
     kc.set_parameters([0, 2.0, 1.0, 0.01, 5.0])  # k, Diff, t0, mu, dens
     k0 = fac_kernel("DiffusionBarrierK0")
-    k0.set_parameters([4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.5, 1, 0.0])  # Nbh, L, k, t0, ss   
+    k0.set_parameters([4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.0, 1, 0.0])  # Nbh, L, k, t0, ss   
     delta_y = 0  # Some Parameters to play around with
     x0 = -5
     x_vec = np.linspace(-20, 20, 200)
@@ -713,12 +713,12 @@ def test_diffusion_barrier():
     
     
     kc.set_parameters([0.5, 2.0, 1.0, 0.01, 5.0])  # k, Diff, t0, mu, dens; set weaker barrier
-    k0.set_parameters([0.5 / 2.0, 1 * 2.0, 4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.0])
+    k0.set_parameters([4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.5 / 2.0, 1 * 2.0,  0.0]) # Nbh, L, k, t0, ss
     # y_vec1 = [kc.num_integral_barrier(delta_y, x0, x1) for x1 in x_vec]  # 0 Difference along y-Axis
     y_vec10 = [k0.num_integral_barrier(delta_y, x0, x1) for x1 in x_vec]  # 0 Difference along y-Axis
     
     kc.set_parameters([10.0, 2.0, 1.0, 0.01, 5.0])  # k, Diff, t0, mu, dens; set weaker barrier
-    k0.set_parameters([10.0 / 2.0, 1 * 2.0, 4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.0])
+    k0.set_parameters([4 * np.pi * 5 * 2.0, 0.02 / 2.0, 10 / 2.0, 1 * 2.0,  0.0]) # Nbh, L, k, t0, ss
     # y_vec2 = [kc.num_integral_barrier(delta_y, x0, x1) for x1 in x_vec]   # 0 Difference along y-Axis
     y_vec20 = [k0.num_integral_barrier(delta_y, x0, x1) for x1 in x_vec]  # 0 Difference along y-Axis
     
@@ -744,7 +744,7 @@ def test_parallel():
     # k1 = fac_kernel("DiffusionK0")
     # k1.set_parameters([100, 0.005, 1.0, 0.04])
     # [0.5 / 2.0, 1 * 2.0, 4 * np.pi * 5 * 2.0, 0.02 / 2.0, 0.0]
-    coords = [[i, i] for i in np.linspace(-3, 3, 100)]
+    coords = np.array([[i, i] for i in np.linspace(-3, 3, 20)])
     
     start = time.time()
     res1 = k1.calc_kernel_mat_old(coords)
@@ -789,9 +789,9 @@ def timer_kernel_diff(nr_runs):
     
 
 if __name__ == "__main__":
-    kernel_test()
-    # test_parallel()  # Tests; but also has timer
-    # test_diffusion_barrier()
+    #kernel_test()
+    #test_parallel()  # Tests; but also has timer
+    test_diffusion_barrier()
     # plot_samples()
     
     # Time the Kernel

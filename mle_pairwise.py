@@ -273,7 +273,7 @@ class MLE_f_emp(GenericLikelihoodModel):
         print(args)  # Prints arguments so that one knows where one is
         args = np.array(args)  # Make Arguments Numpy array so that it everything is fluent
         var = args[-1]  # Gets the variance Parameter
-        args[-1] = 1  # Sets t0 
+        args[-1] = 1.0  # Sets t0 
         args = np.append(args, 0)  # appends ss=0
         # Sets the variance Parameter 0; so that one can calculate the Kernel fluently
         assert(self.kernel.give_nr_parameters() == len(args))  # Checks whether Nr. of Parameters is right.
@@ -333,8 +333,8 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         print("Doing the Fitting...")
         
-        parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,
-                    sigma=y_errors, absolute_sigma=True, p0=start_params, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
+        parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
+                    p0=start_params, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
         
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
@@ -357,43 +357,36 @@ class MLE_f_emp(GenericLikelihoodModel):
 
    
 ######################### Some lines to test the code and make plots
-def analyze_barrier():
+def analyze_barrier(position_list, genotype_mat, position_barrier=500.5):
     '''Test Method that analyzes a barrier'''
-    #position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    #genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./Data/coordinates01b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/data_genotypes01b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_barrier = 500.5
-    
     nr_inds_analysis = 200
     inds = range(len(position_list))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
     inds = inds[:nr_inds_analysis]  # Only load first nr_inds
-    #position_list = position_list[inds, :]
-    #genotype_mat = genotype_mat[inds, :]
+    # position_list = position_list[inds, :]
+    # genotype_mat = genotype_mat[inds, :]
     
     MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, start_params=[65, 0.006, 0.5, 0.5], multi_processing=1)
     MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier
-    tic=time()
+    tic = time()
     fit = MLE_obj.fit(start_params=[65, 0.006, 0.5, 0.5])
     pickle.dump(fit, open("fitbarrier.p", "wb"))
-    toc=time()
-    print("Total Running Time of Fitting: %.4f" % (toc-tic))
+    toc = time()
+    print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal():
+def analyze_normal(position_list, genotype_mat):
     '''Method that analyzes data without a barrier.'''
-    position_list = np.loadtxt('./Data/coordinates01b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/data_genotypes01b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+
     
     # Load only certain Number of Individuals
-    nr_inds_analysis = 200
+    nr_inds_analysis = 1000
     inds = range(len(position_list))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
     inds = inds[:nr_inds_analysis]  # Only load first nr_inds
     
 
-    #position_list = position_list[inds, :]
-    #genotype_mat = genotype_mat[inds, :]
+    # position_list = position_list[inds, :]
+    # genotype_mat = genotype_mat[inds, :]
     # MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
     MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.5], multi_processing=1)
     
@@ -415,7 +408,11 @@ def analyze_normal():
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     
 if __name__ == "__main__":
-    analyze_barrier() # Do not forget to set position of barrier
-    #analyze_normal()
+    # position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    # genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    # analyze_barrier(position_list, genotype_mat) # Do not forget to set position of barrier
+    analyze_normal(position_list, genotype_mat)
     
 #########################################

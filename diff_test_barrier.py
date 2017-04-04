@@ -248,7 +248,7 @@ def create_2x2_plot(c_values, initial_position=-15, barrier_pos=0.5,
 
 # test_diffusion()     # Single test
 create_2x2_plot([0.001, 0.01, 0.1, 0.5], nr_steps=500, 
-                nr_replicates=50000, dispersal="rw")  # Creates 2x2 Plot # Dispersal: rw laplace
+                nr_replicates=50000, dispersal="laplace")  # Creates 2x2 Plot # Dispersal: rw laplace
 
     
 

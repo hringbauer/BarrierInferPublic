@@ -675,7 +675,7 @@ def kernel_test():
     # dens = k0.give_parameters
     
     # x_vec = np.logspace(-2, 2.0, 100) + 2.0
-    x_vec = np.linspace(1.0, 10, 100) + 0.0001
+    x_vec = np.linspace(1.0, 30, 100) + 0.0001
     y_vec = [kc.num_integral_barrier(0, -1, -1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
     y_vec2 = [kc.num_integral_barrier(0, 1, 1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
      
@@ -789,9 +789,9 @@ def timer_kernel_diff(nr_runs):
     
 
 if __name__ == "__main__":
-    #kernel_test()
+    kernel_test()
     #test_parallel()  # Tests; but also has timer
-    test_diffusion_barrier()
+    #test_diffusion_barrier()
     # plot_samples()
     
     # Time the Kernel

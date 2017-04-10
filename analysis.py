@@ -27,7 +27,7 @@ class Fit_class(object):
     def conf_int(self):
         '''Method that gives back Confidence Intervals.
         Calculates it as best estimates plus/minus 3 standard deviations'''
-        conf_int = [[self.params[i] - 3 * self.std[i], self.params[i] + 3 * self.std[i]] for i in xrange(len(self.params))]
+        conf_int = [[self.params[i] - 2 * self.std[i], self.params[i] + 2 * self.std[i]] for i in xrange(len(self.params))] # 95 percent of data within 2 STD of Mean.
         return conf_int
             
 

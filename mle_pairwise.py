@@ -237,10 +237,11 @@ class MLE_f_emp(GenericLikelihoodModel):
     inds = []  # Which indices to use based on min pw. distance
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                 param_mask=None, multi_processing=0, **kwds):
+                 param_mask=None, multi_processing=0, min_distance=0, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
+        self.min_distance = min_distance
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
@@ -333,8 +334,12 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         print("Doing the Fitting...")
         
+        lower_bounds = 0.0  # Lower Bound for the fit.
+        upper_bounds = [np.inf for _ in start_params] # Sets all upper bounds to infinity
+        upper_bounds[2] = 1.0  # Sets the bound of the third parameter to value 1. (in case of barrier this is the barrier strength, otherwise it is ss)
+        
         parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
-                    p0=start_params, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
+                    p0=start_params, bounds=(lower_bounds, upper_bounds))  # @UnusedVariable p0=(C / 10.0, -r)
         
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
@@ -408,11 +413,11 @@ def analyze_normal(position_list, genotype_mat):
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     
 if __name__ == "__main__":
-    # position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    # genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    # analyze_barrier(position_list, genotype_mat) # Do not forget to set position of barrier
-    analyze_normal(position_list, genotype_mat)
+    position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    #position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    #genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    analyze_barrier(position_list, genotype_mat) # Do not forget to set position of barrier
+    #analyze_normal(position_list, genotype_mat)
     
 #########################################

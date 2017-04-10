@@ -255,7 +255,7 @@ class MultiNbh(MultiRun):
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
-        res_numbers = range(0, 86)
+        res_numbers = range(0, 100)
         # res_numbers = range(2, 7) + range(8, 86)
         # res_numbers = range(0, 2) + range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
@@ -280,6 +280,7 @@ class MultiNbh(MultiRun):
         ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
         ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+        ax1.set_ylim([0,200])
         ax1.set_ylabel("Nbh", fontsize=18)
         # ax1.legend()
         
@@ -316,7 +317,7 @@ class MultiNbh(MultiRun):
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
-        res_numbers = range(2, 7) + range(8, 86)
+        res_numbers = range(2, 7) + range(8, 100)
         # res_numbers = range(0,86)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
@@ -404,13 +405,14 @@ class MultiBarrier(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Creating Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        barrier_strength_list = 25 * [0.0] + 25 * [0.2] + 25 * [0.4] + 25 * [0.6]
+        barrier_strength_list = 25 * [0.0] + 25 * [0.25] + 25 * [0.5] + 25 * [1.0]
         barrier_strength = barrier_strength_list[data_set_nr]
         
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
         
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
+        #position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
+        position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)]) # Updated position list.
         nr_loci = 200
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -527,7 +529,7 @@ class MultiBarrier(MultiRun):
             return res[arg_nr]
         
         
-        res_numbers = range(0, 7) + range(8, 86)
+        res_numbers = range(1, 100) #+ range(8, 100)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         print(res_numbers)
         # res_numbers = range(30,31)# To analyze Dataset 30
@@ -547,11 +549,9 @@ class MultiBarrier(MultiRun):
         # plt.figure()
         f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
         
-        ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
-        ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
+        ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+        #ax1.set_ylim([0, 200])
         ax1.set_ylabel("Nbh", fontsize=18)
         # ax1.legend()
         
@@ -561,8 +561,15 @@ class MultiBarrier(MultiRun):
         # ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.04, 0, 100, linewidth=2)
-        ax3.set_ylabel("SS", fontsize=18)
+        #ax3.hlines(0.04, 0, 100, linewidth=2)
+        ax3.set_ylabel("k", fontsize=18)
+        
+        ax3.hlines(0.0, 0, 25, linewidth=2, color="r")
+        ax3.hlines(0.2, 25, 50, linewidth=2, color="r")
+        ax3.hlines(0.4, 50, 75, linewidth=2, color="r")
+        ax3.hlines(0.6, 75, 100, linewidth=2, color="r")
+        ax3.set_ylim([0,1])
+        #ax3.set_ylim([0,0.01])
         # ax3.legend()
         plt.xlabel("Dataset")
         plt.show()
@@ -582,7 +589,7 @@ class TestRun(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Craeting Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)]) #Original position list
         nr_loci = 100
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -692,7 +699,7 @@ def vis_mult_nbh(folder, method):
     '''Visualize the analysis of Multiple Neighborhood Sizes.'''
     MultiRun = fac_method("multi_nbh", folder)
     MultiRun.temp_visualize(method)
-    # MultiRun.visualize_all_methods()
+    #MultiRun.visualize_all_methods()
     
 ##########################################################################################
 # Run all data-sets
@@ -714,13 +721,14 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    # vis_mult_nbh("./nbh_folder/", method=2)
+    vis_mult_nbh("./nbh_folder/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./testfolder/", multi_processing=1)
-    MultiRun.create_data_set(78)
-    MultiRun.analyze_data_set(78, method=2)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder/", multi_processing=1)
+    MultiRun.temp_visualize(method=2)
+    #MultiRun.create_data_set(78)
+    #MultiRun.analyze_data_set(78, method=2)
     
 
 

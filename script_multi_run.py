@@ -9,7 +9,7 @@ import sys
 
 
 #folder = "./nbh_folder/"  # Where the results are saved to.
-folder = "./barrier_folder1/"
+folder = "./barrier_folder2/"
 mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
 #MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.

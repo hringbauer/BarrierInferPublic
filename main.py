@@ -8,6 +8,8 @@ from analysis import Analysis
 from forward_sim import Forward_sim
 from GPR_kernelfit import GPR_kernelfit
 from tf_analysis import TF_Analysis
+from mle_pairwise import analyze_barrier  # Methods to fit individual data
+from mle_pairwise import analyze_normal
 import numpy as np
 import cPickle as pickle  # @UnusedImport
 import matplotlib.pyplot as plt
@@ -164,21 +166,33 @@ def main():
         if inp == 7:
             analysis = Analysis(position_list, genotype_matrix)
             while True:
-                inp1 = int(input("What analysis?\n (1) Correlation Analysis\n (2) Group Individuals\n (3) Geographic Comparison "
-                                 "\n (4) Extract Data\n (5) Correlation Analysis where mean is also estimated\n "
+                inp1 = int(input("\nWhat analysis?\n (1) Correlation Analysis (Binned) \n (2) Fit Individual Correlation \n (3) Group Individuals"
+                                 "\n (4) Geographic Comparison \n (5) Correlation Analysis where mean is also estimated\n "
                                  "(6) Gaussian Process analysis\n (7) Plot Positions \n (8) Plot Mean allele freq. Distribution "
                                  "\n (9) Back to main menu\n "))
                 
                 if inp1 == 1:
                     nr_inds = int(input("How many random individuals?\n"))
-                    analysis.ind_correlation(nr_inds=nr_inds)
+                    bins = int(input("How many bins?\n"))
+                    analysis.ind_correlation(nr_inds=nr_inds, bins=bins)
                     
-                if inp1 == 2:
+                if inp1 == 2: 
+                    nr_inds = int(input("How many random individuals?\n"))
+                    fit_t0 = bool(input("Do you want to fit t0? (1=yes/0=no)\n"))
+                    if fit_t0==1:
+                        start_params=[150, 0.005, 1.0, 0.5]
+                    
+                    elif fit_t0==0:
+                        start_params=[150, 0.005, 0.5]
+                        
+                    analyze_normal(position_list, genotype_matrix, nr_inds=nr_inds, fit_t0=fit_t0, start_params=start_params)
+                    
+                if inp1 == 3:
                     x_demes = int(input("How many Demes along x-axis?\n"))
                     y_demes = int(input("How many Demes along y-axis?\n"))
                     analysis.group_inds(analysis.position_list, analysis.genotypes, x_demes, y_demes)
                     
-                if inp1 == 3:
+                if inp1 == 4:
                     barrier_pos = float(input("Where is the barrier?\n"))
                     analysis.geo_comparison(barrier=barrier_pos)
                     
@@ -258,9 +272,11 @@ def main():
                 # genotype_matrix = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')     
                 # Some commonly used file paths: nbh_file_coords30.csv, ./Data/coordinates00b.csv
                 # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
+                # ./Data/coordinatesHZ.csv ./Data/genotypesHZ.csv
                 
-                position_list = np.loadtxt('./Data/coordinates01b.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                genotype_matrix = np.loadtxt('./Data/data_genotypes01b.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinatesHZ.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix.
+                genotype_matrix = np.loadtxt('./Data/genotypesHZ.csv', delimiter='$').astype('float64')
                 print("Loading Complete.")   
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   

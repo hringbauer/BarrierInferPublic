@@ -290,7 +290,7 @@ class MultiNbh(MultiRun):
         # ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.04, 0, 100, linewidth=2)
+        ax3.hlines(0.52, 0, 100, linewidth=2)
         ax3.set_ylabel("SS", fontsize=18)
         # ax3.legend()
         plt.xlabel("Dataset")
@@ -405,7 +405,7 @@ class MultiBarrier(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Creating Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        barrier_strength_list = 25 * [0.0] + 25 * [0.25] + 25 * [0.5] + 25 * [1.0]
+        barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
         barrier_strength = barrier_strength_list[data_set_nr]
         
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
@@ -565,9 +565,9 @@ class MultiBarrier(MultiRun):
         ax3.set_ylabel("k", fontsize=18)
         
         ax3.hlines(0.0, 0, 25, linewidth=2, color="r")
-        ax3.hlines(0.2, 25, 50, linewidth=2, color="r")
-        ax3.hlines(0.4, 50, 75, linewidth=2, color="r")
-        ax3.hlines(0.6, 75, 100, linewidth=2, color="r")
+        ax3.hlines(0.25, 25, 50, linewidth=2, color="r")
+        ax3.hlines(0.5, 50, 75, linewidth=2, color="r")
+        ax3.hlines(1, 75, 100, linewidth=2, color="r")
         ax3.set_ylim([0,1])
         #ax3.set_ylim([0,0.01])
         # ax3.legend()
@@ -725,7 +725,7 @@ if __name__ == "__main__":
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./barrier_folder/", multi_processing=1)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder1/", multi_processing=1)
     MultiRun.temp_visualize(method=2)
     #MultiRun.create_data_set(78)
     #MultiRun.analyze_data_set(78, method=2)

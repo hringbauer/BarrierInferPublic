@@ -13,7 +13,7 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [79.74, 0.003186, 1.0, 0.035]  # Parameters used in manual Kernel Plot
+parameters_fit = [76.787679355844503, 0.0031842963942330183, 0.0040932997818495112,  0.041957834]  # Parameters used in manual Kernel Plot
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
@@ -27,7 +27,7 @@ class Fit_class(object):
     def conf_int(self):
         '''Method that gives back Confidence Intervals.
         Calculates it as best estimates plus/minus 3 standard deviations'''
-        conf_int = [[self.params[i] - 2 * self.std[i], self.params[i] + 2 * self.std[i]] for i in xrange(len(self.params))] # 95 percent of data within 2 STD of Mean.
+        conf_int = [[self.params[i] - 2 * self.std[i], self.params[i] + 2 * self.std[i]] for i in xrange(len(self.params))]  # 95 percent of data within 2 STD of Mean.
         return conf_int
             
 
@@ -93,7 +93,7 @@ class Analysis(object):
         Fit = Fit_class(params, std_params)
         return Fit
         
-    def ind_correlation(self, p=0.5, nr_inds=10000):
+    def ind_correlation(self, p=0.5, nr_inds=10000, bins=50):
         '''Analyze individual correlations.'''
         inds = range(len(self.position_list[:, 0]))  # Some Code to draw random samples
         shuffle(inds)
@@ -107,9 +107,9 @@ class Analysis(object):
         
         for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
             distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
-            correlation[entry] = self.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff per pair, averaged over loci  
+            correlation[entry] = self.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
             entry += 1     
-        self.vis_correlation(distance, correlation)  # Visualize the correlation
+        self.vis_correlation(distance, correlation, bins=bins)  # Visualize the correlation
     
     def vis_correlation(self, distance, correlation, bins=50):
         '''Take pairwise correlation and distances as inputs and visualizes them'''
@@ -123,6 +123,7 @@ class Analysis(object):
         Nb_est = 1 / (-k)
         Nb_std = (-std_k / k) * Nb_est
         
+        
         # Fit Diffusion/RBF Kernel; Comment out depending on what is need:
         params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins / 2], bin_dist[:bins / 2], stand_errors[:bins / 2])
         # params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
@@ -132,6 +133,10 @@ class Analysis(object):
         # print("Fitted Parameters + Errors from least square fit: ")
         print(params)
         print(std_params)
+        
+        print("Log Fit: ")
+        print(Nb_est)
+        print(Nb_std)
         
         
         x_plot = np.linspace(min(bin_dist), max(bin_dist) / 2.0, 100)
@@ -193,8 +198,8 @@ class Analysis(object):
         
     def geo_comparison(self, mean_all_freq=0.5, barrier=None):
         '''Compares kinship coefficients based on geography'''
-        if barrier==None:
-            barrier=self.barrier
+        if barrier == None:
+            barrier = self.barrier
         y_comps = []  # Comparisons among yellow
         m_comps = []  # Comparisons among magenta
         h_comps = []  # Comparisons among hybrids
@@ -337,7 +342,7 @@ def rbf_kernel(r, l, a):
     y = [K1.calc_r(i) for i in r]
     return y
     
-def fit_diffusion_kernel(f, r, error, guess=[4 * np.pi * 4, 0.02, 0.035]):
+def fit_diffusion_kernel(f, r, error, guess=[200, 0.002, 0.05]):  # Uncomment the t0=1 if not to be fitted
     '''Fits vectors f,r and error to numerical Integration of
     Diffusion Kernel - Using non-linear, weighted least square.'''    
     parameters, cov_matrix = curve_fit(diffusion_kernel, r, f,

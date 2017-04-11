@@ -229,19 +229,19 @@ class MLE_f_emp(GenericLikelihoodModel):
     estimates = []  # Array for the fitted estimates
     start_params = []  # The starting Parameters for the Fit
     kernel = 0  # Class that can calculate the Kernel
-    fixed_params = np.array([200, 0.001, 1.0, 0.])  # Full array nbh, L , t0 , ss
-    param_mask = np.array([0, 1, 3])  # Parameter Mask used to change specific Parameters
     nr_params = 0
     parameter_names = []
     min_distance = 0  # The minimum pairwise Distance that is analyzed
     inds = []  # Which indices to use based on min pw. distance
+    fit_t0 = 0  # Whether to fit t0 as well
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                 param_mask=None, multi_processing=0, min_distance=0, **kwds):
+                multi_processing=0, fit_t0=0, min_distance=0, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
         self.min_distance = min_distance
+        self.fit_t0 = fit_t0
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
@@ -253,8 +253,6 @@ class MLE_f_emp(GenericLikelihoodModel):
         self.parameter_names = self.kernel.give_parameter_names()
         if start_params != None:
             self.start_params = start_params 
-        if param_mask != None:
-            self.param_mask = param_mask
 
         
         
@@ -273,9 +271,16 @@ class MLE_f_emp(GenericLikelihoodModel):
         Return the Vector of fitted Values'''
         print(args)  # Prints arguments so that one knows where one is
         args = np.array(args)  # Make Arguments Numpy array so that it everything is fluent
-        var = args[-1]  # Gets the variance Parameter
-        args[-1] = 1.0  # Sets t0 
-        args = np.append(args, 0)  # appends ss=0
+        
+        if self.fit_t0 == 1:  # In case t0 is actually fitted as well
+            var = args[-1]
+            args[-1] = 0  # sets ss=0
+            
+        elif self.fit_t0 == 0:
+            var = args[-1]  # Gets the variance Parameter
+            args[-1] = 1.0  # Sets t0   
+            args = np.append(args, 0)  # appends ss=0
+            
         # Sets the variance Parameter 0; so that one can calculate the Kernel fluently
         assert(self.kernel.give_nr_parameters() == len(args))  # Checks whether Nr. of Parameters is right.
         self.kernel.set_parameters(args)  # Sets the kernel parameters
@@ -335,8 +340,9 @@ class MLE_f_emp(GenericLikelihoodModel):
         print("Doing the Fitting...")
         
         lower_bounds = 0.0  # Lower Bound for the fit.
-        upper_bounds = [np.inf for _ in start_params] # Sets all upper bounds to infinity
-        upper_bounds[2] = 1.0  # Sets the bound of the third parameter to value 1. (in case of barrier this is the barrier strength, otherwise it is ss)
+        upper_bounds = [np.inf for _ in start_params]  # Sets all upper bounds to infinity
+        if len(upper_bounds)==5:        # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
+            upper_bounds[2] = 1.0 
         
         parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
                     p0=start_params, bounds=(lower_bounds, upper_bounds))  # @UnusedVariable p0=(C / 10.0, -r)
@@ -351,49 +357,39 @@ class MLE_f_emp(GenericLikelihoodModel):
         # Create and fill up Fit object
         fit = Fit_class(parameters, std_params)
         return fit
-    
-    def expand_params(self, params):
-        '''Method to expand subparameters as defined in self.param_mask to full parameters'''
-        all_params = self.fixed_params
-        all_params[self.param_mask] = params  # Set the subarray
-        return all_params
         
 
 
    
 ######################### Some lines to test the code and make plots
-def analyze_barrier(position_list, genotype_mat, position_barrier=500.5):
-    '''Test Method that analyzes a barrier'''
-    nr_inds_analysis = 200
+def analyze_barrier(position_list, genotype_mat, position_barrier=500.5, nr_inds=200, fit_t0=0, start_params=[65, 0.005, 0.5]):
+    '''Method that analyzes a barrier. Use Method 2.'''
     inds = range(len(position_list))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-    inds = inds[:nr_inds_analysis]  # Only load first nr_inds
+    inds = inds[:nr_inds]  # Only load first nr_inds
     # position_list = position_list[inds, :]
     # genotype_mat = genotype_mat[inds, :]
     
-    MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, start_params=[65, 0.006, 0.5, 0.5], multi_processing=1)
+    MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, start_params=start_params, multi_processing=1, fit_t0=fit_t0)
     MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier
     tic = time()
-    fit = MLE_obj.fit(start_params=[65, 0.006, 0.5, 0.5])
+    fit = MLE_obj.fit(start_params=start_params)
     pickle.dump(fit, open("fitbarrier.p", "wb"))
     toc = time()
     print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal(position_list, genotype_mat):
-    '''Method that analyzes data without a barrier.'''
-
-    
+def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[65, 0.005, 0.5], fit_t0=0):
+    '''Method that analyzes data without a barrier. Use Method 2.'''
     # Load only certain Number of Individuals
-    nr_inds_analysis = 1000
     inds = range(len(position_list))
     shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-    inds = inds[:nr_inds_analysis]  # Only load first nr_inds
+    inds = inds[:nr_inds]  # Only load first nr_inds
     
 
     # position_list = position_list[inds, :]
     # genotype_mat = genotype_mat[inds, :]
     # MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
-    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.5], multi_processing=1)
+    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=start_params, multi_processing=1, fit_t0=fit_t0)
     
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
@@ -409,15 +405,15 @@ def analyze_normal(position_list, genotype_mat):
     
     
     # Do the actual Fitting: 
-    fit = MLE_obj.fit(start_params=[65, 0.005, 0.5])  # Could alter method here. nbh, mu
+    fit = MLE_obj.fit(start_params=start_params)  # Could alter method here. nbh, mu
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     
 if __name__ == "__main__":
     position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    #position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    #genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    analyze_barrier(position_list, genotype_mat) # Do not forget to set position of barrier
-    #analyze_normal(position_list, genotype_mat)
+    # position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    # genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    analyze_barrier(position_list, genotype_mat)  # Do not forget to set position of barrier
+    # analyze_normal(position_list, genotype_mat)
     
 #########################################

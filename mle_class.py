@@ -32,11 +32,11 @@ class MLE_estimator(GenericLikelihoodModel):
     parameter_names = []
     mps = [] 
     
-    def __init__(self, kernel_class, coords, genotypes, start_params = None,
+    def __init__(self, kernel_class, coords, genotypes, start_params=None,
                  param_mask=None, multi_processing=0, **kwds):
         '''Initializes the Class.'''
-        self.kernel = fac_kernel(kernel_class)                  # Loads the kernel object. Use factory funciton to branch
-        self.kernel.multi_processing = multi_processing          # Whether to do multi-processing: 1 yes / 0 no
+        self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
+        self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
@@ -47,6 +47,7 @@ class MLE_estimator(GenericLikelihoodModel):
         # Load Parameters and Parameter names
         self.nr_params = self.kernel.give_nr_parameters()
         self.parameter_names = self.kernel.give_parameter_names()
+        print(self.parameter_names)
         if start_params != None:
             self.start_params = start_params 
         if param_mask != None:
@@ -65,7 +66,7 @@ class MLE_estimator(GenericLikelihoodModel):
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype Matrix given Coordinate Matrix.'''
         # First some out-put what the current Parameters are:
-        params = self.expand_params(params)  # Expands Parameters to full array
+        #params = self.expand_params(params)  # Expands Parameters to full array COMMENT THIS IN AGAIN
         print("Calculating Likelihood:")
         for i in xrange(self.nr_params):
             print(self.parameter_names[i] + ":\t %.4f" % params[i])
@@ -265,6 +266,14 @@ def hessian_f(f_tot, g0):
     h0 = -1.0 / (1 + tf.cos(f_tot))  # Second derivative of data (for y=0)
     W = -g0 * h1 - (1 - g0) * h0  # Calculate first part of Hessian. It is diagonal (but here diagonal in every column)
     return W
+    
+    
+def calculate_ss(genotype_matrix):
+    '''Method to calculate Variance due to fluctuations of the mean'''
+    p_mean = np.mean(genotype_matrix, axis=0)
+    f_mean = 2*np.arcsin(np.sqrt(p_mean))
+    f_var= np.var(f_mean)
+    return f_var
 
 # From Alex: Some custom Functions to calculate the Log-Determinant.
 # In there for historic reasons - used to be that this was needed for the Gradient.

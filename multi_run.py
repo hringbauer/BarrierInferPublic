@@ -13,6 +13,7 @@ from kernels import fac_kernel
 from time import time
 from grid import Grid
 from mle_class import MLE_estimator
+from mle_class import calculate_ss
 from mle_pairwise import MLE_pairwise
 from mle_pairwise import MLE_f_emp
 from random import shuffle 
@@ -280,7 +281,7 @@ class MultiNbh(MultiRun):
         ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
         ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-        ax1.set_ylim([0,200])
+        ax1.set_ylim([0, 200])
         ax1.set_ylabel("Nbh", fontsize=18)
         # ax1.legend()
         
@@ -317,7 +318,7 @@ class MultiNbh(MultiRun):
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
         
-        res_numbers = range(2, 7) + range(8, 100)
+        res_numbers = range(2, 7) + range(8, 68)
         # res_numbers = range(0,86)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
@@ -411,8 +412,8 @@ class MultiBarrier(MultiRun):
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
         
-        #position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
-        position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)]) # Updated position list.
+        # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
+        position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
         nr_loci = 200
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -438,7 +439,7 @@ class MultiBarrier(MultiRun):
             grid.update_grid_t(t, p=p_mean[i], barrier=1)  # Uses p_mean[i] as mean allele Frequency.
             genotype_matrix[:, i] = grid.genotypes
         position_list = position_list.astype("float")  # So it works when one subtracts a float.
-        #position_list_update = position_list[:, 0] - grid.barrier 
+        # position_list_update = position_list[:, 0] - grid.barrier 
         self.save_data_set(position_list, genotype_matrix, data_set_nr)
         
             
@@ -454,7 +455,7 @@ class MultiBarrier(MultiRun):
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
-        #barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
+        # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
         barrier_strength_list = 100 * [0.5]
         l = 0.006
 
@@ -497,6 +498,63 @@ class MultiBarrier(MultiRun):
             os.makedirs(directory)
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+        
+    def barrier_ll(self, data_set_nr, nbh, L, t0, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21):
+        '''Calculate LL for different strengths of the barrier in GRF Framework'''
+        print("Running Dataset: %i" % data_set_nr)
+        k_vec = np.linspace(0.00001, 1, barrier_strengths)  # Creates the Grid for k
+        
+        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Dataset
+        ss = calculate_ss(genotype_mat)  # Calculates ss from empirical Data
+        
+        MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+        MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
+        
+        params = [[nbh, L, k, t0, ss] for k in k_vec]  # Prepares the parameter vector
+        print(params[0])
+        ll_vec = np.array([MLE_obj.loglike(p) for p in params])  # Calculates Vector of marginal Likelihoods
+        
+        
+        # Pickle Parameter Estimates:
+        subfolder_meth = "method_k" + "/"  # Sets subfolder on which Method to use.
+        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+        
+        directory = os.path.dirname(path)  # Extract Directory
+        if not os.path.exists(directory):  # Creates Folder if not already existing
+            os.makedirs(directory)
+            
+        pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
+        
+    def visualize_barrier_strengths(self):
+        '''Method to visualize the strengths of the Barrier'''
+        res_numbers = range(0, 100)
+        
+        def load_pickle_data(i):
+            '''Function To load pickled Data.
+            Also visualizes it.'''
+            data_folder = self.data_folder
+            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
+            
+            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
+            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+            
+            # Coordinates for more :
+            subfolder_meth = "method_k" + "/"  # Sets subfolder to which Method to use.
+            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+            
+            res = pickle.load(open(path, "rb"))  # Loads the Data
+            return res
+        
+        ll_vecs = np.array([load_pickle_data(i) for i in res_numbers])
+        ll_vecs_max = np.max(ll_vecs, axis=1)
+        
+        ll_rel_ves = ll_vecs - ll_vecs_max[None, :]
+        
+        plt.figure()
+        plt.xlabel()
+        plt.ylabel("Relative LogLikelihood")
+        print("Implement stuff here!!")
+        plt.show()
 
         
     def visualize_results(self):
@@ -529,7 +587,7 @@ class MultiBarrier(MultiRun):
             return res[arg_nr]
         
         
-        res_numbers = range(1, 100) #+ range(8, 100)
+        res_numbers = range(1, 100)  # + range(8, 100)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         print(res_numbers)
         # res_numbers = range(30,31)# To analyze Dataset 30
@@ -551,7 +609,7 @@ class MultiBarrier(MultiRun):
         
         ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="r")
         ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-        #ax1.set_ylim([0, 200])
+        # ax1.set_ylim([0, 200])
         ax1.set_ylabel("Nbh", fontsize=18)
         # ax1.legend()
         
@@ -561,15 +619,15 @@ class MultiBarrier(MultiRun):
         # ax2.legend()
         
         ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        #ax3.hlines(0.04, 0, 100, linewidth=2)
+        # ax3.hlines(0.04, 0, 100, linewidth=2)
         ax3.set_ylabel("k", fontsize=18)
         
         ax3.hlines(0.0, 0, 25, linewidth=2, color="r")
-        ax3.hlines(0.25, 25, 50, linewidth=2, color="r")
-        ax3.hlines(0.5, 50, 75, linewidth=2, color="r")
-        ax3.hlines(1, 75, 100, linewidth=2, color="r")
-        ax3.set_ylim([0,1])
-        #ax3.set_ylim([0,0.01])
+        ax3.hlines(0.05, 25, 50, linewidth=2, color="r")
+        ax3.hlines(0.1, 50, 75, linewidth=2, color="r")
+        ax3.hlines(0.15, 75, 100, linewidth=2, color="r")
+        ax3.set_ylim([0, 0.5])
+        # ax3.set_ylim([0,0.01])
         # ax3.legend()
         plt.xlabel("Dataset")
         plt.show()
@@ -589,7 +647,7 @@ class TestRun(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Craeting Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)]) #Original position list
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # Original position list
         nr_loci = 100
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -699,7 +757,7 @@ def vis_mult_nbh(folder, method):
     '''Visualize the analysis of Multiple Neighborhood Sizes.'''
     MultiRun = fac_method("multi_nbh", folder)
     MultiRun.temp_visualize(method)
-    #MultiRun.visualize_all_methods()
+    MultiRun.visualize_all_methods()
     
 ##########################################################################################
 # Run all data-sets
@@ -721,14 +779,16 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    vis_mult_nbh("./nbh_folder/", method=2)
+    # vis_mult_nbh("./nbh_folder/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./barrier_folder1/", multi_processing=1)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder2/", multi_processing=1)
     MultiRun.temp_visualize(method=2)
-    #MultiRun.create_data_set(78)
-    #MultiRun.analyze_data_set(78, method=2)
+    # MultiRun.create_data_set(78)
+    # MultiRun.analyze_data_set(78, method=2)
+    
+    
     
 
 

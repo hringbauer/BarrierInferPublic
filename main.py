@@ -176,6 +176,7 @@ def main():
                     bins = int(input("How many bins?\n"))
                     analysis.ind_correlation(nr_inds=nr_inds, bins=bins)
                     
+                    
                 if inp1 == 2: 
                     nr_inds = int(input("How many random individuals?\n"))
                     fit_t0 = bool(input("Do you want to fit t0? (1=yes/0=no)\n"))
@@ -186,6 +187,8 @@ def main():
                         start_params=[150, 0.005, 0.5]
                         
                     analyze_normal(position_list, genotype_matrix, nr_inds=nr_inds, fit_t0=fit_t0, start_params=start_params)
+                    
+                    #bootstrap=int(input("How often do you want to bootstrap? (0: Skip)"))
                     
                 if inp1 == 3:
                     x_demes = int(input("How many Demes along x-axis?\n"))

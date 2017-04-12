@@ -223,7 +223,7 @@ class MLE_f_emp(GenericLikelihoodModel):
     This there to automatically run Maximum Likelihood Estimation.
     coords (nx2) and genotypes (nxk) are saved in self.exog and self.endog.
     One does a curve Fit via the Scipy model to fit all pairwise empirical estimates of F.
-    The error is then estimated via taking the residuals (and curve fit assumes them equally distributed)
+    The error is then estimated by taking the residuals (and curve fit assumes them equally distributed)
     '''
     # Diverse variables:
     estimates = []  # Array for the fitted estimates
@@ -321,7 +321,57 @@ class MLE_f_emp(GenericLikelihoodModel):
         frac_genotypes_sem = sem(genotypes11 + genotypes00, axis=2)  # Calculates SEMs
         
         return frac_genotypes_id, frac_genotypes_sem
-           
+    
+    def bootstrap(self, nr_replicates=100, start_params=None,):
+        '''Method that Bootstraps over nr_replicates many loci to get uncertainty estimates'''
+        if start_params == None:
+            start_params = self.start_params  # Set the starting parameters for the fit
+            
+        # First extract and calculate pairwise distances:
+        coords = self.exog
+        genotypes = self.endog
+        inds = self.extract_right_indices(coords)  # 
+        
+        
+        print("Starting da bootstrap...")
+        
+        lower_bounds = 0.0  # Lower Bound for the fit.
+        upper_bounds = [np.inf for _ in start_params]  # Sets all upper bounds to infinity
+        if len(upper_bounds) == 5:  # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
+            upper_bounds[2] = 1.0 
+        
+        # Create Empty Containers where the estimates will go into:
+        parameters = np.zeros((nr_replicates, len(start_params)))
+        stds = np.zeros((nr_replicates, len(start_params)))
+        
+        nr_genotypes = np.shape(genotypes)[1]
+        
+        for i in range(nr_replicsts):
+            # Calculate Matrix with fraction of identical genotypes per pair
+            r_ind = np.random.randint(len(nr_genotypes), size=len(nr_genotypes))  # Get Indices of random resampling
+            gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap
+            
+            frac_genotypes_id, sems = self.calc_mean_indentical(gtps_sample)
+            y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
+            y_errors = sems[inds]  # Makes vector out of standard errors.
+            
+            params, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
+                        p0=start_params, bounds=(lower_bounds, upper_bounds))  # @UnusedVariable p0=(C / 10.0, -r)
+            
+            std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+            
+            # Set Parameter Estimates and Standard Deviations to a certain value
+            parameters[i, :] = params
+            stds[i, :] = std_params
+            
+            start_params = params  # Save Start Parameters for next Bootstrap
+        
+        pickle.dump((params, stds), open("bootstrap_estimates.p", "wb"))  # Pickle the results
+        return parameters, stds
+    
+        
+
+        
     def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
         if start_params == None:
@@ -341,7 +391,7 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         lower_bounds = 0.0  # Lower Bound for the fit.
         upper_bounds = [np.inf for _ in start_params]  # Sets all upper bounds to infinity
-        if len(upper_bounds)==5:        # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
+        if len(upper_bounds) == 5:  # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
             upper_bounds[2] = 1.0 
         
         parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
@@ -357,6 +407,10 @@ class MLE_f_emp(GenericLikelihoodModel):
         # Create and fill up Fit object
         fit = Fit_class(parameters, std_params)
         return fit
+    
+    def fit_k_only(self, start_params=None, full_parameters=None, maxiter=500, maxfun=1000, **kwds):
+        '''Method that fits only k'''
+        print("To be implemented...")
         
 
 

@@ -18,6 +18,7 @@ from mle_pairwise import MLE_pairwise
 from mle_pairwise import MLE_f_emp
 from random import shuffle 
 from analysis import Analysis
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -525,9 +526,8 @@ class MultiBarrier(MultiRun):
             
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
         
-    def visualize_barrier_strengths(self):
+    def visualize_barrier_strengths(self, res_numbers=range(0,100)):
         '''Method to visualize the strengths of the Barrier'''
-        res_numbers = range(0, 100)
         
         def load_pickle_data(i):
             '''Function To load pickled Data.
@@ -548,21 +548,27 @@ class MultiBarrier(MultiRun):
         ll_vecs = np.array([load_pickle_data(i) for i in res_numbers])
         ll_vecs_max = np.max(ll_vecs, axis=1)
         
-        ll_rel_ves = ll_vecs - ll_vecs_max[None, :]
+        ll_rel_vecs = ll_vecs - ll_vecs_max[:, None]
+        
+        # How many Barrier Strengths:
+        k_len=len(ll_vecs[0])
+        k_vec = np.linspace(0.0, 1, k_len)  # Creates the Grid for k
         
         plt.figure()
-        plt.xlabel()
-        plt.ylabel("Relative LogLikelihood")
-        print("Implement stuff here!!")
-        plt.show()
-
-        
-    def visualize_results(self):
-        '''Load and visualize the Results'''
-        param_estimates, uncert_estimates = self.load_analysis()  # Loads and saves Parameter Estimates and Uncertainty estimates
-        
-        plt.figure()
-        plt.errorbar()  # Fully Implement this plotting.
+        ax = plt.gca()
+        #ax.set_aspect('equal')
+        im=ax.imshow(ll_rel_vecs.T,cmap="seismic", vmin=-6)
+        plt.ylabel("Reduced Migration")
+        plt.xlabel("Data Set")
+        plt.title("Marginal Likelihood Barrier")
+        plt.yticks(range(len(k_vec)),k_vec[::-1])
+        plt.hlines(0*(k_len-1), -0.5, 24.5, linewidth=1, color="g")
+        plt.hlines(0.25*(k_len-1), 24.5, 49.5, linewidth=1, color="g")
+        plt.hlines(0.5*(k_len-1), 49.5, 74.5, linewidth=1, color="g")
+        plt.hlines(1.0*(k_len-1), 74.5, 99.5, linewidth=1, color="g")
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        plt.colorbar(im, cax=cax)
         plt.show()
         
     def temp_visualize(self, method=0):
@@ -771,6 +777,8 @@ if __name__ == "__main__":
     # Test.load_analysis()
     # print(Test.param_estimates)
     # print(Test.uncert_estimates)
+    # MultiRun.create_data_set(78)
+    # MultiRun.analyze_data_set(78, method=2)
     
     ####Method to Run Multiple Neighborhood Sizes:
     # run_mult_nbh("./nbh_folder/")
@@ -779,14 +787,13 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    # vis_mult_nbh("./nbh_folder/", method=2)
+    #vis_mult_nbh("./nbh_folder/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./barrier_folder2/", multi_processing=1)
-    MultiRun.temp_visualize(method=2)
-    # MultiRun.create_data_set(78)
-    # MultiRun.analyze_data_set(78, method=2)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder1/", multi_processing=1)
+    #MultiRun.temp_visualize(method=2)
+    MultiRun.visualize_barrier_strengths(res_numbers = range(0, 100))
     
     
     

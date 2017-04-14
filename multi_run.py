@@ -526,6 +526,8 @@ class MultiBarrier(MultiRun):
             
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
         
+    
+        
     def visualize_barrier_strengths(self, res_numbers=range(0,100)):
         '''Method to visualize the strengths of the Barrier'''
         
@@ -539,7 +541,7 @@ class MultiBarrier(MultiRun):
             # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             # Coordinates for more :
-            subfolder_meth = "method_k" + "/"  # Sets subfolder to which Method to use.
+            subfolder_meth = "method_k0" + "/"  # Sets subfolder to which Method to use.
             path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             res = pickle.load(open(path, "rb"))  # Loads the Data

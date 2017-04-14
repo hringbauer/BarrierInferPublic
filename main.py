@@ -12,7 +12,7 @@ from mle_pairwise import analyze_barrier  # Methods to fit individual data
 from mle_pairwise import analyze_normal
 from mle_class import calculate_ss
 import numpy as np
-import cPickle as pickle  # @UnusedImport
+import pickle as pickle  # @UnusedImport
 import matplotlib.pyplot as plt
 
 

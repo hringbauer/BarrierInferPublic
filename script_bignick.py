@@ -4,7 +4,7 @@ Here you go Mr. AK - make it happen:-)
 '''
 
 from multi_run import fac_method
-import cPickle as pickle
+import pickle as pickle
 import sys
 
 folder = "./barrier_folder/"  # Where the results are saved to.

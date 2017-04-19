@@ -859,10 +859,10 @@ if __name__ == "__main__":
     
     #######################################################
     ####Create Multi Barrier Data Set
-    #MultiRun = fac_method("multi_barrier", "./barrier_folder1/", multi_processing=1)
-    MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
+    MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
+    #MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
     #MultiRun.create_data_set(30)
-    MultiRun.analyze_data_set(30, method=2, fit_t0=0)
+    MultiRun.analyze_data_set(30, method=0, fit_t0=0)
     
     
     # MultiRun.temp_visualize(method=2)

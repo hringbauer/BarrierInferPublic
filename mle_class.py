@@ -66,7 +66,7 @@ class MLE_estimator(GenericLikelihoodModel):
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype Matrix given Coordinate Matrix.'''
         # First some out-put what the current Parameters are:
-        #params = self.expand_params(params)  # Expands Parameters to full array COMMENT THIS IN AGAIN
+        params = self.expand_params(params)  # Expands Parameters to full array COMMENT THIS IN AGAIN
         print("Calculating Likelihood:")
         for i in xrange(self.nr_params):
             print(self.parameter_names[i] + ":\t %.4f" % params[i])

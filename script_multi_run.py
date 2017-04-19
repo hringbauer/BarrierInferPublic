@@ -16,6 +16,7 @@ mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 ''''Mr AK - just use this:'''
 MultiRun = fac_method("multi_barrier", folder, multi_processing=1) 
 
+
 ########### For creating the data sets ###############
 #data_set_nr = int(sys.argv[1])  # Which data-set to use
 #data_set_nr = 1

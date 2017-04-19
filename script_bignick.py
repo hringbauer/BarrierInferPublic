@@ -9,20 +9,6 @@ import sys
 
 mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
-def analyze_nbh_data_sets_model(data_set_nrs):
-    '''Analyzes the nbh data_sets created under the model
-    data_set_nrs is a vector'''
-    folder = "./nbh_folder_gauss/"  # Where the results are saved to.
-    
-    #MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
-    MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
-    
-    ########### For creating the data sets ###############
-    for data_set_nr in data_set_nrs:
-        MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-        MultiRun.analyze_data_set(data_set_nr, method=0)
-        MultiRun.analyze_data_set(data_set_nr, method=1)
-        MultiRun.analyze_data_set(data_set_nr, method=2)  # Analyzes the results and pickles them.
         
 ###########Methods for creating Barrier Likelihood Profiles:
 def load_pickle_data(i):
@@ -52,12 +38,27 @@ def analyze_barrier_strengths_ll():
         MultiRun.barrier_ll(data_set_nr, nbh=nbh, L=l, t0=0.5, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21)
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     #analyze_barrier_strengths_ll()
-    analyze_nbh_data_sets_model(data_set_nrs=range(100)) # Analyze 100 Neighborhood Samples
+    #analyze_nbh_data_sets_model(data_set_nrs=[2,]) # Analyze 100 Neighborhood Samples
     
 
 
+#data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 1
+data_set_nr = data_set_nr - 1
+
+folder = "./nbh_folder_gauss/"  # Where the results are saved to.
+    
+#MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
+MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
+
+########### For creating the data sets ###############
+
+MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+MultiRun.analyze_data_set(data_set_nr, method=1)
+MultiRun.analyze_data_set(data_set_nr, method=2)  # Analyzes the results and pickles them.
+MultiRun.analyze_data_set(data_set_nr, method=0)
 
 
 

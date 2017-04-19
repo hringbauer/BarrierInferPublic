@@ -278,10 +278,10 @@ def main():
                 # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
                 # ./Data/coordinatesHZ.csv ./Data/genotypesHZ.csv
                 
-                position_list = np.loadtxt('./Data/coordinatesHZ.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix.
-                genotype_matrix = np.loadtxt('./Data/genotypesHZ.csv', delimiter='$').astype('float64')
-                print("Loading Complete.")   
+                position_list = np.loadtxt('./nbh_gaussian_folder/nbh_file_coords30.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
+                genotype_matrix = np.loadtxt('./nbh_gaussian_folder/nbh_file_genotypes30.csv', delimiter='$').astype('float64')
+                print("Loading Complete!")   
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1])   
             

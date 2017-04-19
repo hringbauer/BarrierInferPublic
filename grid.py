@@ -301,7 +301,7 @@ class Grid(object):
         Simulate as draws from a random Gaussian.'''
         print("Todo")      
 
-    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=False, coords=None):
+    def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=0, coords=None):
         '''Draw correlated genotypes
         l: Typical correlation length, a: Absolute correlation, 
         c: Strength of the Barrier, fluc_mean: Whether varying mean all. frequency is simulated'''
@@ -314,9 +314,9 @@ class Grid(object):
         mean_p = np.array([f_mean for _ in range(len(coords))])  # Calculate the mean allele frequency
         f_delta = np.zeros(nr_genotypes)  # Initialize 0 deviations.
         
-        if fluc_mean == True:
-            v = float(input("What should the standard deviation around the mean f be?\n"))
-            f_delta = np.random.normal(scale=v, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
+        if fluc_mean > 0:
+            fluc_mean = float(input("What should the standard deviation around the mean f be?\n"))
+            f_delta = np.random.normal(scale=fluc_mean, size=nr_genotypes)  # Draw some random Delta F from a normal distribution
             # f_delta = np.random.laplace(scale=v / np.sqrt(2.0), size=nr_genotypes)  # Draw some random Delta f from a Laplace distribution 
             # f_delta = np.random.uniform(low=-v * np.sqrt(3), high=v * np.sqrt(3), size=nr_genotypes)  # Draw from Uniform Distribution
             # f_delta = np.random.uniform(0, high=v * np.sqrt(3), size=nr_genotypes)  # Draw from one-sided uniform Distribution!
@@ -379,11 +379,6 @@ class Grid(object):
             plt.show()
         return coords, genotypes[:]  # Returns the geographic list + Data 
     
-    # def draw_correlated_genotypes(self, p_mean, a, l):
-    #    '''Draws Genotypes DIRECTLY from adding noise without link function. '''
-        
-    #    return "implement"
-
         
     def draw_corr_genotypes_replicates(self, coords, nr_genotypes, l=25, a=0.1, replicate_nr=100):
         '''Draws a number of replicates of correlated_genotypes'''
@@ -392,6 +387,23 @@ class Grid(object):
             genotype, coords = self.draw_correlated_genotypes(self, coords, nr_genotypes, l, a)
             genotypes.append(genotype)
         return coords, np.array(genotypes)
+    
+    def draw_corr_genotypes_kernel(self, kernel_mat, p_mean=0.5):
+        '''Draw correlated genotypes given a Kernel Matrix and coords, as well as mean allele frequency and standard deviation.
+        Give back Genotype Matrix.'''
+        assert(len(np.shape(kernel_mat)) == 2)  # Assert kernel mat is really a matrix
+        assert(np.shape(kernel_mat)[0] == np.shape(kernel_mat)[1])  # Check whether Kernel Matrix is actually quadratic.
+        
+        f_mean = 2.0 * np.arcsin(np.sqrt(p_mean))  # Do the Arc Sin Transformation (Reverse of the Link Function)
+        mean_p = np.array([f_mean for _ in range(len(kernel_mat))])  # Calculate the mean allele frequency
+        
+        data = np.random.multivariate_normal(mean_p, kernel_mat)  # Do the random draws of the deviations from the mean
+        data = np.transpose(data)  # Transpose, so that individual x locus matrix
+        
+        p = arc_sin_lin(data)  # Do an arc-sin transform
+        genotypes = np.random.binomial(1, p)  # Draw genotypes
+        return genotypes  # Returns the geographic list + Data
+               
 
 def arc_sin_lin(x):
     '''Arcus-Sinus Link function'''

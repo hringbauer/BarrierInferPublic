@@ -16,8 +16,9 @@ mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 ''''Mr AK - just use this:'''
 MultiRun = fac_method("multi_barrier", folder, multi_processing=1) 
 
+
 ########### For creating the data sets ###############
-data_set_nr = int(sys.argv[1])  # Which data-set to use
+#data_set_nr = int(sys.argv[1])  # Which data-set to use
 #data_set_nr = 1
 #MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
 
@@ -47,12 +48,7 @@ def load_pickle_data(i):
     res = pickle.load(open(path, "rb"))  # Loads the Data
     return res
 
-nbh, l, _, _ = load_pickle_data(data_set_nr)[0]
-
-#MultiRun.barrier_ll(data_set_nr, nbh=5*4*3.141, L=0.006, t0=0.5, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21)
 MultiRun.barrier_ll(data_set_nr, nbh=nbh, L=l, t0=0.5, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21)
-
-
 
 
 

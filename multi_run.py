@@ -22,7 +22,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import cPickle as pickle
+import pickle as pickle
     
 
 class MultiRun(object):
@@ -179,8 +179,8 @@ class MultiNbh(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, method=0):
-        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, method=0, fit_t0=0):
+        '''Create Data Set. Override Method. fit_t0: Whether to fit t0. (at the moment only for method 2!)
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
@@ -189,6 +189,9 @@ class MultiNbh(MultiRun):
         ips_list = np.array(ips_list)
         nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
         start_list = [[nbh_size, 0.005, 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
+        
+        if fit_t0==1:  # If t0 is to be fitted as well
+            start_list = [[nbh_size, 0.005, 1.0 ,0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
         inds = range(len(position_list))
@@ -204,8 +207,10 @@ class MultiNbh(MultiRun):
             MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_list = [[nbh_size, 0.006, 0.01] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
         elif method == 2:
-            MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing, fit_t0=fit_t0)
             start_list = [[nbh_size, 0.006, 0.5] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
+            if fit_t0==1:
+                start_list = [[nbh_size, 0.006, 1.0, 0.5] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
         else: raise ValueError("Wrong Input for Method!!")
@@ -391,7 +396,65 @@ class MultiNbh(MultiRun):
         
         # ax3.legend()
         plt.show()
+
+###############################################################################################################################
+
+class MultiNbhModel(MultiNbh):
+    '''Class that generates the data UNDER the Gaussian model, not from a population genetics perspective.
+    Simply overwerite the data creation method of MultiNbh, the rest (data analysis/visualization) is the same.'''
+    
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method of MultiNbh.'''
+        print("Craeting Dataset: %i" % data_set_nr)
+        # First set all the Parameter Values:
+        ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0] 
+        ips = ips_list[data_set_nr]  # Number of haploid Individuals per Node (For D_e divide by 2)  Loads the right Neighborhood Size for specific run.
         
+        
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
+        nr_loci = 200
+        # t = 5000
+        # gridsize_x, gridsize_y = 1000, 1000
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p.
+        ss = 0.04  # The std of fluctuations in f-space.
+        t0 = 1.0  # When do start the integration.
+        p_mean = 0.5 # Sets the mean allele frequency.
+        
+        # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+        # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+        
+        genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
+        
+        nbh = 4.0 * np.pi * ips / 2.0 * 1.0  # Calculate Neighborhood size
+        L = 2 * mu  # Calculate the effective mutation rate
+        KC = fac_kernel("DiffusionK0")  # Create the object that will calculate the Kernel.
+        KC.set_parameters([nbh, L, t0, ss])  # Sets parameters: Nbh, L, t0, ss
+        
+        print("Calculating Kernel...")
+        
+        tic=time()
+        kernel_mat = KC.calc_kernel_mat(position_list)  # Calculate the co-variance Matrix
+        toc=time()
+        print("Calculation Kernel runtime: %.6f:" % (toc-tic))
+        
+        grid = Grid() # Load the grid (contains method to created correlated data.
+        
+        for i in range(nr_loci):  # Iterate over all loci
+            print("Doing Locus: %i" % i)
+            genotypes = grid.draw_corr_genotypes_kernel(kernel_mat=kernel_mat, p_mean=p_mean)
+            genotype_matrix[:, i] = genotypes
+            
+        self.save_data_set(position_list, genotype_matrix, data_set_nr) # Save the Data.
+        
+            
+        # Now Pickle Some additional Information:
+        p_names = ["Nr Loci", "t0", "p_mean", "sigma", "ss", "mu", "ips", "Position List"]
+        ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list]
+        additional_info = ("Data generated under a gaussian Model")
+        self.pickle_parameters(p_names, ps, additional_info)
+    
+
 ###############################################################################################################################
 
 class MultiBarrier(MultiRun):
@@ -526,7 +589,9 @@ class MultiBarrier(MultiRun):
             
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
         
-    def visualize_barrier_strengths(self, res_numbers=range(0,100)):
+    
+        
+    def visualize_barrier_strengths(self, res_numbers=range(0, 100)):
         '''Method to visualize the strengths of the Barrier'''
         
         def load_pickle_data(i):
@@ -539,7 +604,7 @@ class MultiBarrier(MultiRun):
             # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             # Coordinates for more :
-            subfolder_meth = "method_k" + "/"  # Sets subfolder to which Method to use.
+            subfolder_meth = "method_k0" + "/"  # Sets subfolder to which Method to use.
             path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             res = pickle.load(open(path, "rb"))  # Loads the Data
@@ -551,21 +616,21 @@ class MultiBarrier(MultiRun):
         ll_rel_vecs = ll_vecs - ll_vecs_max[:, None]
         
         # How many Barrier Strengths:
-        k_len=len(ll_vecs[0])
+        k_len = len(ll_vecs[0])
         k_vec = np.linspace(0.0, 1, k_len)  # Creates the Grid for k
         
         plt.figure()
         ax = plt.gca()
-        #ax.set_aspect('equal')
-        im=ax.imshow(ll_rel_vecs.T,cmap="seismic", vmin=-6)
+        # ax.set_aspect('equal')
+        im = ax.imshow(ll_rel_vecs.T, cmap="seismic", vmin=-6)
         plt.ylabel("Reduced Migration")
         plt.xlabel("Data Set")
         plt.title("Marginal Likelihood Barrier")
-        plt.yticks(range(len(k_vec)),k_vec[::-1])
-        plt.hlines(0*(k_len-1), -0.5, 24.5, linewidth=1, color="g")
-        plt.hlines(0.25*(k_len-1), 24.5, 49.5, linewidth=1, color="g")
-        plt.hlines(0.5*(k_len-1), 49.5, 74.5, linewidth=1, color="g")
-        plt.hlines(1.0*(k_len-1), 74.5, 99.5, linewidth=1, color="g")
+        plt.yticks(range(len(k_vec)), k_vec[::-1])
+        plt.hlines(0 * (k_len - 1), -0.5, 24.5, linewidth=1, color="g")
+        plt.hlines(0.25 * (k_len - 1), 24.5, 49.5, linewidth=1, color="g")
+        plt.hlines(0.5 * (k_len - 1), 49.5, 74.5, linewidth=1, color="g")
+        plt.hlines(1.0 * (k_len - 1), 74.5, 99.5, linewidth=1, color="g")
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         plt.colorbar(im, cax=cax)
@@ -737,6 +802,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_barrier":
         return MultiBarrier(folder, multi_processing=multi_processing)
     
+    elif method == "multi_nbh_gaussian":
+        return MultiNbhModel(folder, multi_processing=multi_processing)
+    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -787,16 +855,20 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    #vis_mult_nbh("./nbh_folder/", method=2)
+    # vis_mult_nbh("./nbh_folder/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./barrier_folder1/", multi_processing=1)
-    #MultiRun.temp_visualize(method=2)
-    MultiRun.visualize_barrier_strengths(res_numbers = range(0, 100))
+    MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
+    #MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
+    #MultiRun.create_data_set(30)
+    MultiRun.analyze_data_set(30, method=0, fit_t0=0)
     
     
+    # MultiRun.temp_visualize(method=2)
+    #MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
     
+
 
 
 

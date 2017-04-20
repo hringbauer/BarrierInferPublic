@@ -187,17 +187,17 @@ class MLE_estimator(GenericLikelihoodModel):
         # print("Nr loci: %i" % nr_loci)
         
         with tf.device('/cpu:0'):  # GPU or CPU.
-            X = tf.Variable(dtype=tf.float64, initial_value=coords, trainable=False)
-            Y = tf.Variable(dtype=tf.float64, initial_value=genotypes, trainable=False)
-            F = tf.Variable(dtype=tf.float64, initial_value=np.random.normal(0.0, 0.1, (nr_inds, nr_loci)).astype('float64'),
+            X = tf.Variable(dtype=tf.float32, initial_value=coords, trainable=False)
+            Y = tf.Variable(dtype=tf.float32, initial_value=genotypes, trainable=False)
+            F = tf.Variable(dtype=tf.float32, initial_value=np.random.normal(0.0, 0.1, (nr_inds, nr_loci)).astype('float32'),
                             trainable=True)  # Initial Value for the F
         
-            K = tf.placeholder(shape=[nr_inds, nr_inds], dtype=tf.float64)  # Placeholder for the Kernel Matrix
-            mean_param = tf.placeholder(shape=[nr_loci], dtype=tf.float64)  # The Mean Hyper Parameters
+            K = tf.placeholder(shape=[nr_inds, nr_inds], dtype=tf.float32)  # Placeholder for the Kernel Matrix
+            mean_param = tf.placeholder(shape=[nr_loci], dtype=tf.float32)  # The Mean Hyper Parameters
           
             f_tot = F + mean_param[None, :]  # Adds mean term; None is at position of an individual
             g0 = tf.greater(Y, 0.5)  # Values where Y is greater than 0; i.e. data is 1.
-            g0 = tf.cast(g0, tf.float64)  # Transform so that can be multiplied
+            g0 = tf.cast(g0, tf.float32)  # Transform so that can be multiplied
             
             p = link_f(f_tot)  # Calculate novel p, assuming sin^2 Link Function.
             grad1 = grad_f(f_tot, g0)  # Calculate the Gradient.
@@ -214,7 +214,7 @@ class MLE_estimator(GenericLikelihoodModel):
             logL = tf.reduce_sum(data_fit + prior_fit)  # Modulo terms not depending on f: Check
             
             g = grad1 - Kinv_F  # Calculate Matrix for Gradients Check
-            lhs = -K[:, :, None] * W[None, :, :] - tf.eye(nr_inds, dtype=tf.float64)[:, :, None]  # Check (HEAD-ACHE)
+            lhs = -K[:, :, None] * W[None, :, :] - tf.eye(nr_inds, dtype=tf.float32)[:, :, None]  # Check (HEAD-ACHE)
             rhs = tf.matmul(K, g)
             
             update = tf.matrix_solve(tf.transpose(lhs, [2, 0, 1]), tf.transpose(rhs, [1, 0])[:, :, None])[:, :, 0]
@@ -222,7 +222,7 @@ class MLE_estimator(GenericLikelihoodModel):
             opt_op = F.assign(F - update)
             
             ##################
-            B = (W[:, None, :] ** 0.5) * K[:, :, None] * (W[None, :, :] ** 0.5) + tf.eye(nr_inds, dtype=tf.float64)[:, :, None]  # Check 
+            B = (W[:, None, :] ** 0.5) * K[:, :, None] * (W[None, :, :] ** 0.5) + tf.eye(nr_inds, dtype=tf.float32)[:, :, None]  # Check 
             
             det = tf.reduce_sum(tf.log(tf.matrix_diag_part(tf.cholesky(tf.transpose(B, [2, 0, 1])))))  # Factor of 2??
             # logdet = tf.reduce_sum(py_logdet(tf.transpose(B, [2, 0, 1])))  # Factor of 2?? Alex Log 
@@ -243,9 +243,9 @@ class MLE_estimator(GenericLikelihoodModel):
 # variance is right. Function, 1st and 2nd derivative:
 def link_f(f):  # Define Link function
     '''Sinus Squared Link function'''
-    pi = 0.999 * np.pi * tf.ones(tf.shape(f), dtype=tf.float64)  # Matrix - for values bigger than Pi. 
+    pi = 0.999 * np.pi * tf.ones(tf.shape(f), dtype=tf.float32)  # Matrix - for values bigger than Pi. 
     # Allow for values slightly smaller than Pi to infinte likelihood (to avoid infinities)
-    z = 0.001 * tf.ones(tf.shape(f), dtype=tf.float64)       
+    z = 0.001 * tf.ones(tf.shape(f), dtype=tf.float32)       
     # Matrix - for values smaller than 0. Allow for small values slightly bigger than 1 (to avoid infinities)
     f = tf.where(f > np.pi, pi, f)  # Make values bigger than pi almost pi
     f = tf.where(f < 0, z, f)  # Make values smaller than 0 almost 0
@@ -292,7 +292,7 @@ def py_logdet(x, name=None):
     with ops.op_scope([x], name, "Logdet") as name:
         logdet = py_func(lambda x: np.linalg.slogdet(x)[1],
                          [x],
-                         [tf.float64],
+                         [tf.float32],
                          name=name,
                          grad=_LogdetGrad)  # <-- here's the call to the gradient
     return logdet[0]
@@ -304,8 +304,8 @@ def _LogdetGrad(op, grad):
    
 ######################### Some lines to test the code and make plots
 if __name__ == "__main__":
-    X_data = np.loadtxt('./Data/coordinates00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    Y_data = np.loadtxt('./Data/data_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    X_data = np.loadtxt('./Data/coordinates00.csv', delimiter='$').astype('float32')  # Load the complete X-Data
+    Y_data = np.loadtxt('./Data/data_genotypes00.csv', delimiter='$').astype('float32')  # Load the complete Y-Data
     # Extract some information regarding the mean allele frequency:
     p_means = np.mean(Y_data, axis=0)
     print("Standard Deviation of mean allele frequencies: %.4f" % np.std(p_means))

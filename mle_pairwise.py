@@ -118,26 +118,34 @@ class MLE_pairwise(GenericLikelihoodModel):
         # Set Mean and Variance of the opposing genotypes.
         q_mean, q_var = 1 - p_mean, p_var
         
-        # Calculates Matrix of mismatches of Genotype pairs. 
-        genotype_mat = np.abs(genotypes[:, None] - genotypes[None, :]) 
-        genotypes11 = genotypes[:, None] * genotypes[None, :]  # Where both genotypes are 1.
-        genotypes00 = (1 - genotypes[:, None]) * (1 - genotypes[None, :])  # Where both genotypes are 0.
-         
-        # Extract upper triangular values into vectors to avoid double calculation:
         inds = np.triu_indices(nr_inds, 1)  # Only take everything above diagonal.
-        genotype_vec = genotype_mat[inds]  # Gives list of lists of differences.
-        genotype11_vec = genotypes11[inds]  # Gives list where both are 1.
-        genotype00_vec = genotypes00[inds]  # Gives list where both are 0.
-        kernel_vec = kernel_mat[inds]  # Gives list
         
-        # Do the composite likelihood Calculations:
-        ll_same0 = genotype00_vec * (kernel_vec[:, None] * q_mean + (1 - kernel_vec[:, None]) * (q_var + q_mean ** 2))
-        ll_same1 = genotype11_vec * (kernel_vec[:, None] * p_mean + (1 - kernel_vec[:, None]) * (p_var + p_mean ** 2))
-        ll_different = genotype_vec * (1 - kernel_vec[:, None]) * (p_mean - p_var - p_mean ** 2)  # That works. check
+        def ll_per_locus(genotypes, inds):
+            '''Calculates the likelihood per locus - Written to save Memory.
+            Genotype: Single array of genotypes.  But also works for multiple rows - Warning: Memory 
+            Inds: Which positions to use in difference Matrix.'''
+            # Calculates Matrix of mismatches of Genotype pairs. 
+            genotype_mat = np.abs(genotypes[:, None] - genotypes[None, :]) 
+            genotypes11 = genotypes[:, None] * genotypes[None, :]  # Where both genotypes are 1.
+            genotypes00 = (1 - genotypes[:, None]) * (1 - genotypes[None, :])  # Where both genotypes are 0.
+             
+            # Extract upper triangular values into vectors to avoid double calculation:
+            genotype_vec = genotype_mat[inds]  # Gives list of lists of differences.
+            genotype11_vec = genotypes11[inds]  # Gives list where both are 1.
+            genotype00_vec = genotypes00[inds]  # Gives list where both are 0.
+            kernel_vec = kernel_mat[inds]  # Gives list
+            
+            # Do the composite likelihood Calculations:
+            ll_same0 = genotype00_vec * (kernel_vec * q_mean + (1 - kernel_vec) * (q_var + q_mean ** 2))
+            ll_same1 = genotype11_vec * (kernel_vec * p_mean + (1 - kernel_vec) * (p_var + p_mean ** 2))
+            ll_different = genotype_vec * (1 - kernel_vec) * (p_mean - p_var - p_mean ** 2)  # That works. check
+            
+            ll = np.sum(np.log((ll_same0 + ll_same1 + ll_different)))  # Calulate the sum of all log-likelihoods. There should be no more 0.
+            return ll  # Return the Log Likelihood
         
-        ll = np.sum(np.log((ll_same0 + ll_same1 + ll_different)))  # Calulate the sum of all log-likelihoods. There should be no more 0.
-        
-        return ll  # Return the Log Likelihood
+        ll_vec = [ll_per_locus(genotype_row, inds) for genotype_row in genotypes.T]   # calculates ll per locus. Iterate over columns of matrix
+        total_ll = np.sum(ll_vec)   # Sum all log likelihoods
+        return total_ll             # Return the total Likelihood.
         
     
     def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000

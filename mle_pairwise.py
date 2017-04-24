@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import cPickle as pickle
+import gc
     
 class MLE_pairwise(GenericLikelihoodModel):
     '''
@@ -84,11 +85,14 @@ class MLE_pairwise(GenericLikelihoodModel):
         
         # Calculate Kernel matrix
         coords = self.exog
+        print("Maximum Memory usage before Kernel calculation: %.4f MB" % memory_usage_resource())
         self.kernel.set_parameters(params)
         kernel_mat = self.kernel.calc_kernel_mat(coords) 
         
         var = params[-1]  # Assumes that the last parameter of the param-vector gives the all. freq. Variance.
         # Calculate Log Likelihood
+        
+        
         ll = self.likelihood_function(kernel_mat, var)
         
 
@@ -476,7 +480,9 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[65, 
     # Do the actual Fitting: 
     fit = MLE_obj.fit(start_params=start_params)  # Could alter method here. nbh, mu
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
-    
+        
+
+
 if __name__ == "__main__":
     position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data

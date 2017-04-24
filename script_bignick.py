@@ -5,9 +5,10 @@ Here you go Mr. AK - make it happen:-)
 
 from multi_run import fac_method
 import pickle as pickle
+import numpy as np
 import sys
 
-mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
         
 ###########Methods for creating Barrier Likelihood Profiles:
@@ -44,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-data_set_nr = int(sys.argv[1])  # Which data-set to use
-#data_set_nr = 1
+#data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 29
 print("Starting Dataset Nr %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -57,13 +58,11 @@ MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp)
 ########### For creating the data sets ###############
 
 #MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.analyze_data_set(data_set_nr, method=2)
-#MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
+#MultiRun.analyze_data_set(data_set_nr, method=2)
+MultiRun.analyze_data_set(data_set_nr, method=1)  # Analyzes the results and pickles them.
 #MultiRun.analyze_data_set(data_set_nr, method=1)
 
 print("Run %i completed. Good job!" % data_set_nr)
-
-
 
 
 

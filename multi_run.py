@@ -190,8 +190,8 @@ class MultiNbh(MultiRun):
         nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
         start_list = [[nbh_size, 0.005, 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
-        if fit_t0==1:  # If t0 is to be fitted as well
-            start_list = [[nbh_size, 0.005, 1.0 ,0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
+        if fit_t0 == 1:  # If t0 is to be fitted as well
+            start_list = [[nbh_size, 0.005, 1.0 , 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
         inds = range(len(position_list))
@@ -209,7 +209,7 @@ class MultiNbh(MultiRun):
         elif method == 2:
             MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing, fit_t0=fit_t0)
             start_list = [[nbh_size, 0.006, 0.5] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
-            if fit_t0==1:
+            if fit_t0 == 1:
                 start_list = [[nbh_size, 0.006, 1.0, 0.5] for nbh_size in nbh_sizes]  # Update Vector of Start Lists
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
@@ -419,7 +419,7 @@ class MultiNbhModel(MultiNbh):
         mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p.
         ss = 0.04  # The std of fluctuations in f-space.
         t0 = 1.0  # When do start the integration.
-        p_mean = 0.5 # Sets the mean allele frequency.
+        p_mean = 0.5  # Sets the mean allele frequency.
         
         # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
         # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
@@ -433,19 +433,19 @@ class MultiNbhModel(MultiNbh):
         
         print("Calculating Kernel...")
         
-        tic=time()
+        tic = time()
         kernel_mat = KC.calc_kernel_mat(position_list)  # Calculate the co-variance Matrix
-        toc=time()
-        print("Calculation Kernel runtime: %.6f:" % (toc-tic))
+        toc = time()
+        print("Calculation Kernel runtime: %.6f:" % (toc - tic))
         
-        grid = Grid() # Load the grid (contains method to created correlated data.
+        grid = Grid()  # Load the grid (contains method to created correlated data.
         
         for i in range(nr_loci):  # Iterate over all loci
             print("Doing Locus: %i" % i)
             genotypes = grid.draw_corr_genotypes_kernel(kernel_mat=kernel_mat, p_mean=p_mean)
             genotype_matrix[:, i] = genotypes
             
-        self.save_data_set(position_list, genotype_matrix, data_set_nr) # Save the Data.
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)  # Save the Data.
         
             
         # Now Pickle Some additional Information:
@@ -772,7 +772,11 @@ class TestRun(MultiRun):
     
         # results0 = ml_estimator.fit(method="BFGS")  # Do the actual fit. method="BFGS" possible
         params = fit.params
-        conf_ind = fit.conf_int()
+        try: 
+            conf_ind = fit.conf_int()
+        except:
+            print("Finding Confidence Intervalls failed...")
+            conf_ind = [[param, param] for param in params]  # The CIs
         
         print(np.shape(conf_int))
         print(params)  # Print Parameter Estimates
@@ -829,9 +833,9 @@ def an_mult_nbh(folder):
     
 def vis_mult_nbh(folder, method):
     '''Visualize the analysis of Multiple Neighborhood Sizes.'''
-    MultiRun = fac_method("multi_nbh", folder)
+    MultiRun = fac_method("multi_nbh_gaussian", folder)
     MultiRun.temp_visualize(method)
-    MultiRun.visualize_all_methods()
+    # MultiRun.visualize_all_methods()
     
 ##########################################################################################
 # Run all data-sets
@@ -855,18 +859,18 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    # vis_mult_nbh("./nbh_folder/", method=2)
+    vis_mult_nbh("./nbh_folder_gauss/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
-    #MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
-    #MultiRun.create_data_set(30)
-    MultiRun.analyze_data_set(30, method=0, fit_t0=0)
+    # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
+    # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
+    # MultiRun.create_data_set(30)
+    # MultiRun.analyze_data_set(30, method=0, fit_t0=0)
     
     
     # MultiRun.temp_visualize(method=2)
-    #MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
+    # MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
     
 
 

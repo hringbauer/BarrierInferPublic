@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import multiprocessing as mp  # Library for Multiprocessing
 import intergand  # Import the Integrand Watch the type
 import time
+import objgraph
 # get_ipython().magic(u'matplotlib notebook')
 
 # In[49]:
@@ -30,6 +31,7 @@ class Kernel(object):
     Covariance Matrix '''
     nr_parameters = 0  # The Number of Parameters to optimize
     multi_processing = 0  # Whether to use multi-processing or not (advantegous for Kernel)
+    counter = 0
     
     def __init__(self):
         print("Sets the parameters of the respective Kernel")
@@ -317,9 +319,11 @@ class DiffusionBarrierK0(Kernel):
         coords = np.array(coords).astype("float")  # Make Coordinates a Numpy Array!
         nr_inds = len(coords)
         
+        print("Maximum Memory usage 0: %.4f MB" % memory_usage_resource())
         # Gets the upper triangular Indices
         inds0, inds1 = np.triu_indices(nr_inds)  # Gets all the indices which are needed.
         inds = np.triu_indices(nr_inds)
+        
         
         y_coords = coords[:, 1]  # Array of all the y-Coordinates
         rel_ycoord_mat = np.abs(y_coords[:, None] - y_coords[None, :])  # Matrix of relative coordinates. Due to symmetry take absolute value
@@ -336,6 +340,7 @@ class DiffusionBarrierK0(Kernel):
         #Extracts unique values and indices to reconstruct to avoid double calculation
         argument_vec_unique, indices = unique_rows(np.array(argument_vec))
         
+        print("Maximum Memory usage 1: %.4f MB" % memory_usage_resource())
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
@@ -344,10 +349,16 @@ class DiffusionBarrierK0(Kernel):
             pool.close()
             pool.join()
             
-        else: pool_outputs = map(numerical_integration_barrier_mr, argument_vec_unique)
+        elif self.multi_processing == 0: 
+            pool_outputs = map(numerical_integration_barrier_mr, argument_vec_unique)
         
-        pool_outputs = np.array(pool_outputs)[indices]  # Restores full array.
+        else:
+            raise ValueError("Enter valid Multi Processing Variable!")
+            
+        pool_outputs = np.copy(np.array(pool_outputs)[indices])  # Restores full array. Copy to make old memory inaccessible.
         
+        print("Maximum Memory usage 2: %.4f MB" % memory_usage_resource())
+         
         # Fills up upper triangle again
         kernel = np.zeros((nr_inds, nr_inds))
         kernel[inds] = pool_outputs  
@@ -356,7 +367,15 @@ class DiffusionBarrierK0(Kernel):
         kernel = np.triu(kernel) + np.triu(kernel, -1).T - np.diag(np.diag(kernel))   
         K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
         K2 = self.ss * np.ones(np.shape(kernel))  # Add the kernel from Deviations from the Mean:
-        return (kernel + K1 + K2)
+        
+        print("Maximum Memory usage 3: %.4f MB" % memory_usage_resource())
+        del pool_outputs
+        del argument_vec_unique
+        del indices
+        del inds
+        output = kernel + K1 + K2
+        del kernel
+        return output
 
 
 class DiffusionK(Kernel):
@@ -490,6 +509,7 @@ class DiffusionK0(Kernel):
     def calc_kernel_mat(self, coords):
         '''Calculates Full Covariance Kernel
         Calculates only upper triangular Matrix; and used multi-processing'''
+        print("Maximum Memory usage 0: %.4f MB" % memory_usage_resource())
         coords = np.array(coords)  # Make Coordinates a Numpy Array!
         nr_inds = len(coords)
         
@@ -498,11 +518,15 @@ class DiffusionK0(Kernel):
         ind_ut = np.triu_indices(nr_inds)  # Indices for upper triangular array
         dist_vec = dist_mat[ind_ut]
         argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in dist_vec]  # Create vector with all arguments
+        
+        print("Maximum Memory usage 0.5: %.4f MB" % memory_usage_resource())
         # argument_vec = zip([self.t0] * nr_inds, [np.inf] * nr_inds, , ,dist_vec)  
         
         #Extracts unique values and indices to reconstruct to avoid double calculation
         argument_vec_unique, indices = unique_rows(np.array(argument_vec))
         
+        print("Number of Unique Arguments: %.4f" % len(argument_vec_unique))
+        print("Maximum Memory usage 1: %.4f MB" % memory_usage_resource())
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
@@ -511,19 +535,38 @@ class DiffusionK0(Kernel):
             pool.close()
             pool.join()
             
-        else: pool_outputs = map(numerical_integration_mr, argument_vec_unique)
+        elif self.multi_processing == 0:
+            pool_outputs = map(numerical_integration_mr, argument_vec_unique)
+            
+        else: raise ValueError("Enter valid Multiprocessing Variable!")
         
-        pool_outputs = np.array(pool_outputs)[indices]  # Restores the full result vector
+        pool_outputs = np.copy(np.array(pool_outputs)[indices])  # Restores the full result vector
         
         # Fills up upper triangle again
-        kernel = np.zeros((nr_inds, nr_inds))
-        kernel[ind_ut] = pool_outputs  
+        up_tri_kernel = np.zeros((nr_inds, nr_inds))
+        up_tri_kernel[ind_ut] = pool_outputs  
+        
+        print("Maximum Memory usage 2: %.4f MB" % memory_usage_resource())
         
         # Symmetrizes again and fill up everything:
-        kernel = np.triu(kernel) + np.triu(kernel, -1).T - np.diag(np.diag(kernel))   
+        full_kernel = np.triu(up_tri_kernel) + np.triu(up_tri_kernel, -1).T - np.diag(np.diag(up_tri_kernel))   
         K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
-        K2 = self.ss * np.ones(np.shape(kernel))  # Add the kernel from Deviations from the Mean
-        return kernel + K1 + K2
+        K2 = self.ss * np.ones(np.shape(full_kernel))  # Add the kernel from Deviations from the Mean
+        
+        print("Maximum Memory usage 3: %.4f MB" % memory_usage_resource())
+        
+        # Manually delete Variable to take care of Memory leak.
+        output = full_kernel + K1 + K2
+        self.counter+=1
+        roots = objgraph.get_leaking_objects()
+        
+        print("Number of leaking objects: %i:" % len(roots))
+        if self.counter>20:
+            objgraph.show_growth()
+            
+        #objgraph.show_most_common_types(limit=50)
+        #objgraph.show_growth()
+        return output
         
         
 # In[98]:
@@ -601,7 +644,7 @@ def numerical_integration(lb, ub, nbh, L, r):
     '''Function for numerical Integration.
     Main reason: It is outside a class so multiprocessing can access it.'''
     # print([lb, ub, r, nbh, L]))
-    return quad(intergand.integrand_c,  # # intergand.integrand_c   for c function. Old one was integrand
+    return quad(intergand.integrand_c,  # # intergand.integrand_c   for c function. Old one was integrand; new one is intergand.integrand_c
         lb, ub, args=(r, nbh, L))[0]  # Returns only the Integration, not the uncertainty
 
 def numerical_integration_mr(arg):
@@ -622,10 +665,18 @@ def numerical_integration_barrier_mr(arg):
 
 def unique_rows(data):
     '''Gives back unique rows in data and the indices needed to reconstruct the original thing'''
+    data = np.copy(data)  # Make copy to avoid GC getting stuck.
     uniq, indices = np.unique(data.view(data.dtype.descr * data.shape[1]), return_inverse=True)
-    return uniq.view(data.dtype).reshape(-1, data.shape[1]), indices
+    return np.copy(uniq.view(data.dtype).reshape(-1, data.shape[1])), np.copy(indices)
         
-    
+
+def memory_usage_resource():
+    '''Returns Maximum Memory usage'''
+    import resource
+    rusage_denom = 1024.
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
+    return mem
+
 
 # Factory Method that produces the Kernel:
 def fac_kernel(kernel_type):
@@ -786,6 +837,17 @@ def timer_kernel_diff(nr_runs):
     
     print(run_times)
     print("Mean Runtime: %.6f" % np.mean(run_times))
+    
+def memory_leak():
+    '''Minimal working example for memory leak'''
+    position_list = np.array([(500 + i, 500 + j) for i in range(-19, 0, 4) for j in range(-25, 0, 4)])
+    kc = fac_kernel("DiffusionK0")
+    kc.set_parameters([100, 0.006, 1.0, 0.04])  # k', t0, nbh, L, ss
+    
+    for _ in xrange(100):
+        kc.calc_kernel_mat(coords)
+    
+    
     
 
 if __name__ == "__main__":

@@ -99,6 +99,7 @@ class MLE_estimator(GenericLikelihoodModel):
             ll, = sess.run([margL, ], {K: kernel_mat, mean_param: self.mps})  # Now calculate the Marginal Likelihood
         
         toc = time()
+        print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
         print("Total runtime: %.4f " % (toc - tic))
         print("Total log likelihood: %.4f \n" % ll)
         return ll  # Return the log likelihood
@@ -300,6 +301,13 @@ def py_logdet(x, name=None):
 def _LogdetGrad(op, grad):
     x = op.inputs[0]
     return tf.matrix_inverse(x) * grad[:, None, None]
+
+def memory_usage_resource():
+    '''Returns Maximum Memory usage'''
+    import resource
+    rusage_denom = 1024.
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
+    return mem
 
    
 ######################### Some lines to test the code and make plots

@@ -94,6 +94,7 @@ class MLE_pairwise(GenericLikelihoodModel):
 
     
         toc = time()
+        print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
         print("Total runtime: %.4f " % (toc - tic))
         print("Total log likelihood: %.4f \n" % ll)
         return ll  # Return the log likelihood
@@ -419,8 +420,14 @@ class MLE_f_emp(GenericLikelihoodModel):
     def fit_k_only(self, start_params=None, full_parameters=None, maxiter=500, maxfun=1000, **kwds):
         '''Method that fits only k'''
         print("To be implemented...")
-        
 
+######################################################### 
+def memory_usage_resource():
+    '''Returns Maximum Memory usage'''
+    import resource
+    rusage_denom = 1024.
+    mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / rusage_denom
+    return mem
 
    
 ######################### Some lines to test the code and make plots
@@ -479,3 +486,5 @@ if __name__ == "__main__":
     # analyze_normal(position_list, genotype_mat)
     
 #########################################
+
+

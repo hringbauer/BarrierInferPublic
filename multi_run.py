@@ -453,7 +453,7 @@ class MultiNbhModel(MultiNbh):
         ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list]
         additional_info = ("Data generated under a gaussian Model")
         self.pickle_parameters(p_names, ps, additional_info)
-    
+
 
 ###############################################################################################################################
 
@@ -476,8 +476,8 @@ class MultiBarrier(MultiRun):
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
         
-        # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
-        position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
+        # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
         nr_loci = 200
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -703,6 +703,180 @@ class MultiBarrier(MultiRun):
         plt.xlabel("Dataset")
         plt.show()
         
+##############################################################################################################################
+class MultiCluster(MultiBarrier):
+    '''Tests 100 runs for different degrees of clustering
+    4x25; 25 Datasets are the same.'''
+    
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method.'''
+        print("Creating Dataset: %i" % data_set_nr)
+        # First set all the Parameter Values:
+        barrier_strength_list = 25 * [0.1]
+        barrier_strength = barrier_strength_list[data_set_nr]
+        
+        if data_set_nr > 25:
+            raise ValueError("Only 25 Datasets available")
+        
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        
+        
+        position_list = np.array([(500 + i, 500 + j) for i in range(-11, 12, 1) for j in range(-17, 18, 1)])  # Spaced 1 sigma apart
+        # 24*36
+        nr_loci = 200
+        t = 5000
+        gridsize_x, gridsize_y = 1000, 1000
+        barrier_pos = 500.5
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.1
+        p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_mean = p_mean + p_delta
+        
+        # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+        # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+        
+        genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
+        
+        for i in range(nr_loci):
+            grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+            grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
+            print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
+            grid.set_samples(position_list)
+            grid.set_barrier_parameters(barrier_pos, barrier_strength)  # Where to set the Barrier and its strength
+            grid.update_grid_t(t, p=p_mean[i], barrier=1)  # Uses p_mean[i] as mean allele Frequency.
+            genotype_matrix[:, i] = grid.genotypes
+        position_list = position_list.astype("float")  # So it works when one subtracts a float.
+        # position_list_update = position_list[:, 0] - grid.barrier 
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)
+        
+            
+        # Now Pickle Some additional Information:
+        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
+        ps = [nr_loci, t, p_mean, sigma, mu, ips, sd_p, position_list]
+        additional_info = ("1 Test Run for Grid object with high neighborhood size")
+        self.pickle_parameters(p_names, ps, additional_info)
+            
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, position_barrier=500.5, method=2):
+        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
+        method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
+        
+        if data_set_nr >= 100:
+            raise ValueError("DataSet does not exist.")
+            
+        data_set_eff = data_set_nr % 25  # Which data-set to use
+        batch_nr = np.floor(data_set_nr / 25)  # Which batch to use
+        assert(batch_nr * 25 + data_set_eff == data_set_nr)  # Make sure everything works.
+        
+        position_list, genotype_mat = self.load_data_set(data_set_eff)  # Loads the Data 
+        
+        def group_inds(position_list, genotypes, demes_x=10, demes_y=10):
+            '''Function that groups indviduals into demes and gives back mean deme position
+            and mean deme genotype'''
+            nr_inds, nr_markers = np.shape(genotypes)
+            
+            x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+            
+            x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
+            y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
+            
+            x_inds = np.digitize(x_coords, x_bins)
+            y_inds = np.digitize(y_coords, y_bins)
+            
+            nr_demes = demes_x * demes_y
+            
+            position_list_new = np.zeros((nr_demes, 2)) - 1.0
+            genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0
+            
+            # Iterate over every deme
+            for i in xrange(1, demes_x + 1):
+                for j in range(1, demes_y + 1):
+                    inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
+                    
+                    row = (i - 1) * demes_y + (j - 1)  # Which row to set the data         
+                    position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
+                    
+                    matching_genotypes = genotypes[inds, :]
+                    genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
+            
+            return position_list_new, genotypes_new
+        
+        
+        # Then group the Individuals:
+        if batch_nr == 0:
+            position_list, genotype_mat = position_list, genotype_mat  # No grouping whatsoever: 24x36
+            
+        elif batch_nr == 1:
+            position_list, genotype_mat = group_inds(position_list, genotype_mat, demes_x=12, demes_y=18)  # 2x2 clustering
+            
+        elif batch_nr == 2:
+            position_list, genotype_mat = group_inds(position_list, genotype_mat, demes_x=8, demes_y=12)  # 3x3 clustering
+            
+        elif batch_nr == 3:
+            position_list, genotype_mat = group_inds(position_list, genotype_mat, demes_x=6, demes_y=9)  # 4x4 clustering
+        
+        
+        
+        # Creates the "right" starting parameters:
+        # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
+        barrier_strength_list = 100 * [0.1]
+        l = 0.006
+
+        nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
+        start_list = [[nbh_size, l, bs, 0.004] for bs in barrier_strength_list]  # General Vector for Start-Lists
+        
+        # Pick Random_ind_nr many Individuals:
+        # inds = range(len(position_list))
+        # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+        # inds = inds[:random_ind_nr]  # Only load first nr_inds
+
+        # position_list = position_list[inds, :]
+        # genotype_mat = genotype_mat[inds, :]
+        
+        if method == 0:
+            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+        elif method == 1:
+            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_list = [[nbh_size, l, bs, 0.01] for bs in barrier_strength_list]  # Update Vector of Start Lists
+        elif method == 2:
+            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_list = [[nbh_size, l, bs, 0.5] for bs in barrier_strength_list]  # Update Vector of Start Lists
+        elif method == 3:  # Do the fitting based on binned data
+            MLE_obj = Analysis(position_list, genotype_mat) 
+        else: raise ValueError("Wrong Input for Method!!")
+        
+        MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
+        
+        fit = MLE_obj.fit(start_params=start_list[data_set_nr])
+
+        params = fit.params
+        try:
+            conf_ind = fit.conf_int()
+        except: conf_ind = np.array([[param, param] for param in params])
+        
+        # Pickle Parameter Estimates:
+        subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+        
+        directory = os.path.dirname(path)  # Extract Directory
+        if not os.path.exists(directory):  # Creates Folder if not already existing
+            os.makedirs(directory)
+            
+        pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+
+
+
+##############################################################################################################################
+class SecondaryContact(MultiBarrier):
+    '''
+    Tests 100 Runs for different Barrier strengths.
+    Everything set so that 100 Data-Sets are run; with 4x25 Parameters.
+    '''
+    
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method.'''
+        raise NotImplementedError("Implement This!!!")
     
         
 ###############################################################################################################################
@@ -718,7 +892,7 @@ class TestRun(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Craeting Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 2) for j in range(-25, 25, 2)])  # Original position list
+        position_list = np.array([(500 + i, 500 + j) for i in range(-11, 12, 1) for j in range(-17, 18, 1)])  # Original position list
         nr_loci = 100
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
@@ -809,6 +983,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_nbh_gaussian":
         return MultiNbhModel(folder, multi_processing=multi_processing)
     
+    elif method == "multi_cluster":
+        return MultiCluster(folder, multi_processing=multi_processing)
+    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -835,7 +1012,7 @@ def vis_mult_nbh(folder, method):
     '''Visualize the analysis of Multiple Neighborhood Sizes.'''
     MultiRun = fac_method("multi_nbh_gaussian", folder)
     MultiRun.temp_visualize(method)
-    # MultiRun.visualize_all_methods()
+    MultiRun.visualize_all_methods()
     
 ##########################################################################################
 # Run all data-sets
@@ -859,7 +1036,7 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    vis_mult_nbh("./nbh_folder_gauss/", method=2)
+    #vis_mult_nbh("./nbh_folder_gauss/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
@@ -871,6 +1048,13 @@ if __name__ == "__main__":
     
     # MultiRun.temp_visualize(method=2)
     # MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
+    
+    ###################################################
+    ####Create Multi Cluster Data Set
+    MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
+    #MultiRun.create_data_set(51, method=2)
+    MultiRun.analyze_data_set(76, method=2)
+    
     
 
 

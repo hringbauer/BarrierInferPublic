@@ -1,6 +1,10 @@
 '''
 Created on 27.01.2015
 The Grid class
+Contains grid to run my simulations; 
+it can run no barrier and a barrier
+There is also a SecondaryGrid class that inherits from it and can
+simulate a scenario of secondary contact
 @author: hringbauer
 '''
 
@@ -87,7 +91,7 @@ class Grid(object):
         # Some output for debugging:
         # print("Number of individuals hit by mutation: %i" % np.sum([len(i) for i in self.final_ancestry]))
         # print("Total length of ancestry: %i" % np.sum([len(i) for i in self.ancestry]))
-        print("Run complete\n ")  
+        print("Run complete Lol\n ")  
         
     def update_grid(self):
         '''Update the grid for a single generation'''
@@ -269,8 +273,8 @@ class Grid(object):
         print(std_param)
         
         # Fit the Diffusion Kernel
-        KC = fac_kernel("DiffusionK")
-        KC.set_parameters([1.0, 1.0, 0.001, 1.0])  # Diffusion; t0, mutation, density 
+        KC = fac_kernel("DiffusionK0")
+        KC.set_parameters([4 * np.pi * 5.0, 0.006, 1.0, 0.0])  # Diffusion; t0, mutation, density 
         print(KC.give_parameters())
         x_plot = np.linspace(min(x), max(x), 100)    
         coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coords-Vector. Begin with [0,0]!!
@@ -286,7 +290,7 @@ class Grid(object):
             # plt.semilogy(x, fit, 'y-.', label="Fitted exponential decay")  # Plot of exponential fit
             plt.plot(x_plot, bessel0(x_plot, C1, r1), 'r-.', label="Fitted Bessel decay", linewidth=2)  # Plot of exact fit
             plt.plot(x_plot, kernel[1:, 0], label="From Kernel Function")
-            plt.plot(x_plot, bessel0(x_plot, 1 / (np.pi * 4 * 1.0), np.sqrt(2 * 0.001)), 'g-.', label="Ideal Bessel decay", linewidth=2)
+            plt.plot(x_plot, bessel0(x_plot, 1 / (np.pi * 4 * 5.0), np.sqrt(2 * 0.003)), 'g-.', label="Ideal Bessel decay", linewidth=2)
             # plt.plot(x_plot, y_vec, 'm-.', label="Direct numerical Integration")
             
             plt.xlabel('Pairwise Distance', fontsize=25)
@@ -295,11 +299,6 @@ class Grid(object):
             plt.tick_params(axis='y', labelsize=15)
             plt.legend(prop={'size':15})
             plt.show()
-           
-    def simulate_correlated_data(self, position_list, cov_func):
-        '''Given a position list, simulate correlated data.
-        Simulate as draws from a random Gaussian.'''
-        print("Todo")      
 
     def draw_correlated_genotypes(self, nr_genotypes, l, a, c, p_mean, show=False, fluc_mean=0, coords=None):
         '''Draw correlated genotypes
@@ -403,7 +402,116 @@ class Grid(object):
         p = arc_sin_lin(data)  # Do an arc-sin transform
         genotypes = np.random.binomial(1, p)  # Draw genotypes
         return genotypes  # Returns the geographic list + Data
-               
+ 
+ ###################################################################################################################   
+    
+class Secondary_Grid(Grid):
+    # Grid that can simulate secondary contact
+    test = 100
+    gridsize_x = 1000
+    gridsize_y = 1000
+    ind_list = []  # List of lists to which the initial genotypes correspond
+    update_list = []  # List of individuals do update. Contains x and y positions
+    position_list = []  # List of initial positions.
+    ancestry = []  # List of individuals that currently descent from individual i
+    final_ancestry_left = []  # List of final ancestry from left-hand side
+    final_ancestry_right = []  # List of final ancestry from right-hand side
+    genotypes = []  # List of the genotypes of every individuals
+    genotype_mat = []  # List of the genotype matrix. In case multiple multiple markers are simulated
+    t = 0  # Current time back in generations.
+    barrier = 500.5
+    barrier_strength = 1  # The strength of the barrier # 1 Everything migrates; 0 Nothing Migrates
+    sigma = 0.965  # 0.965  # 1.98 # 0.965
+    ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.003  # The Mutation/Long Distance Migration rate.
+    
+    def __init__(self):  # Initializes an empty grid
+        print("Initializing Grid for secondary contact...")  # Actually all relevant things are set with set_samples
+        
+        
+    def update_grid_t(self, t, coalesce=1, barrier=0, p1=0.5, p2=0.5):
+        '''Updates the grid for t generations'''
+        for i in range(t):
+            t += 1  # Adds time to the generation clock!
+            self.drop_mutations()  # Drops mutations that moves lineages into their pension
+            
+            if i % 100 == 0:
+                print("Doing generation: %i " % i)
+            
+            if barrier == 0:
+                self.update_grid()  # Updates the update list
+            
+            elif barrier == 1:  # In case of barrier
+                self.update_grid_barrier()
+                
+            else:
+                raise Exception("Only 1/0 Input allowed!")
+            
+            if coalesce == 1:
+                self.coal_inds()  # Coalesces individuals in the same position; and merges the off-spring indices
+                
+        self.assign_ancestry()  # Assigns ancestry to left and right; gets back Lineages from pension
+        # And assigns them randomly
+        
+        self.draw_genotypes(p1, p2)  # Draw genotypes
+    
+    # Some output for debugging:
+    # print("Number of individuals hit by mutation: %i" % np.sum([len(i) for i in self.final_ancestry]))
+    # print("Total length of ancestry: %i" % np.sum([len(i) for i in self.ancestry]))
+        print("Run complete\n ") 
+    
+    def assign_ancestry(self):
+        '''Assign Ancestry to left or to the right of barrier; i.e. 
+        secondary contact zone. Use axis one.'''
+        
+        # Assign ancestry to left if x-Axis position smaller than where the barrier is
+        self.ancestry_left = [self.ancestry[i] for i, pos in enumerate(self.update_list) if pos[0] < self.barrier]
+        
+        # Assign it to the right in if x-Axis position bigger than where the barrier is
+        self.ancestry_right = [self.ancestry[i] for i, pos in enumerate(self.update_list) if pos[0] >= self.barrier]
+        
+        assert(len(self.ancestry_left) + len(self.ancestry_right) == len(self.ancestry))  # Assert that everything worked
+        
+        # Randomly split up final_ancestry:
+        n = len(self.final_ancestry)
+        left = np.random.random(n)
+        self.final_ancestry_left = [self.final_ancestry[i] for i in xrange(n) if left[i] < 0.5]
+        self.final_ancestry_right = [self.final_ancestry[i] for i in xrange(n) if left[i] >= 0.5]
+        
+        assert(len(self.final_ancestry_left) + len(self.final_ancestry_right) == len(self.final_ancestry))  # Check whether the splitting worked
+        
+        self.ancestry_left = self.ancestry_left + self.final_ancestry_left  # Gets non-active lineages back from Pension
+        self.ancestry_right = self.ancestry_right + self.final_ancestry_right  # Gets non-active lineages back from Pension
+        
+        self.ancestry = self.ancestry_left + self.ancestry_right  # For calculation of full paiwrise F-Statistics
+        
+        return self.ancestry_left, self.ancestry_right
+        
+        
+    def draw_genotypes(self, p1=0.5, p2=0.5):
+        '''Method that draws genotypes from pool of allele freqs.
+        p is the frequency of the allele from which one has to draw.
+        p1: left. p2: right
+        Sets genotype i to a certain allele.'''
+
+        
+        for lists in self.ancestry_left:
+            all_freq = np.random.random() < p1  # Draws the allele Frequency
+            for i in lists:
+                self.genotypes[i] = all_freq  # Sets the Genotype to that allele Frequency              
+        for i in lists:
+                self.genotypes[i] = all_freq  # Sets the Genotype to that allele Frequency     
+        
+        for lists in self.ancestry_right:
+            all_freq = np.random.random() < p2
+            for i in lists:
+                self.genotypes[i] = all_freq  # Sets the Genotype to that allele Frequency  
+                
+        assert(np.sum(self.genotypes < 0) == 0)  # Check whether all Genotypes are set   
+                
+        print(self.genotypes)
+            
+                   
 
 def arc_sin_lin(x):
     '''Arcus-Sinus Link function'''
@@ -473,6 +581,25 @@ def test_fit_f():
     grid.update_grid_t(5000)  # Updates for t Generations
     grid.fit_F(show=True)
     
+def test_secondary_contact():
+    '''Test secondary contact scenario.'''
+    position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
+    grid = Secondary_Grid()
+    grid.barrier = 550.5
+    grid.set_samples(position_list)  # Sets the samples
+    grid.update_grid_t(10, p1=0.0, p2=1.0)  # Updates for t Generations
+    grid.fit_F(show=True)
+    np.savetxt("./coordinates_snd.csv", position_list, delimiter="$")  # Save the coordinates
+    genotypes= np.reshape(grid.genotypes, (len(grid.genotypes)), 1)
+    np.savetxt("./data_genotypes_snd.csv", genotypes, delimiter="$")  # Save the data 
+    print("Run Complete; data saved.")
+        
+    
+    
+    
+if __name__ == "__main__":
+    # test_fit_f()
+    test_secondary_contact()
     
     # grid.extract_F(20, show=True)
 

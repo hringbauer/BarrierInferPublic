@@ -865,6 +865,95 @@ class MultiCluster(MultiBarrier):
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
 
+##############################################################################################################################
+
+class MultiBootsTrap(MultiBarrier):
+    '''
+    Class that bootstrap over Datasets.
+    Generates Bootstraps when creating data-set
+    
+    When initializing it; one can give it the path to the 
+    data set over which one has to bootstrap.
+    
+    Inherits from MultiBarrier. Uses its Analyze Data-Set Method.
+    '''
+    
+    # Paths to the File over which to bootstrap
+    position_path = "./cluster_folder/barrier_file_coords00.csv"  # Path to the data set over which one has to bootstrap
+    gtp_path = "./cluster_folder/barrier_file_genotypes00.csv"
+    
+    def __init__(self, folder, nr_data_sets=100, nr_params=4, **kwds):
+        '''Initializes the BootsTrap class. Path_data_set is the path to the 
+        data set over which to bootstrap.'''
+        super(MultiBootsTrap, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        self.name = "bt_file"
+    
+    def set_data_path(self, position_path, gtp_path):
+        '''Sets the path to the position and genotype files.'''
+        self.position_path = position_path
+        self.gtp_path = gtp_path
+    
+    def create_data_set(self, data_set_nr):
+        '''In this case one actually does 
+        the bootstrapping'''
+        
+        def group_inds(position_list, genotypes, demes_x=10, demes_y=10):
+            '''Function that groups indviduals into demes and gives back mean deme position
+            and mean deme genotype'''
+            nr_inds, nr_markers = np.shape(genotypes)
+            
+            x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+            
+            x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
+            y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
+            
+            x_inds = np.digitize(x_coords, x_bins)
+            y_inds = np.digitize(y_coords, y_bins)
+            
+            nr_demes = demes_x * demes_y
+            
+            position_list_new = np.zeros((nr_demes, 2)) - 1.0
+            genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0
+            
+            # Iterate over every deme
+            for i in xrange(1, demes_x + 1):
+                for j in range(1, demes_y + 1):
+                    inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
+                    
+                    row = (i - 1) * demes_y + (j - 1)  # Which row to set the data         
+                    position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
+                    
+                    matching_genotypes = genotypes[inds, :]
+                    genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
+            
+            return position_list_new, genotypes_new
+        
+        
+        print("Creating Data Set: %i" % data_set_nr)
+        
+        # Load the data.
+        position_list = np.loadtxt(self.position_path, delimiter='$').astype('float64')
+        genotype_matrix = np.loadtxt(self.gtp_path, delimiter='$').astype('float64')
+        
+        position_list, genotype_matrix = group_inds(position_list, genotype_matrix, demes_x=8, demes_y=12)  # 3x3 clustering
+    
+        
+        nr_inds, nr_genotypes = np.shape(genotype_matrix)  # Could in principle also bootstrap over Individuals
+        
+        
+        r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices of random resampling
+        gtps_sample = genotype_matrix[:, r_ind]  # Do the actual Bootstrap; pick the columns
+        
+        
+        self.save_data_set(position_list, gtps_sample, data_set_nr)  # Save the Data Set
+        
+        # self.pickle_parameters(p_names, ps, additional_info)      Dont't pickle additional Info; as it is not clear what it was
+        
+        
+        
+        
+        
+
 
 
 ##############################################################################################################################
@@ -986,6 +1075,10 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_cluster":
         return MultiCluster(folder, multi_processing=multi_processing)
     
+    elif method == "multi_bts":
+        return MultiBootsTrap(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
+    
+    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -1036,7 +1129,7 @@ if __name__ == "__main__":
     # an_mult_nbh("./nbh_folder/")
     
     ####Method to Visualize Multiple Neighborhood Sizes:
-    #vis_mult_nbh("./nbh_folder_gauss/", method=2)
+    # vis_mult_nbh("./nbh_folder_gauss/", method=2)
     
     #######################################################
     ####Create Multi Barrier Data Set
@@ -1051,9 +1144,16 @@ if __name__ == "__main__":
     
     ###################################################
     ####Create Multi Cluster Data Set
-    MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
-    #MultiRun.create_data_set(51, method=2)
-    MultiRun.analyze_data_set(76, method=2)
+    # MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
+    # MultiRun.create_data_set(51)
+    # MultiRun.analyze_data_set(76, method=2)
+    
+    
+    ####################################################
+    ####Create Bootrap Data Set
+    MultiRun = fac_method("multi_bts", "./bts_folder_test/", multi_processing=1)
+    for i in xrange(100):
+        MultiRun.create_data_set(i)
     
     
 

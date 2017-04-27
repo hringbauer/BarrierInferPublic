@@ -51,15 +51,18 @@ data_set_nr = int(sys.argv[1])  # Which data-set to use
 data_set_nr = data_set_nr - 1
 
 #folder = "./nbh_folder_gauss/"  # Where the results are saved to.
-folder = "./cluster_folder/"
+#folder = "./cluster_folder/"
+folder = "./bts_folder_test/"
 
 #MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
 #MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
-MultiRun = fac_method("multi_cluster", folder, multi_processing=1)   
+#MultiRun = fac_method("multi_cluster", folder, multi_processing=1)   
+MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 
-########### For creating the data sets ###############
 
-MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+########### For creating and analyzing the data sets ###############
+
+#MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
 MultiRun.analyze_data_set(data_set_nr, method=2)
 #MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 #MultiRun.analyze_data_set(data_set_nr, method=1)

@@ -319,7 +319,7 @@ class DiffusionBarrierK0(Kernel):
         coords = np.array(coords).astype("float")  # Make Coordinates a Numpy Array!
         nr_inds = len(coords)
         
-        print("Maximum Memory usage 0: %.4f MB" % memory_usage_resource())
+        print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
         # Gets the upper triangular Indices
         inds0, inds1 = np.triu_indices(nr_inds)  # Gets all the indices which are needed.
         inds = np.triu_indices(nr_inds)
@@ -340,7 +340,6 @@ class DiffusionBarrierK0(Kernel):
         #Extracts unique values and indices to reconstruct to avoid double calculation
         argument_vec_unique, indices = unique_rows(np.array(argument_vec))
         
-        print("Maximum Memory usage 1: %.4f MB" % memory_usage_resource())
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
@@ -357,7 +356,6 @@ class DiffusionBarrierK0(Kernel):
             
         pool_outputs = np.copy(np.array(pool_outputs)[indices])  # Restores full array. Copy to make old memory inaccessible.
         
-        print("Maximum Memory usage 2: %.4f MB" % memory_usage_resource())
          
         # Fills up upper triangle again
         kernel = np.zeros((nr_inds, nr_inds))
@@ -368,7 +366,6 @@ class DiffusionBarrierK0(Kernel):
         K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
         K2 = self.ss * np.ones(np.shape(kernel))  # Add the kernel from Deviations from the Mean:
         
-        print("Maximum Memory usage 3: %.4f MB" % memory_usage_resource())
         del pool_outputs
         del argument_vec_unique
         del indices
@@ -509,7 +506,7 @@ class DiffusionK0(Kernel):
     def calc_kernel_mat(self, coords):
         '''Calculates Full Covariance Kernel
         Calculates only upper triangular Matrix; and used multi-processing'''
-        print("Maximum Memory usage 0: %.4f MB" % memory_usage_resource())
+        print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
         coords = np.array(coords)  # Make Coordinates a Numpy Array!
         nr_inds = len(coords)
         
@@ -519,14 +516,12 @@ class DiffusionK0(Kernel):
         dist_vec = dist_mat[ind_ut]
         argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in dist_vec]  # Create vector with all arguments
         
-        print("Maximum Memory usage 0.5: %.4f MB" % memory_usage_resource())
         # argument_vec = zip([self.t0] * nr_inds, [np.inf] * nr_inds, , ,dist_vec)  
         
         #Extracts unique values and indices to reconstruct to avoid double calculation
         argument_vec_unique, indices = unique_rows(np.array(argument_vec))
         
         print("Number of Unique Arguments: %.4f" % len(argument_vec_unique))
-        print("Maximum Memory usage 1: %.4f MB" % memory_usage_resource())
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
@@ -546,21 +541,18 @@ class DiffusionK0(Kernel):
         up_tri_kernel = np.zeros((nr_inds, nr_inds))
         up_tri_kernel[ind_ut] = pool_outputs  
         
-        print("Maximum Memory usage 2: %.4f MB" % memory_usage_resource())
-        
         # Symmetrizes again and fill up everything:
         full_kernel = np.triu(up_tri_kernel) + np.triu(up_tri_kernel, -1).T - np.diag(np.diag(up_tri_kernel))   
         K1 = 0.0000001 * np.eye(len(coords))  # Add something to make it positive definite
         K2 = self.ss * np.ones(np.shape(full_kernel))  # Add the kernel from Deviations from the Mean
         
-        print("Maximum Memory usage 3: %.4f MB" % memory_usage_resource())
         
         # Manually delete Variable to take care of Memory leak.
         output = full_kernel + K1 + K2
         self.counter+=1
         roots = objgraph.get_leaking_objects()
         
-        print("Number of leaking objects: %i:" % len(roots))
+        #print("Number of leaking objects: %i:" % len(roots))
         if self.counter>20:
             objgraph.show_growth()
             

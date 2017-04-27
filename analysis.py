@@ -172,6 +172,7 @@ class Analysis(object):
         plt.figure()
         plt.title("Sample Distribution", fontsize=30)
         color = self.genotypes[:, row].astype("float")
+        print(color)
         plt.scatter(self.position_list[:, 0], self.position_list[:, 1], label="Samples", c=color)
         # pylab.vlines(0, min(X_data[:,1]), max(X_data[:,1]), linewidth=2, color="red", label="Barrier")
         plt.xlabel("X-Coordinate", fontsize=30)

@@ -46,13 +46,13 @@ def analyze_barrier_strengths_ll():
 
 
 #data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 1
+data_set_nr = 5
 #print("Starting Dataset Nr %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
-#folder = "./nbh_folder_gauss/"  # Where the results are saved to.
+#folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
 #folder = "./cluster_folder/"
-folder = "./bts_folder_test/"
+#folder = "./bts_folder_test/"
 folder = "./hz_folder/"
 
 #MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
@@ -65,8 +65,8 @@ MultiRun = fac_method("multi_HZ", folder, multi_processing=1)
 
 ########### For creating and analyzing the data sets ###############
 
-#MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, method=2)  # Position Barrier is there for the HZ Data.
+MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, res_folder="barrier3/" ,method=2)  # Position Barrier is there for the HZ Data.
 #MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 #MultiRun.analyze_data_set(data_set_nr, method=1)
 

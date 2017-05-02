@@ -202,7 +202,7 @@ class MLE_estimator(GenericLikelihoodModel):
             
             p = link_f(f_tot)  # Calculate novel p, assuming sin^2 Link Function.
             grad1 = grad_f(f_tot, g0)  # Calculate the Gradient.
-            W = hessian_f(f_tot, g0)  # Calculates the Hessian of the second derivative.
+            W = -hessian_f(f_tot, g0)  # Calculates the Hessian of the second derivative.
             
             Kinv_F = tf.matrix_solve(K, F)  # Calculate K^(-1)*F
             
@@ -257,23 +257,23 @@ def link_f(f):  # Define Link function
 def grad_f(f_tot, g0):
     '''Return Gradient of the Link function'''
     d1 = 1.0 / tf.tan(0.5 * f_tot)  # Gradient coming from f_tot (for y=1)
-    d0 = -tf.tan(0.5 * f_tot)  # Gradient comfing from t_tot (for y=0)    
+    d0 = -tf.tan(0.5 * f_tot)  # Gradient coming from t_tot (for y=0)    
     grad1 = g0 * d1 + (1 - g0) * d0  # First part of the gradient
     return grad1
 
 def hessian_f(f_tot, g0):
     '''Returns second derivative of Link Funciton'''
-    h1 = -0.5 / ((tf.sin(0.5 * f_tot)) ** 2)  # Minus second derivative of data. (for y=1)
+    h1 = 1.0 / (-1 + tf.cos(f_tot))  # -0.5 / ((tf.sin(0.5 * f_tot)) ** 2)  # Minus second derivative of data. (for y=1)
     h0 = -1.0 / (1 + tf.cos(f_tot))  # Second derivative of data (for y=0)
-    W = -g0 * h1 - (1 - g0) * h0  # Calculate first part of Hessian. It is diagonal (but here diagonal in every column)
-    return W
+    H = g0 * h1 + (1 - g0) * h0  # Calculate first part of Hessian. It is diagonal (but here diagonal in every column)
+    return H  # We need the negative second derivative
     
     
 def calculate_ss(genotype_matrix):
     '''Method to calculate Variance due to fluctuations of the mean'''
     p_mean = np.mean(genotype_matrix, axis=0)
-    f_mean = 2*np.arcsin(np.sqrt(p_mean))
-    f_var= np.var(f_mean)
+    f_mean = 2 * np.arcsin(np.sqrt(p_mean))
+    f_var = np.var(f_mean)
     return f_var
 
 # From Alex: Some custom Functions to calculate the Log-Determinant.
@@ -312,8 +312,9 @@ def memory_usage_resource():
    
 ######################### Some lines to test the code and make plots
 if __name__ == "__main__":
-    X_data = np.loadtxt('./Data/coordinates00.csv', delimiter='$').astype('float32')  # Load the complete X-Data
-    Y_data = np.loadtxt('./Data/data_genotypes00.csv', delimiter='$').astype('float32')  # Load the complete Y-Data
+    X_data = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float32')  # Load the complete X-Data
+    Y_data = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float32')  # Load the complete Y-Data
+
     # Extract some information regarding the mean allele frequency:
     p_means = np.mean(Y_data, axis=0)
     print("Standard Deviation of mean allele frequencies: %.4f" % np.std(p_means))
@@ -342,6 +343,6 @@ if __name__ == "__main__":
     
     
     # Do the actual Fitting: 
-    fit = MLE_obj.fit(start_params=[75, 0.02, 0.035])  # Could alter method here.
+    fit = MLE_obj.fit(start_params=[75, 0.006, 0.04])  # Could alter method here.
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
     print(fit.summary())

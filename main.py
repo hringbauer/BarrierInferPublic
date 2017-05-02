@@ -11,6 +11,7 @@ from tf_analysis import TF_Analysis
 from mle_pairwise import analyze_barrier  # Methods to fit individual data
 from mle_pairwise import analyze_normal
 from mle_class import calculate_ss
+from random import shuffle 
 import numpy as np
 import pickle as pickle  # @UnusedImport
 import matplotlib.pyplot as plt
@@ -279,12 +280,15 @@ def main():
                 # Some commonly used file paths: nbh_file_coords30.csv, ./Data/coordinates00b.csv
                 # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
                 # ./Data/coordinatesHZ.csv ./Data/genotypesHZ.csv
+                # ./nbh_folder_gauss/nbh_file_coords30.csv   # ./nbh_folder_gauss/nbh_file_genotypes30.csv
                 # './cluster_folder/barrier_file_coords01.csv'
                 # ./cluster_folder/barrier_file_coords01.csv
                 
-                position_list = np.loadtxt('./Data/coordinatesHZall1.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                
+                position_list = np.loadtxt('./hz_folder/hz_file_coords04.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./Data/genotypesHZall1.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./hz_folder/hz_file_genotypes04.csv', delimiter='$').astype('float64')
+                
                 # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
                 print("Loading Complete!")   
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])

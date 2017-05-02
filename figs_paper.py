@@ -236,12 +236,63 @@ def boots_trap(folder, method=2):
     plt.xlabel("Dataset")
     plt.show()
     
+def hz_barrier_bts(folder, method=2):
+    '''Plot BootsTrap Estimates for HZ.
+    Same as normal one but with a few modificatins.'''
+    
+    res_numbers = range(0, 100)
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(4):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    
+    
+    # plt.figure()
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    
+    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    
+    
+    inds = np.argsort(res_vec[res_numbers, 0])
+    ax1.errorbar(res_numbers, res_vec[inds, 0], yerr=res_vec[inds, 0] - unc_vec[inds, 0, 0], fmt="ro")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("BootsTrap over Test Data Set")
+    
+    inds = np.argsort(res_vec[res_numbers, 1])
+    ax2.errorbar(res_numbers, res_vec[inds, 1], yerr=res_vec[inds, 1] - unc_vec[inds, 1, 0], fmt="ro")
+    ax2.hlines(0.006, 0, 100, linewidth=2)
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    inds = np.argsort(res_vec[res_numbers, 2])
+    ax3.errorbar(res_numbers, res_vec[inds, 2], yerr=res_vec[inds, 2] - unc_vec[inds, 2, 0], fmt="ro")
+    ax3.hlines(0.1, 0, 100, linewidth=2)
+    ax3.set_ylabel("Barrier", fontsize=18)
+    
+    inds = np.argsort(res_vec[res_numbers, 3])
+    ax4.errorbar(res_numbers, res_vec[inds, 3], yerr=res_vec[inds, 3] - unc_vec[inds, 3, 0], fmt="ro")
+    ax4.hlines(0.52, 0, 100, linewidth=2)
+    ax4.set_ylim([0.5, 0.53])
+    ax4.set_ylabel("SS", fontsize=18)
+    # plt.xticks([10,35,60,85], ['1x1', '2x2', '3x3','4x4'])
+    
+    plt.xlabel("Dataset")
+    plt.show()
+    
     
     
 ######################################################
 if __name__ == "__main__":
-    multi_nbh_single(multi_nbh_folder, method=0)
-    # multi_nbh_single(multi_nbh_gauss_folder, method=0)
+    # multi_nbh_single(multi_nbh_folder, method=0)
+    multi_nbh_single(multi_nbh_gauss_folder, method=0)
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")

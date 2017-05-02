@@ -451,7 +451,7 @@ def analyze_barrier(position_list, genotype_mat, position_barrier=500.5, nr_inds
     toc = time()
     print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[65, 0.005, 0.5], fit_t0=0):
+def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[15, 0.005, 0.5], fit_t0=0):
     '''Method that analyzes data without a barrier. Use Method 2.'''
     # Load only certain Number of Individuals
     inds = range(len(position_list))
@@ -484,12 +484,12 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[65, 
 
 
 if __name__ == "__main__":
-    position_list = np.loadtxt('./nbh_folder/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./nbh_folder/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     # position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    analyze_barrier(position_list, genotype_mat)  # Do not forget to set position of barrier
-    # analyze_normal(position_list, genotype_mat)
+    # analyze_barrier(position_list, genotype_mat)  # Do not forget to set position of barrier
+    analyze_normal(position_list, genotype_mat)
     
 #########################################
 

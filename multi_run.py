@@ -513,7 +513,8 @@ class MultiBarrier(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, position_barrier=500.5, method=0):
+    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
+                         position_barrier=500.5, method=0):
         '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
@@ -554,7 +555,11 @@ class MultiBarrier(MultiRun):
         conf_ind = fit.conf_int()
         
         # Pickle Parameter Estimates:
-        subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        if res_folder == None:
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+            
+        else: subfolder_meth = res_folder
+            
         path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
         
         directory = os.path.dirname(path)  # Extract Directory
@@ -864,6 +869,7 @@ class MultiCluster(MultiBarrier):
             os.makedirs(directory)
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+        
 
 ##############################################################################################################################
 
@@ -1128,7 +1134,7 @@ def fac_method(method, folder, multi_processing=0):
         return MultiBootsTrap(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
     
     elif method == "multi_HZ":
-        return MultiBT_HZ(folder, multi_processing=multi_processing)   # IMPORTANT: Set the path to the bootstrap there.
+        return MultiBT_HZ(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
     
     
     else: raise ValueError("Wrong method entered!")

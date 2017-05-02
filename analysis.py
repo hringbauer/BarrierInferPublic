@@ -13,7 +13,8 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [197.5, 0.0066, 0.0040932997818495112, 0.1169]  # Parameters used in manual Kernel Plot. Old: 0.04194
+parameters_fit = [90.96, 0.0447, 1.0, 0.097]  # Parameters used in manual Kernel Plot. Old: 0.04194
+#7.38282829e+01   9.44133108e-04   5.15210543e-01
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''

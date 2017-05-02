@@ -181,20 +181,22 @@ def main():
                 if inp1 == 2: 
                     nr_inds = int(input("How many random individuals?\n"))
                     fit_t0 = bool(input("Do you want to fit t0? (1=yes/0=no)\n"))
-                    if fit_t0==1:
-                        start_params=[150, 0.005, 1.0, 0.5]
+                    if fit_t0 == 1:
+                        start_params = [150, 0.005, 1.0, 0.5]
                     
-                    elif fit_t0==0:
-                        start_params=[150, 0.005, 0.5]
+                    elif fit_t0 == 0:
+                        start_params = [150, 0.005, 0.5]
                         
                     analyze_normal(position_list, genotype_matrix, nr_inds=nr_inds, fit_t0=fit_t0, start_params=start_params)
                     
-                    #bootstrap=int(input("How often do you want to bootstrap? (0: Skip)"))
+                    # bootstrap=int(input("How often do you want to bootstrap? (0: Skip)"))
                     
                 if inp1 == 3:
                     x_demes = int(input("How many Demes along x-axis?\n"))
                     y_demes = int(input("How many Demes along y-axis?\n"))
-                    analysis.group_inds(analysis.position_list, analysis.genotypes, x_demes, y_demes)
+                    nr_inds = int(input("What is the minimum Nr of individuals?\n"))
+                    position_list, genotype_matrix = analysis.group_inds(
+                        analysis.position_list, analysis.genotypes, x_demes, y_demes, min_ind_nr=nr_inds)
                     
                 if inp1 == 4:
                     barrier_pos = float(input("Where is the barrier?\n"))
@@ -267,8 +269,8 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinates01b.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/data_genotypes01b.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinatesHZall1.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/genotypesHZall1.csv", genotype_matrix, delimiter="$")  # Save the data 
                 print("Saving Complete.")
                 
             elif inp9 == 2:
@@ -278,11 +280,12 @@ def main():
                 # ./nbh_folder/nbh_file_coords200.csv    ./nbh_folder/nbh_file_genotypes200.csv
                 # ./Data/coordinatesHZ.csv ./Data/genotypesHZ.csv
                 # './cluster_folder/barrier_file_coords01.csv'
+                # ./cluster_folder/barrier_file_coords01.csv
                 
-                position_list = np.loadtxt('./cluster_folder/barrier_file_coords01.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = np.loadtxt('./Data/coordinatesHZall1.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./cluster_folder/barrier_file_genotypes01.csv', delimiter='$').astype('float64')
-                #genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
+                genotype_matrix = np.loadtxt('./Data/genotypesHZall1.csv', delimiter='$').astype('float64')
+                # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
                 print("Loading Complete!")   
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1]) 

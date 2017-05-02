@@ -13,7 +13,7 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [76.787679355844503, 0.0031842963942330183, 0.0040932997818495112,  0.041957834]  # Parameters used in manual Kernel Plot
+parameters_fit = [197.5, 0.0066, 0.0040932997818495112, 0.1169]  # Parameters used in manual Kernel Plot. Old: 0.04194
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
@@ -288,7 +288,7 @@ class Analysis(object):
         plt.legend(prop={'size':20})
         plt.show() 
         
-    def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10):
+    def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
         '''Function that groups indviduals into demes and gives back mean deme position
         and mean deme genotype'''
         nr_inds, nr_markers = np.shape(genotypes)
@@ -303,19 +303,30 @@ class Analysis(object):
         
         nr_demes = demes_x * demes_y
         
-        position_list_new = np.zeros((nr_demes, 2)) - 1.0
-        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0
+        position_list_new = np.zeros((nr_demes, 2)) - 1.0  # Defaults everything to -1.
+        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0 # Same.
         
         # Iterate over every deme
+        
+        row = 0
         for i in xrange(1, demes_x + 1):
             for j in range(1, demes_y + 1):
                 inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
                 
-                row = (i - 1) * demes_y + (j - 1)  # Which row to set the data         
+                # row = (i - 1) * demes_y + (j - 1)  # Which row to set the data 
+                
+                if len(inds) <= min_ind_nr:  # In case no Individual fits in the grid space
+                    continue
+                      
                 position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
                 
                 matching_genotypes = genotypes[inds, :]
                 genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
+                row += 1
+        
+        # Extract only the set individuals:
+        position_list_new = position_list_new[:row, :]
+        genotypes_new = genotypes_new[:row, :]
         
         self.position_list, self.genotypes = position_list_new, genotypes_new
         return position_list_new, genotypes_new

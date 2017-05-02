@@ -949,12 +949,61 @@ class MultiBootsTrap(MultiBarrier):
         
         # self.pickle_parameters(p_names, ps, additional_info)      Dont't pickle additional Info; as it is not clear what it was
         
+##############################################################################################################################
+class MultiBT_HZ(MultiBarrier):
+    '''
+    Class that bootstrap over Datasets.
+    Generates Bootstraps when creating data-set
+    
+    The first data_set is the original Data-Set;
+    the rest are 99 Bootstraps.
+    
+    Inherits from MultiBarrier. Uses its Analyze Data-Set Method.
+    '''
+    
+    # Paths to the File over which to bootstrap
+    position_path = "./Data/coordinatesHZall1.csv"  # Path to the data set over which one has to bootstrap
+    gtp_path = "./Data/genotypesHZall1.csv"
+    
+    def __init__(self, folder, nr_data_sets=100, nr_params=4, **kwds):
+        '''Initializes the BootsTrap class. Path_data_set is the path to the 
+        data set over which to bootstrap.'''
+        super(MultiBT_HZ, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        self.name = "hz_file"
+    
+    def set_data_path(self, position_path, gtp_path):
+        '''Sets the path to the position and genotype files.'''
+        self.position_path = position_path
+        self.gtp_path = gtp_path
+    
+    def create_data_set(self, data_set_nr):
+        '''In this case one actually does 
+        the bootstrapping'''
+        
+        if not 0 <= data_set_nr < self.nr_data_sets:  # Check whether everything alright
+            raise ValueError("Data Set out of Range!")
         
         
+        print("Creating Data Set: %i" % data_set_nr)
+        
+        # Load the data.
+        position_list = np.loadtxt(self.position_path, delimiter='$').astype('float64')
+        genotype_matrix = np.loadtxt(self.gtp_path, delimiter='$').astype('float64')
+        
+        # The first data set is the original one
+        if data_set_nr == 0: 
+            self.save_data_set(position_list, genotype_matrix, data_set_nr)
+            return 
+    
+        
+        nr_inds, nr_genotypes = np.shape(genotype_matrix)  # Could in principle also bootstrap over Individuals
         
         
-
-
+        r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
+        gtps_sample = genotype_matrix[:, r_ind]  # Do the actual Bootstrap; pick the columns
+        
+        self.save_data_set(position_list, gtps_sample, data_set_nr)  # Save the Data Set
+        
 
 ##############################################################################################################################
 class SecondaryContact(MultiBarrier):
@@ -1078,6 +1127,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_bts":
         return MultiBootsTrap(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
     
+    elif method == "multi_HZ":
+        return MultiBT_HZ(folder, multi_processing=multi_processing)   # IMPORTANT: Set the path to the bootstrap there.
+    
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1131,7 +1183,7 @@ if __name__ == "__main__":
     ####Method to Visualize Multiple Neighborhood Sizes:
     # vis_mult_nbh("./nbh_folder_gauss/", method=2)
     
-    #######################################################
+    ####################################################
     ####Create Multi Barrier Data Set
     # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_gaussian_folder/", multi_processing=1)
@@ -1142,7 +1194,7 @@ if __name__ == "__main__":
     # MultiRun.temp_visualize(method=2)
     # MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
     
-    ###################################################
+    ####################################################
     ####Create Multi Cluster Data Set
     # MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
     # MultiRun.create_data_set(51)
@@ -1154,6 +1206,8 @@ if __name__ == "__main__":
     MultiRun = fac_method("multi_bts", "./bts_folder_test/", multi_processing=1)
     for i in xrange(100):
         MultiRun.create_data_set(i)
+        
+    ####################################################
     
     
 

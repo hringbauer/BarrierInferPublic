@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-#data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 5
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+#data_set_nr = 5
 #print("Starting Dataset Nr %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -65,8 +65,10 @@ MultiRun = fac_method("multi_HZ", folder, multi_processing=1)
 
 ########### For creating and analyzing the data sets ###############
 
-MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, res_folder="barrier3/" ,method=2)  # Position Barrier is there for the HZ Data.
+#MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+#MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, res_folder="barrier3/" ,method=2)  # Position Barrier is there for the HZ Data.
+MultiRun.analyze_data_set(data_set_nr, position_barrier=-20.0, res_folder="barrier20m/" ,method=2)
+MultiRun.analyze_data_set(data_set_nr, position_barrier=18.0, res_folder="barrier18m/" ,method=2)
 #MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 #MultiRun.analyze_data_set(data_set_nr, method=1)
 

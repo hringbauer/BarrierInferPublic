@@ -14,14 +14,17 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 multi_nbh_folder = "./nbh_folder/"
 multi_nbh_gauss_folder = "./nbh_folder_gauss/"
 cluster_folder = "./cluster_folder/"
+hz_folder = "./hz_folder/"
 
 
-def load_pickle_data(folder, i, arg_nr, method=2):
+def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
             '''Function To load pickled Data.
             Also visualizes it.'''
             
             # Coordinates for more :
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+            if subfolder == None:
+                subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+            else: subfolder_meth = subfolder
             path = folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
             
             
@@ -31,8 +34,8 @@ def load_pickle_data(folder, i, arg_nr, method=2):
 def multi_nbh_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    #res_numbers = range(0, 100)
-    res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40]  # 2
+    res_numbers = range(0, 100)
+    #res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40]  # 2
     
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
@@ -72,10 +75,6 @@ def multi_nbh_single(folder, method):
     plt.xlabel("Dataset")
     plt.show()
 
-def multi_nbh_popgen_all(folder):
-    '''Print several Neighborhood Sizes simulated under Population Genetics Model/Gaussian Model'''
-    print("To Implement")
-    
 
 def multi_barrier(folder):
     '''Prints Inference of multiple Barrier strenghts'''
@@ -236,14 +235,14 @@ def boots_trap(folder, method=2):
     plt.xlabel("Dataset")
     plt.show()
     
-def hz_barrier_bts(folder, method=2):
+def hz_barrier_bts(folder, subfolder, method=2):
     '''Plot BootsTrap Estimates for HZ.
     Same as normal one but with a few modificatins.'''
     
     res_numbers = range(0, 100)
     
-    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
-    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    res_vec = np.array([load_pickle_data(folder, i, 0, method, subfolder=subfolder) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method, subfolder=subfolder) for i in res_numbers])
     
     for l in range(len(res_numbers)):
         i = res_numbers[l]
@@ -257,30 +256,33 @@ def hz_barrier_bts(folder, method=2):
     # plt.figure()
     f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
     
-    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    #ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
     
     
     inds = np.argsort(res_vec[res_numbers, 0])
     ax1.errorbar(res_numbers, res_vec[inds, 0], yerr=res_vec[inds, 0] - unc_vec[inds, 0, 0], fmt="ro")
-    ax1.set_ylim([0, 200])
+    ax1.set_ylim([5, 400])
     ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.hlines(res_vec[0, 0], 0, 100, linewidth=2)
     ax1.title.set_text("BootsTrap over Test Data Set")
     
     inds = np.argsort(res_vec[res_numbers, 1])
     ax2.errorbar(res_numbers, res_vec[inds, 1], yerr=res_vec[inds, 1] - unc_vec[inds, 1, 0], fmt="ro")
-    ax2.hlines(0.006, 0, 100, linewidth=2)
+    ax2.hlines(res_vec[0, 1], 0, 100, linewidth=2)
+    ax2.set_ylim([0, 0.1])
     ax2.set_ylabel("L", fontsize=18)
     # ax2.legend()
     
     inds = np.argsort(res_vec[res_numbers, 2])
     ax3.errorbar(res_numbers, res_vec[inds, 2], yerr=res_vec[inds, 2] - unc_vec[inds, 2, 0], fmt="ro")
-    ax3.hlines(0.1, 0, 100, linewidth=2)
+    ax3.hlines(res_vec[0, 2], 0, 100, linewidth=2)
+    ax3.set_ylim([0, 5])
     ax3.set_ylabel("Barrier", fontsize=18)
     
     inds = np.argsort(res_vec[res_numbers, 3])
     ax4.errorbar(res_numbers, res_vec[inds, 3], yerr=res_vec[inds, 3] - unc_vec[inds, 3, 0], fmt="ro")
-    ax4.hlines(0.52, 0, 100, linewidth=2)
-    ax4.set_ylim([0.5, 0.53])
+    ax4.hlines(res_vec[0, 3], 0, 100, linewidth=2)
+    ax4.set_ylim([0.52, 0.58])
     ax4.set_ylabel("SS", fontsize=18)
     # plt.xticks([10,35,60,85], ['1x1', '2x2', '3x3','4x4'])
     
@@ -291,11 +293,12 @@ def hz_barrier_bts(folder, method=2):
     
 ######################################################
 if __name__ == "__main__":
-    # multi_nbh_single(multi_nbh_folder, method=0)
-    multi_nbh_single(multi_nbh_gauss_folder, method=0)
-    # cluster_plot(cluster_folder, method=2)
-    # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
-    # ll_barrier("./barrier_folder1/")
+    #multi_nbh_single(multi_nbh_folder, method=2)
+    #multi_nbh_single(multi_nbh_gauss_folder, method=2)
+    #cluster_plot(cluster_folder, method=2)
+    #boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
+    #ll_barrier("./barrier_folder1/")
+    hz_barrier_bts(hz_folder, "barrier2/")
     
     
     

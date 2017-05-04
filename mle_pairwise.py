@@ -451,7 +451,7 @@ def analyze_barrier(position_list, genotype_mat, position_barrier=500.5, nr_inds
     toc = time()
     print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[15, 0.005, 0.5], fit_t0=0):
+def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[200, 0.01, 0.5], fit_t0=0):
     '''Method that analyzes data without a barrier. Use Method 2.'''
     # Load only certain Number of Individuals
     inds = range(len(position_list))

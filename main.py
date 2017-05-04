@@ -17,6 +17,7 @@ import pickle as pickle  # @UnusedImport
 import matplotlib.pyplot as plt
 
 
+
 def main():
     '''Main loop of the program. Here we can control everything.'''
     grid = Grid()
@@ -283,11 +284,12 @@ def main():
                 # ./nbh_folder_gauss/nbh_file_coords30.csv   # ./nbh_folder_gauss/nbh_file_genotypes30.csv
                 # './cluster_folder/barrier_file_coords01.csv'
                 # ./cluster_folder/barrier_file_coords01.csv
+                # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
                 
                 
-                position_list = np.loadtxt('./hz_folder/hz_file_coords04.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./hz_folder/hz_file_genotypes04.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')
                 
                 # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
                 print("Loading Complete!")   

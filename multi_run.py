@@ -179,7 +179,7 @@ class MultiNbh(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, method=0, fit_t0=0):
+    def analyze_data_set(self, data_set_nr, random_ind_nr=4000, method=0, fit_t0=0):
         '''Create Data Set. Override Method. fit_t0: Whether to fit t0. (at the moment only for method 2!)
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
@@ -194,12 +194,11 @@ class MultiNbh(MultiRun):
             start_list = [[nbh_size, 0.005, 1.0 , 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
-        inds = range(len(position_list))
-        shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-        inds = inds[:random_ind_nr]  # Only load first nr_inds
-
-        position_list = position_list[inds, :]
-        genotype_mat = genotype_mat[inds, :]
+        #inds = range(len(position_list))
+        #shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+        #inds = inds[:random_ind_nr]  # Only load first nr_inds
+        #position_list = position_list[inds, :]
+        #genotype_mat = genotype_mat[inds, :]
         
         if method == 0:
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
@@ -1021,8 +1020,84 @@ class SecondaryContact(MultiBarrier):
     def create_data_set(self, data_set_nr):
         '''Create a Data_Set. Override method.'''
         raise NotImplementedError("Implement This!!!")
+
+###############################################################################################################################
+
+class MultiIndNr(MultiNbhModel):
+    '''Generate Data-Sets under the Model. A big one at 0 with 4000
+    individuals; and then 99 smaller ones with decreasing number 
+    of individuals (randomly subchosen)
+    Inherits from MultiNbhModel to analyze the Data'''
     
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method of MultiNbh.'''
+        print("Creating Dataset: %i" % data_set_nr)
         
+        # Create Vector of Numbers of Individuals:
+        ind_nr_vec = range(436, 4001, 36)  # Length 100: from 404 to 4000
+
+        if data_set_nr == 0:  # Create the first data set
+            # Set all the Parameter Values:
+            # 4000 Individuals; each spaced 1 Sigma apart
+            ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2
+            position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 1) for j in range(-49, 51, 1)])  
+            nr_loci = 200  # 1 for testing reasons.
+            # t = 5000
+            # gridsize_x, gridsize_y = 1000, 1000
+            sigma = 0.965  # 0.965 # 1.98
+            mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p.
+            ss = 0.04  # The std of fluctuations in f-space.
+            t0 = 1.0  # When do start the integration.
+            p_mean = 0.5  # Sets the mean allele frequency.
+            
+            # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+            # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+            
+            genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
+            
+            nbh = 4.0 * np.pi * ips / 2.0 * 1.0  # Calculate Neighborhood size
+            L = 2 * mu / 1.0  # Calculate the effective mutation rate
+            KC = fac_kernel("DiffusionK0")  # Create the object that will calculate the Kernel.
+            KC.set_parameters([nbh, L, t0, ss])  # Sets parameters: Nbh, L, t0, ss
+            
+            print("Calculating Kernel...")
+            
+            tic = time()
+            kernel_mat = KC.calc_kernel_mat(position_list)  # Calculate the co-variance Matrix
+            toc = time()
+            print("Calculation Kernel runtime: %.6f:" % (toc - tic))
+            
+            grid = Grid()  # Load the grid (contains method to created correlated data.
+            
+            for i in range(nr_loci):  # Iterate over all loci
+                print("Doing Locus: %i" % i)
+                genotypes = grid.draw_corr_genotypes_kernel(kernel_mat=kernel_mat, p_mean=p_mean)
+                genotype_matrix[:, i] = genotypes
+                
+            self.save_data_set(position_list, genotype_matrix, 0)  # Save the Data.
+            
+                
+            # Now Pickle Some additional Information:
+            p_names = ["Nr Loci", "t0", "p_mean", "sigma", "ss", "mu", "ips", "Position List"]
+            ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list]
+            additional_info = ("Data generated under a gaussian Model")
+            self.pickle_parameters(p_names, ps, additional_info)
+            
+        elif 0 < data_set_nr < 100:  # In case of valid Data-Set Nr.
+            ind_nr = ind_nr_vec[data_set_nr]  # Number of Individuals to Load
+            position_list, genotype_mat = self.load_data_set(0)  # Loads the Data
+            
+            # Do the random Choice of individuals
+            inds = range(len(position_list))
+            shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+            inds = inds[:ind_nr]  # Only load first nr_inds
+            self.save_data_set(position_list[inds, :], genotype_mat[inds, :], data_set_nr)  # Save the Data.
+            
+            
+        else: 
+            raise ValueError("Invalid Data-Set Nr.!")
+
+       
 ###############################################################################################################################
         
 class TestRun(MultiRun):
@@ -1131,11 +1206,13 @@ def fac_method(method, folder, multi_processing=0):
         return MultiCluster(folder, multi_processing=multi_processing)
     
     elif method == "multi_bts":
-        return MultiBootsTrap(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
+        return MultiBootsTrap(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap up there.
     
     elif method == "multi_HZ":
-        return MultiBT_HZ(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap there.
+        return MultiBT_HZ(folder, multi_processing=multi_processing)  # IMPORTANT: Set the path to the bootstrap up there.
     
+    elif method == "multi_inds":
+        return MultiIndNr(folder, multi_processing=multi_processing)
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1209,10 +1286,17 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Bootrap Data Set
-    MultiRun = fac_method("multi_bts", "./bts_folder_test/", multi_processing=1)
-    for i in xrange(100):
-        MultiRun.create_data_set(i)
+    # MultiRun = fac_method("multi_bts", "./bts_folder_test/", multi_processing=1)
+    # for i in xrange(100):
+    #    MultiRun.create_data_set(i)
         
+    ####################################################
+    MultiRun = fac_method("multi_inds", "./multi_inds/", multi_processing=1)
+    #MultiRun.create_data_set(0)
+    MultiRun.create_data_set(25)
+    MultiRun.analyze_data_set(25, method=0)
+    
+    
     ####################################################
     
     

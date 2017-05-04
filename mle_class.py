@@ -93,18 +93,19 @@ class MLE_estimator(GenericLikelihoodModel):
             sess.run(tf.global_variables_initializer())
             
             # Optimize the F 4x (Very fast; quadratic convergence)
-            for i in range(4):
-                _, = sess.run([opt_op, ], {K: kernel_mat, mean_param: self.mps})  
-            
-            ll, = sess.run([margL, ], {K: kernel_mat, mean_param: self.mps})  # Now calculate the Marginal Likelihood
+            for i in range(5):
+                _, lgl, = sess.run([opt_op, logL, ], {K: kernel_mat, mean_param: self.mps})  
+                #print(lgl)     # For Debugging!
+            ll, lgl, = sess.run([margL, logL ], {K: kernel_mat, mean_param: self.mps})  # Now calculate the Marginal Likelihood
         
         toc = time()
         print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
         print("Total runtime: %.4f " % (toc - tic))
-        print("Total log likelihood: %.4f \n" % ll)
+        print("Maximum likelihood: %.4f " % lgl)
+        print("Marginal log likelihood: %.4f \n" % ll)
         return ll  # Return the log likelihood
     
-    def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
+    def fit(self, start_params=None, maxiter=250, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
         if start_params == None:
             start_params = self.start_params  # Set the starting parameters for the fit
@@ -232,7 +233,7 @@ class MLE_estimator(GenericLikelihoodModel):
             
             # Set up configuration
             config = tf.ConfigProto()  
-            config.gpu_options.per_process_gpu_memory_fraction = 0.01
+            # config.gpu_options.per_process_gpu_memory_fraction = 0.01
             
             return((config, update, opt_op, logL, margL, F, K, mean_param))
         

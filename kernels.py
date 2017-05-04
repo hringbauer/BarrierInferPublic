@@ -521,7 +521,7 @@ class DiffusionK0(Kernel):
         #Extracts unique values and indices to reconstruct to avoid double calculation
         argument_vec_unique, indices = unique_rows(np.array(argument_vec))
         
-        print("Number of Unique Arguments: %.4f" % len(argument_vec_unique))
+        #print("Number of Unique Arguments: %.4f" % len(argument_vec_unique))
         # Do the Multiprocessing Action
         if self.multi_processing == 1:
             pool_size = mp.cpu_count() * 2
@@ -550,11 +550,11 @@ class DiffusionK0(Kernel):
         # Manually delete Variable to take care of Memory leak.
         output = full_kernel + K1 + K2
         self.counter+=1
-        roots = objgraph.get_leaking_objects()
         
+        #roots = objgraph.get_leaking_objects()
         #print("Number of leaking objects: %i:" % len(roots))
-        if self.counter>20:
-            objgraph.show_growth()
+        #if self.counter>20:
+        #    objgraph.show_growth()
             
         #objgraph.show_most_common_types(limit=50)
         #objgraph.show_growth()

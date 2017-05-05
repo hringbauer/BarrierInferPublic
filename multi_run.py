@@ -11,7 +11,7 @@ For visualization the pickled file is loaded then.
 from statsmodels.base.model import GenericLikelihoodModel
 from kernels import fac_kernel
 from time import time
-from grid import Grid
+from grid import Grid, Secondary_Grid
 from mle_class import MLE_estimator
 from mle_class import calculate_ss
 from mle_pairwise import MLE_pairwise
@@ -194,11 +194,11 @@ class MultiNbh(MultiRun):
             start_list = [[nbh_size, 0.005, 1.0 , 0.04] for nbh_size in nbh_sizes]  # General Vector for Start-Lists
         
         # Pick Random_ind_nr many Individuals:
-        #inds = range(len(position_list))
-        #shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-        #inds = inds[:random_ind_nr]  # Only load first nr_inds
-        #position_list = position_list[inds, :]
-        #genotype_mat = genotype_mat[inds, :]
+        # inds = range(len(position_list))
+        # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+        # inds = inds[:random_ind_nr]  # Only load first nr_inds
+        # position_list = position_list[inds, :]
+        # genotype_mat = genotype_mat[inds, :]
         
         if method == 0:
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
@@ -1011,15 +1011,66 @@ class MultiBT_HZ(MultiBarrier):
         
 
 ##############################################################################################################################
-class SecondaryContact(MultiBarrier):
+class MultiSecondaryContact(MultiBarrier):
     '''
     Tests 100 Runs for different Barrier strengths.
     Everything set so that 100 Data-Sets are run; with 4x25 Parameters.
     '''
     
     def create_data_set(self, data_set_nr):
-        '''Create a Data_Set. Override method.'''
-        raise NotImplementedError("Implement This!!!")
+        '''Create a Data_Set for secondary contact.
+        Use Secondary Contact Subclass of Grid for Simulations'''
+        
+        # Set overall Parameters:  
+        std_pl, std_pr = 0.1, 0.1  # Standard Deviation of Allele Frequency to the left and to the right.
+        t_contact = 100  # Time until secondary Contact.
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)  Loads the right Neighborhood Size
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
+        nr_loci = 100
+        t = 5000
+        gridsize_x, gridsize_y = 1000, 1000
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.1
+        barrier = 500.5  # Where to set the Barrier
+                
+        # Draw allele frequencies to the left and to the right:
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_delta_l = np.random.normal(scale=std_pl, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_delta_r = np.random.normal(scale=std_pr, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        
+        p_mean_l = p_mean + p_delta_l
+        p_mean_r = p_mean + p_delta_r
+        
+        # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+        # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+        
+        genotype_matrix = -np.ones((len(position_list), nr_loci))  # Set Genotype Matrix to -1 to detect Errors.
+        
+        for i in range(nr_loci):
+            grid = Secondary_Grid()
+            grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
+            grid.barrier = barrier
+            print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
+            grid.set_samples(position_list)
+            grid.update_grid_t(t_contact, p1=p_mean_l[i], p2=p_mean_r[i])  # Updates for t Generations with 
+            
+            genotype_matrix[:, i] = grid.genotypes
+            
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)
+        
+            
+        # Now Pickle Some additional Information:
+        p_names = ["Nr Loci", "t", "p_mean_l", "p_mean_r", "sigma", "mu", "ips", "sd_p", "Barrier", "Position List", "t_contact"]
+        ps = [nr_loci, t, p_mean_l, p_mean_r, sigma, mu, ips, barrier, position_list, t_contact]
+        additional_info = ("Secondary Contact Simulations; with different allele frequencies left and right")
+        self.pickle_parameters(p_names, ps, additional_info)
+        
+    def analyze_data_set1(self, data_set_nr, random_ind_nr=500):
+        '''Analyze Data Set data_set_nr'''
+        raise(NotImplementedError("Implement This!"))
+        print("Also change data_set1 to data_set")
+        
 
 ###############################################################################################################################
 
@@ -1214,6 +1265,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_inds":
         return MultiIndNr(folder, multi_processing=multi_processing)
     
+    elif method == "multi_2nd_cont":
+        return MultiSecondaryContact(folder, multi_processing=multi_processing)
+    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -1291,14 +1345,15 @@ if __name__ == "__main__":
     #    MultiRun.create_data_set(i)
         
     ####################################################
-    MultiRun = fac_method("multi_inds", "./multi_inds/", multi_processing=1)
-    #MultiRun.create_data_set(0)
-    MultiRun.create_data_set(25)
-    MultiRun.analyze_data_set(25, method=0)
-    
+    #MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
+    # MultiRun.create_data_set(0)
+    # MultiRun.create_data_set(25)
+    # MultiRun.analyze_data_set(28, method=2)
     
     ####################################################
-    
+    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd", multi_processing=1)
+    #MultiRun.create_data_set(0)
+    MultiRun.analyze_data_set(0, method=2)
     
 
 

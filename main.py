@@ -287,9 +287,9 @@ def main():
                 # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
                 
                 
-                position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinatesHZ.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
+                genotype_matrix = np.loadtxt('./Data/genotypesHZ.csv', delimiter='$').astype('float64')
                 
                 # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
                 print("Loading Complete!")   

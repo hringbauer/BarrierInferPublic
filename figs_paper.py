@@ -40,7 +40,7 @@ def multi_nbh_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
     res_numbers = range(0, 100)
-    #res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
+    # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
@@ -376,15 +376,16 @@ def barrier_var_pos(folder, subfolder0, subfolder1, subfolder2, method=2):
     
     
     
-def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, bins=50, p=0.5, nr_bootstraps=100):
+def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, 
+                       bins=50, p=0.5, nr_bootstraps=100):
     '''Plot IBD of real data and bootstrapped real data (over loci).
     Load from Result Folder and plot binned IBD from HZ'''  
     
-    #res_numbers = range(0, 100)
+    # res_numbers = range(0, 100)
     positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
     
-    def calc_bin_correlations(positions, genotypes, correction=True):
+    def calc_bin_correlations(positions, genotypes, bins=50, correction=True):
         '''Calculates Binwise Correlations'''
         # Load the data:
         # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
@@ -412,10 +413,21 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, b
         return bin_dist, bin_corr, stand_errors
     
     # Calculate best Estimates
-    bin_dist, bin_corr0, stand_errors = calc_bin_correlations(positions, genotypes)
+    bin_dist, bin_corr0, stand_errors = calc_bin_correlations(positions, genotypes, bins=bins)
+    
+    # Calculates Estimates for left and right half of HZ
+    inds_l = np.where(positions[:, 0] < 0)[0]
+    inds_r = np.where(positions[:, 0] > 0)[0]
+    
+    bin_dist_l, bin_corr_l, stds_l = calc_bin_correlations(positions[inds_l, :], genotypes[inds_l, :], bins=bins/3.0)
+    bin_dist_r, bin_corr_r, stds_r = calc_bin_correlations(positions[inds_r, :], genotypes[inds_r, :], bins=bins/3.0)
+
     
     # Load the Best-Fit Estimates:
     res_vec = load_pickle_data(result_folder, 0, 0, method=2, subfolder=subfolder)
+    
+    
+    
     
     res_vec[ -1] = 0.0  # 605  # Set the mean to mean
     # else: res_vec[:,-1] = 0.0605
@@ -452,17 +464,24 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, b
     corr_fit = kernel[0, 1:] - np.mean(kernel[0, 40:60])  # Substract the middle Value
     
     
-    #scale_factor=50   # Scaling factor for x-Distance
-    scale_factor=1
+    # scale_factor=50   # Scaling factor for x-Distance
+    scale_factor = 50
     
     plt.figure()
-    plt.errorbar(bin_dist[:bins / 2]*scale_factor, bin_corr0[:bins / 2], stand_errors[:bins / 2], fmt='ro', label="Binwise Correlation")
+    plt.errorbar(bin_dist[:bins / 2] * scale_factor, bin_corr0[:bins / 2], stand_errors[:bins / 2], fmt='ro', label="Binwise Correlation")
     # plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted Log Decay")
     
     # plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")
-    plt.plot(x_plot*scale_factor, kernel[0, 1:], 'b-', linewidth=2, label="Best Fit Estimates")
-    plt.plot(bin_dist[:bins / 2]*scale_factor, lower[:bins / 2], 'k-', label="Bootstrap 2.5 %")
-    plt.plot(bin_dist[:bins / 2]*scale_factor, upper[:bins / 2], 'k-', label="Bootstrap 97.5 %")
+    plt.plot(x_plot * scale_factor, kernel[0, 1:], 'b-', linewidth=2, label="Best Fit Estimates")
+    plt.plot(bin_dist[:bins / 2] * scale_factor, lower[:bins / 2], 'k-', label="Bootstrap 2.5 %")
+    plt.plot(bin_dist[:bins / 2] * scale_factor, upper[:bins / 2], 'k-', label="Bootstrap 97.5 %")
+    
+    # Plot IBD of Left and Right half of HZ:
+    nr_bins_l=10
+    nr_bins_r=10
+    plt.plot(bin_dist_l[:nr_bins_l] * scale_factor, bin_corr_l[:nr_bins_l], 'y-', label="Left Half HZ") #stds_l[:nr_bins_l]
+    plt.plot(bin_dist_r[:nr_bins_r] * scale_factor, bin_corr_r[:nr_bins_r], 'm-', label="Right Half HZ") #stds_r[:nr_bins_r]
+    
     # plt.axhline(np.mean(bin_corr), label="Mean Value", color='k', linewidth=2)
     # plt.annotate(r'$\bar{N_b}=%.4G \pm %.2G$' % (Nb_est, Nb_std) , xy=(0.6, 0.7), xycoords='axes fraction', fontsize=15)
     plt.legend()
@@ -477,17 +496,19 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, b
     
 ######################################################
 if __name__ == "__main__":
-    #multi_nbh_single(multi_nbh_folder, method=0)
-    #multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    #cluster_plot(cluster_folder, method=2)
-    #boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
-    #ll_barrier("./barrier_folder1/")
+    '''Here one chooses which Plot to do:'''
+    
+    # multi_nbh_single(multi_nbh_folder, method=0)
+    # multi_nbh_single(multi_nbh_gauss_folder, method=2)
+    # cluster_plot(cluster_folder, method=2)
+    # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
+    # ll_barrier("./barrier_folder1/")
     
     # Plots for Hybrid Zone Data
-    #hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
-    barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    #plot_IBD_bootstrap("./Data/coordinatesHZall1.csv", "./Data/genotypesHZall1.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
-    #plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
+    # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
+    # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
+    plot_IBD_bootstrap("./Data/coordinatesHZall1.csv", "./Data/genotypesHZall1.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     
     
     

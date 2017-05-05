@@ -368,6 +368,4 @@ def fit_rbf_kernel(f, r, error, guess=[25, 0.2]):
     parameters, cov_matrix = curve_fit(rbf_kernel, r, f,
                             sigma=error, absolute_sigma=True, p0=guess, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
     return parameters, cov_matrix
-
-
          

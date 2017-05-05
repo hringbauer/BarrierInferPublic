@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle as pickle
+from gtk._gtk import accel_map_load
     
 
 class MultiRun(object):
@@ -513,10 +514,13 @@ class MultiBarrier(MultiRun):
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
-                         position_barrier=500.5, method=0):
-        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
+                         position_barrier=500.5, method=0, position_list=[], genotype_mat=[]):
+        '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood.
+        If no positon list or genotype data is given; load it for the according Data Set.
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
-        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+        
+        if len(position_list) == 0 or len(genotype_mat) == 0:  # Load Data Sets in case it is needed
+            position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
@@ -1016,7 +1020,6 @@ class MultiSecondaryContact(MultiBarrier):
     Tests 100 Runs for different Barrier strengths.
     Everything set so that 100 Data-Sets are run; with 4x25 Parameters.
     '''
-    
     def create_data_set(self, data_set_nr):
         '''Create a Data_Set for secondary contact.
         Use Secondary Contact Subclass of Grid for Simulations'''
@@ -1066,10 +1069,73 @@ class MultiSecondaryContact(MultiBarrier):
         additional_info = ("Secondary Contact Simulations; with different allele frequencies left and right")
         self.pickle_parameters(p_names, ps, additional_info)
         
-    def analyze_data_set1(self, data_set_nr, random_ind_nr=500):
-        '''Analyze Data Set data_set_nr'''
-        raise(NotImplementedError("Implement This!"))
-        print("Also change data_set1 to data_set")
+    def analyze_data_set_cleaning(self, data_set_nr, method=2):
+        '''Analyze Data Set data_set_nr. Analyses the Data-Set with various levels of "cleaning"
+        I.e. it tries to remove loci with differences in allele frequencies. Then passes Data-Sets to 
+        Standard-Analysis Method'''
+        max_r2_vec = [1.0] * 25 + [0.5] * 25 + [0.01] * 25 + [0.005] * 25
+        max_r2 = max_r2_vec[data_set_nr]
+        max_r2 = 0.01
+        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+        
+        # Extract Indices on which side of the Barrier to look at
+        # barrier = 500.5
+        # inds_l = np.where(position_list[:, 0] <= barrier)[0]
+        # inds_r = np.where(position_list[:, 0] > barrier)[0]
+        
+        # genotypes_left = genotype_mat[inds_l,:]
+        # genotypes_right = genotype_mat[inds_r,:]
+        
+        # assert(len(genotypes_left) + len(genotypes_right) == len(genotype_mat))   # Assert that splitting worked.
+        
+        # Calculate mean Allele Frequencies:
+        # p_l = np.mean(genotypes_left, axis=0)
+        # p_r = np.mean(genotypes_right, axis=0)
+        
+        # print("Standard Deviation left: %.2f" % np.std(p_l))
+        # print("Standard Deviation right: %.2f" % np.std(p_r))
+        # print("Standard Deviation between: %.2f" % np.std(p_r-p_l))
+        
+        # Plot to compare allel-frequs
+        
+        # p_diff = 0.05
+        # close_inds=np.where(np.abs(p_l-p_r)< p_diff)[0]
+        
+        # ## Do the Correction via geographic R**2:
+        x_coords = position_list[:, 0] 
+        y_coords = position_list[:, 1]
+        nr_gtps = np.shape(genotype_mat)[1]
+        
+        x_corr = np.array([np.corrcoef(x_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
+        y_corr = np.array([np.corrcoef(y_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
+        tot_corr = np.maximum(x_corr, y_corr)
+        
+        x = range(nr_gtps)
+        
+        good_lc_inds = np.where(tot_corr < max_r2)[0]
+        print("Nr. of Loci with difference < %.4f: %i" % (max_r2, len(good_lc_inds)))
+        
+        gen_mat_clean = genotype_mat[:, good_lc_inds]
+        
+        # Call the original Method of MultiBarrier
+        self.analyze_data_set(data_set_nr, method=method,
+                              position_list=position_list, genotype_mat=gen_mat_clean)
+        
+        # Plot the different cut-offs:
+        # plt.figure()
+        # plt.plot(x, p_l, 'ro')
+        # plt.plot(x, p_r, 'bo')
+        # plt.plot(x, np.abs(p_r-p_l), 'bo')
+        # plt.plot(x, x_corr, 'ro')
+        # plt.hlines(1.0, min(x), max(x))
+        # plt.hlines(0.02, min(x), max(x))
+        # plt.hlines(0.01, min(x), max(x))
+        # plt.hlines(0.001, min(x), max(x))
+        # plt.show()
+        
+        # Calculate Allele Frequency to the left and to the right of the Barrier:
+
+       
         
 
 ###############################################################################################################################
@@ -1345,15 +1411,16 @@ if __name__ == "__main__":
     #    MultiRun.create_data_set(i)
         
     ####################################################
-    #MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
+    # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
     # MultiRun.create_data_set(0)
     # MultiRun.create_data_set(25)
     # MultiRun.analyze_data_set(28, method=2)
     
     ####################################################
-    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd", multi_processing=1)
-    #MultiRun.create_data_set(0)
-    MultiRun.analyze_data_set(0, method=2)
+    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
+    # MultiRun.create_data_set(0)
+    # MultiRun.analyze_data_set(0, method=2)
+    MultiRun.analyze_data_set_cleaning(0, method=2)
     
 
 

@@ -449,7 +449,8 @@ def memory_usage_resource():
 
    
 ######################### Some lines to test the code and make plots
-def analyze_barrier(position_list, genotype_mat, ind_deme_nr, position_barrier=2, nr_inds=200, fit_t0=0, start_params=[136.07, 0.0122, 0.375, 0.53]):
+def analyze_barrier(position_list, genotype_mat, ind_deme_nr, 
+                    position_barrier=2, nr_inds=200, fit_t0=0, start_params=[136.07, 0.0122, 0.375, 0.53]):
     '''Method that analyzes a barrier. Use Method 2.'''
     # inds = range(len(position_list))
     # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out

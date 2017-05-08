@@ -21,7 +21,9 @@ multi_nbh_gauss_folder = "./nbh_folder_gauss/"
 cluster_folder = "./cluster_folder/"
 hz_folder = "./hz_folder/"
 multi_ind_folder = "./multi_ind_nr/"
+multi_loci_folder = "./multi_loci_nr/"
 secondary_contact_folder = "./multi_2nd/"
+
 
 
 def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
@@ -43,7 +45,7 @@ def multi_nbh_single(folder, method):
     # First quick function to unpickle the data:
     # res_numbers = range(0, 100)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
-    res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
+    # res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
     
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
@@ -124,6 +126,49 @@ def multi_ind_single(folder, method):
     ax3.set_ylabel("SS", fontsize=18)
     # ax3.legend()
     plt.xlabel("Nr. of Individuals")
+    plt.show()
+    
+    
+def multi_loci_single(folder, method):
+    '''Print several Neighborhood Sizes simulated under the model - using one method'''
+    # First quick function to unpickle the data:
+    res_numbers = range(0, 100)
+    # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
+    # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
+    
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(3):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    
+    x_vec = range(50, 350, 3)  # Length 100: from 50 to 350
+    # plt.figure()
+    f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
+    
+    ax1.hlines(4 * np.pi * 5, 50, 350, linewidth=2, color="r")
+    ax1.errorbar(x_vec, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+    ax1.set_ylim([30, 150])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Method: %s" % str(method))
+    # ax1.legend()
+    
+    ax2.errorbar(x_vec, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
+    ax2.hlines(0.006, 50, 350, linewidth=2)
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    ax3.errorbar(x_vec, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
+    ax3.hlines(0.52, 50, 350, linewidth=2)
+    ax3.set_ylabel("SS", fontsize=18)
+    # ax3.legend()
+    plt.xlabel("Nr. of Loci")
     plt.show()
 
 
@@ -501,17 +546,15 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
         # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
         
         analysis = Analysis(positions, genotypes)
-            
         distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
         correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
         entry = 0
         
         for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
             distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
-            
             correlation[entry] = analysis.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
             entry += 1 
-            
+           
         bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
         stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
         
@@ -620,14 +663,15 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
     # multi_ind_single(multi_ind_folder, method=2)
+    multi_loci_single(multi_loci_folder, method=2)
     # multi_secondary_contact_single(secondary_contact_folder, method=2)
     
-    cluster_plot(cluster_folder, method=2)
+    # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # plot_IBD_bootstrap("./Data/coordinatesHZall.csv", "./Data/genotypesHZall.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set

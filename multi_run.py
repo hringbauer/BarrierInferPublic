@@ -1476,14 +1476,14 @@ if __name__ == "__main__":
     #    MultiRun.create_data_set(i)
         
     ####################################################
-    # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
-    # MultiRun.create_data_set(0)
+    MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
+    #MultiRun.create_data_set(0)
     # MultiRun.create_data_set(25)
-    # MultiRun.analyze_data_set(2, method=0)
+    MultiRun.analyze_data_set(3, method=0)
     
     ######################################################
-    MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
-    MultiRun.create_data_set(5)
+    #MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
+    #MultiRun.create_data_set(5)
     #MultiRun.analyze_data_set(5, method=2)
     
     

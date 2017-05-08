@@ -140,7 +140,7 @@ class MultiNbh(MultiRun):
         
     def create_data_set(self, data_set_nr):
         '''Create a Data_Set. Override method.'''
-        print("Craeting Dataset: %i" % data_set_nr)
+        print("Creating Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
         ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
         ips = ips_list[data_set_nr]  # Number of haploid Individuals per Node (For D_e divide by 2)  Loads the right Neighborhood Size
@@ -453,6 +453,9 @@ class MultiNbhModel(MultiNbh):
         ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list]
         additional_info = ("Data generated under a gaussian Model")
         self.pickle_parameters(p_names, ps, additional_info)
+        
+        
+
 
 
 ###############################################################################################################################
@@ -1075,7 +1078,6 @@ class MultiSecondaryContact(MultiBarrier):
         Standard-Analysis Method'''
         max_r2_vec = [1.0] * 25 + [0.5] * 25 + [0.01] * 25 + [0.005] * 25
         max_r2 = max_r2_vec[data_set_nr]
-        max_r2 = 0.01
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Extract Indices on which side of the Barrier to look at
@@ -1213,6 +1215,65 @@ class MultiIndNr(MultiNbhModel):
             
         else: 
             raise ValueError("Invalid Data-Set Nr.!")
+        
+###############################################################################################################################
+
+class MultiLociNr(MultiNbh):
+    '''Generate Data-Sets under the PopgenModel:
+    From 50-350 Loci in steps of three
+    Inherits from MultiNbh to analyze the Data'''
+    
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method of MultiNbh.'''
+        print("Creating Dataset: %i" % data_set_nr)
+        
+        # Create Vector of Numbers of Individuals:
+        nr_loci_vec = range(50, 350, 3)  # From 50 to 350 in steps of 3.
+        assert(len(nr_loci_vec)==100) # Check whether the right length
+
+        if 0 <= data_set_nr < 100:  # In case of valid Data-Set Nr.
+            '''Create a Data_Set. Override method of MultiNbh.'''
+            print("Creating Dataset: %i" % data_set_nr)
+            # First set all the Parameter Values:
+            ips = 10
+            
+            position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
+            nr_loci = nr_loci_vec[data_set_nr]
+            t = 5000
+            gridsize_x, gridsize_y = 1000, 1000
+            sigma = 0.965  # 0.965 # 1.98
+            mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+            sd_p = 0.1
+            p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+            p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+            p_mean = p_mean + p_delta
+            
+            # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+            # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+            
+            genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
+            
+            for i in range(nr_loci):
+                grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+                grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
+                print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
+                grid.set_samples(position_list)
+                grid.update_grid_t(t, p=p_mean[i])  # Uses p_mean[i] as mean allele Frequency.
+                genotype_matrix[:, i] = grid.genotypes
+                
+            
+            self.save_data_set(position_list, genotype_matrix, data_set_nr)
+                
+                
+            # Now Pickle Some additional Information:
+            p_names = ["Nr Loci", "t0", "p_mean", "sigma", "ss", "mu", "ips", "Position List", "Loci Nr Vec"]
+            ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list, nr_loci_vec]
+            additional_info = ("Data generated under a Gaussian Model")
+            self.pickle_parameters(p_names, ps, additional_info)  
+            
+        else: 
+            raise ValueError("Invalid Data-Set Nr.!")
+
 
        
 ###############################################################################################################################
@@ -1331,8 +1392,12 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_inds":
         return MultiIndNr(folder, multi_processing=multi_processing)
     
+    elif method == "multi_loci":
+        return MultiLociNr(folder, multi_processing=multi_processing)
+        
     elif method == "multi_2nd_cont":
         return MultiSecondaryContact(folder, multi_processing=multi_processing)
+    
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1414,13 +1479,20 @@ if __name__ == "__main__":
     # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
     # MultiRun.create_data_set(0)
     # MultiRun.create_data_set(25)
-    # MultiRun.analyze_data_set(28, method=2)
+    # MultiRun.analyze_data_set(2, method=0)
+    
+    ######################################################
+    MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
+    MultiRun.create_data_set(5)
+    #MultiRun.analyze_data_set(5, method=2)
+    
     
     ####################################################
-    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
+    #MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
     # MultiRun.create_data_set(0)
-    # MultiRun.analyze_data_set(0, method=2)
-    MultiRun.analyze_data_set_cleaning(0, method=2)
+    # MultiRun.analyze_data_set(30, method=2)
+    # MultiRun.analyze_data_set_cleaning(0, method=2)
+    
     
 
 

@@ -27,6 +27,7 @@ def main():
     barrier_position = 500.5  # Where is the Barrier
     # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 20, 1) for j in range(-25, 25, 1)])
     genotype_matrix = []  # Matrix of multiple genotypes  
+    inds_per_deme = []  #  Vector storing the Number of Individuals per Deme
 
     print("Welcome back!")
     
@@ -171,7 +172,7 @@ def main():
             while True:
                 inp1 = int(input("\nWhat analysis?\n (1) Correlation Analysis (Binned) \n (2) Fit Individual Correlation \n (3) Group Individuals"
                                  "\n (4) Geographic Comparison \n (5) Correlation Analysis where mean is also estimated\n "
-                                 "(6) Gaussian Process analysis\n (7) Plot Positions \n (8) Plot Mean allele freq. Distribution "
+                                 "(6) Flip Genotypes\n (7) Plot Positions \n (8) Plot Mean allele freq. Distribution "
                                  "\n (9) Back to main menu\n "))
                 
                 if inp1 == 1:
@@ -197,7 +198,7 @@ def main():
                     x_demes = int(input("How many Demes along x-axis?\n"))
                     y_demes = int(input("How many Demes along y-axis?\n"))
                     nr_inds = int(input("What is the minimum Nr of individuals?\n"))
-                    position_list, genotype_matrix = analysis.group_inds(
+                    position_list, genotype_matrix, inds_per_deme = analysis.group_inds(
                         analysis.position_list, analysis.genotypes, x_demes, y_demes, min_ind_nr=nr_inds)
                     
                 if inp1 == 4:
@@ -214,22 +215,7 @@ def main():
                     analysis.ind_correlation(np.mean(genotype_matrix, axis=0))
                     
                 if inp1 == 6:
-                    print("Loading GPR-analysis")
-                    gpr = GPR_kernelfit(analysis.position_list, analysis.genotypes[:, 0])
-                    
-                    
-                    while True:
-                        inp2 = int(input("What do you want to do?\n (1) Run Fit \n (2) Show Fit\n"
-                                         " (3) Show Likelihood Surface\n (4) Back\n"))
-                        
-                        if inp2 == 1:
-                            gpr.run_fit()
-                        if inp2 == 2:
-                            gpr.show_fit()
-                        if inp2 == 3:
-                            gpr.plot_loglike_sf()
-                        if inp2 == 4:
-                            break
+                    genotype_matrix = analysis.flip_gtps(analysis.genotypes)
                 
                 if inp1 == 7:
                     # Plot the data
@@ -271,8 +257,10 @@ def main():
             inp9 = int(input("(1) Save data \n(2) Load data \n"))
             
             if inp9 == 1:
-                np.savetxt("./Data/coordinatesHZall1.csv", position_list, delimiter="$")  # Save the coordinates
-                np.savetxt("./Data/genotypesHZall1.csv", genotype_matrix, delimiter="$")  # Save the data 
+                np.savetxt("./Data/coordinatesHZall2.csv", position_list, delimiter="$")  # Save the coordinates
+                np.savetxt("./Data/genotypesHZall2.csv", genotype_matrix, delimiter="$")  # Save the data 
+                if(len(inds_per_deme > 0)):
+                    np.savetxt("./Data/inds_per_deme_HZall2.csv", inds_per_deme, delimiter="$")
                 print("Saving Complete.")
                 
             elif inp9 == 2:
@@ -287,9 +275,11 @@ def main():
                 # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
                 
                 
-                position_list = np.loadtxt('./Data/coordinatesHZ.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./Data/genotypesHZ.csv', delimiter='$').astype('float64')
+                position_list = np.loadtxt('./Data/coordinatesHZall2.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                #position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
+                genotype_matrix = np.loadtxt('./Data/genotypesHZall2.csv', delimiter='$').astype('float64')
+                
+                
                 
                 # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))
                 print("Loading Complete!")   

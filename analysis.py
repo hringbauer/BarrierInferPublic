@@ -13,8 +13,8 @@ from random import shuffle
 from scipy.optimize.minpack import curve_fit
 from time import time
 
-parameters_fit = [90.96, 0.0447, 1.0, 0.097]  # Parameters used in manual Kernel Plot. Old: 0.04194
-#7.38282829e+01   9.44133108e-04   5.15210543e-01
+parameters_fit = [84.96, 0.0814, 1.0, 0.0596]  # Parameters used in manual Kernel Plot. Old: 0.04194
+# 7.38282829e+01   9.44133108e-04   5.15210543e-01
 
 class Fit_class(object):
     '''Simple class that contains the results of a fit'''
@@ -38,6 +38,7 @@ class Analysis(object):
     '''
     position_list = []  # List of all positions (n individuals)
     genotypes = []  # List of all genotypes (nxk matrix. n: Individuals k: Genotypes)
+    inds_per_deme = []  # Vector storing the number of Individuals per Deme
     barrier = 0  # Where one can find the barrier
 
     def __init__(self, position_list, genotype_list, barrier=0):
@@ -195,6 +196,7 @@ class Analysis(object):
         ax2 = fig.add_subplot(122)
         ax2.hist(p_mean)
         ax2.axvline(x=0.5, c="r")
+        ax2.set_xlim([0, 1])
         plt.title("Distribution of mean all. freqs")
         plt.show()
         
@@ -288,7 +290,18 @@ class Analysis(object):
         plt.ylabel("Mean f", fontsize=25)
         plt.legend(prop={'size':20})
         plt.show() 
+     
+    def flip_gtps(self, genotypes): 
+        '''Randomly flip Genotypes
+        There for the case when SNPs are somehow ascertained'''
+        nr_genotypes = np.shape(genotypes)[1]
+    
+        flip = np.random.random(size=nr_genotypes) < 0.5  # Whether to flip or not
+        genotypes_new = (1 - flip[None, :]) * genotypes + flip[None, :] * (1 - genotypes)  # Does the flipping
+        self.genotypes = genotypes_new
+        return genotypes_new
         
+       
     def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
         '''Function that groups indviduals into demes and gives back mean deme position
         and mean deme genotype'''
@@ -305,7 +318,8 @@ class Analysis(object):
         nr_demes = demes_x * demes_y
         
         position_list_new = np.zeros((nr_demes, 2)) - 1.0  # Defaults everything to -1.
-        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0 # Same.
+        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0  # Same.
+        inds_per_deme = np.zeros(nr_demes)
         
         # Iterate over every deme
         
@@ -320,6 +334,7 @@ class Analysis(object):
                     continue
                       
                 position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
+                inds_per_deme[row] = len(inds)
                 
                 matching_genotypes = genotypes[inds, :]
                 genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
@@ -328,9 +343,10 @@ class Analysis(object):
         # Extract only the set individuals:
         position_list_new = position_list_new[:row, :]
         genotypes_new = genotypes_new[:row, :]
+        inds_per_deme = inds_per_deme[:row]
         
-        self.position_list, self.genotypes = position_list_new, genotypes_new
-        return position_list_new, genotypes_new
+        self.position_list, self.genotypes, self.inds_per_deme = position_list_new, genotypes_new, inds_per_deme
+        return position_list_new, genotypes_new, inds_per_deme
                 
         
 def fit_log_linear(t, y):

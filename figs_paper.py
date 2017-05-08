@@ -20,6 +20,8 @@ multi_nbh_folder = "./nbh_folder/"
 multi_nbh_gauss_folder = "./nbh_folder_gauss/"
 cluster_folder = "./cluster_folder/"
 hz_folder = "./hz_folder/"
+multi_ind_folder = "./multi_ind_nr/"
+secondary_contact_folder = "./multi_2nd/"
 
 
 def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
@@ -39,8 +41,9 @@ def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
 def multi_nbh_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    res_numbers = range(0, 100)
+    # res_numbers = range(0, 100)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
+    res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
     
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
@@ -79,8 +82,115 @@ def multi_nbh_single(folder, method):
     # ax3.legend()
     plt.xlabel("Dataset")
     plt.show()
+    
+
+def multi_ind_single(folder, method):
+    '''Print several Neighborhood Sizes simulated under the model - using one method'''
+    # First quick function to unpickle the data:
+    res_numbers = range(0, 100)
+    # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
+    # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
+    
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(3):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    
+    x_vec = range(436, 4001, 36)  # Length 100: from 404 to 4000
+    # plt.figure()
+    f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
+    
+    ax1.hlines(4 * np.pi * 5, 500, 4000, linewidth=2, color="r")
+    ax1.errorbar(x_vec, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Method: %s" % str(method))
+    # ax1.legend()
+    
+    ax2.errorbar(x_vec, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
+    ax2.hlines(0.006, 500, 4000, linewidth=2)
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    ax3.errorbar(x_vec, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
+    ax3.hlines(0.52, 500, 4000, linewidth=2)
+    ax3.set_ylabel("SS", fontsize=18)
+    # ax3.legend()
+    plt.xlabel("Nr. of Individuals")
+    plt.show()
 
 
+def multi_secondary_contact_single(folder, method):
+    '''Print several Neighborhood Sizes simulated under the model - using one method'''
+    # First quick function to unpickle the data:
+    res_numbers0 = range(0, 25)
+    res_numbers1 = range(25, 50)
+    res_numbers2 = range(50, 75)
+    res_numbers3 = range(75, 100)
+    res_numbers = res_numbers0 + res_numbers1 + res_numbers2 + res_numbers3
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(4):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    res_vec[res_numbers,2] =np.where(res_vec[res_numbers,2]>1, 1, res_vec[res_numbers,2])
+            
+    
+    
+    # plt.figure()
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    
+    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    
+    ax1.errorbar(res_numbers0, res_vec[res_numbers0, 0], yerr=res_vec[res_numbers0, 0] - unc_vec[res_numbers0, 0, 0], fmt="yo", label="R2=1")
+    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="ro", label="R2=0.5")
+    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="R2=0.1")
+    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="R2=0.01")
+    ax1.set_ylim([0, 150])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Various Clustering")
+    ax1.legend()
+    
+    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="yo")
+    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="ro")
+    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="go")
+    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="bo")
+    ax2.hlines(0.006, 0, 100, linewidth=2)
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    ax3.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
+    ax3.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
+    ax3.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
+    ax3.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
+    ax3.hlines(0.1, 0, 100, linewidth=2)
+    ax3.set_ylim([0, 1])
+    ax3.set_ylabel("Barrier", fontsize=18)
+    
+    ax4.errorbar(res_numbers0, res_vec[res_numbers0, 3], yerr=res_vec[res_numbers0, 3] - unc_vec[res_numbers0, 3, 0], fmt="yo")
+    ax4.errorbar(res_numbers1, res_vec[res_numbers1, 3], yerr=res_vec[res_numbers1, 3] - unc_vec[res_numbers1, 3, 0], fmt="ro")
+    ax4.errorbar(res_numbers2, res_vec[res_numbers2, 3], yerr=res_vec[res_numbers2, 3] - unc_vec[res_numbers2, 3, 0], fmt="go")
+    ax4.errorbar(res_numbers3, res_vec[res_numbers3, 3], yerr=res_vec[res_numbers3, 3] - unc_vec[res_numbers3, 3, 0], fmt="bo")
+    ax4.hlines(0.52, 0, 100, linewidth=2)
+    ax4.set_ylim([0.5, 0.53])
+    ax4.set_ylabel("SS", fontsize=18)
+    # plt.xticks([10,35,60,85], ['1x1', '2x2', '3x3','4x4'])
+    
+    plt.xlabel("Dataset")
+    plt.show()
 def multi_barrier(folder):
     '''Prints Inference of multiple Barrier strenghts'''
     print("To Implement")
@@ -376,8 +486,8 @@ def barrier_var_pos(folder, subfolder0, subfolder1, subfolder2, method=2):
     
     
     
-def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder, 
-                       bins=50, p=0.5, nr_bootstraps=100):
+def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
+                       bins=50, p=0.5, nr_bootstraps=200):
     '''Plot IBD of real data and bootstrapped real data (over loci).
     Load from Result Folder and plot binned IBD from HZ'''  
     
@@ -407,25 +517,34 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
         
         bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
         
+        corr_factor = 0
         if correction == True:
             # Substract IBD of distant individuals
-            bin_corr = bin_corr - np.mean(bin_corr[int(bins * 1 / 3):int(bins * 2 / 3)])  
-        return bin_dist, bin_corr, stand_errors
+            corr_factor = np.mean(bin_corr[int(bins * 1 / 3):int(bins * 2 / 3)]) 
+            bin_corr = bin_corr -  corr_factor
+        return bin_dist, bin_corr, stand_errors, corr_factor 
     
     # Calculate best Estimates
-    bin_dist, bin_corr0, stand_errors = calc_bin_correlations(positions, genotypes, bins=bins)
+    bin_dist, bin_corr0, stand_errors, corr_factor_e = calc_bin_correlations(positions, genotypes, bins=bins)
     
     # Calculates Estimates for left and right half of HZ
     inds_l = np.where(positions[:, 0] < 0)[0]
     inds_r = np.where(positions[:, 0] > 0)[0]
     
-    bin_dist_l, bin_corr_l, stds_l = calc_bin_correlations(positions[inds_l, :], genotypes[inds_l, :], bins=bins/3.0)
-    bin_dist_r, bin_corr_r, stds_r = calc_bin_correlations(positions[inds_r, :], genotypes[inds_r, :], bins=bins/3.0)
+    bin_dist_l, bin_corr_l, stds_l, _ = calc_bin_correlations(positions[inds_l, :], 
+                                    genotypes[inds_l, :], bins=bins / 3.0, correction=False)
+    bin_dist_r, bin_corr_r, stds_r, _ = calc_bin_correlations(positions[inds_r, :], 
+                                    genotypes[inds_r, :], bins=bins / 3.0, correction=False)
+    
+    # Take the same correction as Overall
+    bin_corr_l = bin_corr_l - corr_factor_e 
+    bin_corr_r = bin_corr_r - corr_factor_e
 
     
     # Load the Best-Fit Estimates:
     res_vec = load_pickle_data(result_folder, 0, 0, method=2, subfolder=subfolder)
-    
+    print("Best Fit Results:")
+    print(res_vec)
     
     
     
@@ -444,9 +563,10 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     f_estimates = np.zeros((nr_bootstraps, len(bin_dist)))  # Empty Vector for the F-Estimates
     
     for i in range(nr_bootstraps):
+        print("Doing BootsTrap Nr. %i" % i)
         r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
         gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap; pick the columns
-        _, bin_corr, _ = calc_bin_correlations(positions, gtps_sample)
+        _, bin_corr, _, _ = calc_bin_correlations(positions, gtps_sample)
         f_estimates[i, :] = bin_corr
     
     upper = np.percentile(f_estimates, 97.5, axis=0)  # Calculate Upper Bound
@@ -477,10 +597,10 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     plt.plot(bin_dist[:bins / 2] * scale_factor, upper[:bins / 2], 'k-', label="Bootstrap 97.5 %")
     
     # Plot IBD of Left and Right half of HZ:
-    nr_bins_l=10
-    nr_bins_r=10
-    plt.plot(bin_dist_l[:nr_bins_l] * scale_factor, bin_corr_l[:nr_bins_l], 'y-', label="Left Half HZ") #stds_l[:nr_bins_l]
-    plt.plot(bin_dist_r[:nr_bins_r] * scale_factor, bin_corr_r[:nr_bins_r], 'm-', label="Right Half HZ") #stds_r[:nr_bins_r]
+    nr_bins_l = 20
+    nr_bins_r = 24
+    plt.plot(bin_dist_l[:nr_bins_l] * scale_factor, bin_corr_l[:nr_bins_l], 'y-', label="Left Half HZ")  # stds_l[:nr_bins_l]
+    plt.plot(bin_dist_r[:nr_bins_r] * scale_factor, bin_corr_r[:nr_bins_r], 'm-', label="Right Half HZ")  # stds_r[:nr_bins_r]
     
     # plt.axhline(np.mean(bin_corr), label="Mean Value", color='k', linewidth=2)
     # plt.annotate(r'$\bar{N_b}=%.4G \pm %.2G$' % (Nb_est, Nb_std) , xy=(0.6, 0.7), xycoords='axes fraction', fontsize=15)
@@ -497,20 +617,17 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    
     # multi_nbh_single(multi_nbh_folder, method=0)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    # cluster_plot(cluster_folder, method=2)
+    # multi_ind_single(multi_ind_folder, method=2)
+    # multi_secondary_contact_single(secondary_contact_folder, method=2)
+    
+    cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    plot_IBD_bootstrap("./Data/coordinatesHZall1.csv", "./Data/genotypesHZall1.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
-    
-    
-    
-    
-    

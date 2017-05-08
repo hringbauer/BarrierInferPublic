@@ -148,9 +148,9 @@ class MLE_pairwise(GenericLikelihoodModel):
             ll = np.sum(np.log((ll_same0 + ll_same1 + ll_different)))  # Calulate the sum of all log-likelihoods. There should be no more 0.
             return ll  # Return the Log Likelihood
         
-        ll_vec = [ll_per_locus(genotype_row, inds) for genotype_row in genotypes.T]   # calculates ll per locus. Iterate over columns of matrix
-        total_ll = np.sum(ll_vec)   # Sum all log likelihoods
-        return total_ll             # Return the total Likelihood.
+        ll_vec = [ll_per_locus(genotype_row, inds) for genotype_row in genotypes.T]  # calculates ll per locus. Iterate over columns of matrix
+        total_ll = np.sum(ll_vec)  # Sum all log likelihoods
+        return total_ll  # Return the total Likelihood.
         
     
     def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
@@ -244,12 +244,14 @@ class MLE_f_emp(GenericLikelihoodModel):
     kernel = 0  # Class that can calculate the Kernel
     nr_params = 0
     parameter_names = []
+    nr_ind_demes = []  # Nr of Individuals per Deme  
     min_distance = 0  # The minimum pairwise Distance that is analyzed
     inds = []  # Which indices to use based on min pw. distance
     fit_t0 = 0  # Whether to fit t0 as well
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                multi_processing=0, fit_t0=0, min_distance=0, **kwds):
+                multi_processing=0, fit_t0=0, min_distance=0,
+                nr_ind_demes=[], **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
@@ -257,6 +259,10 @@ class MLE_f_emp(GenericLikelihoodModel):
         self.fit_t0 = fit_t0
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
+        
+        if len(nr_ind_demes) == 0:  # In case no Nr. of Inds per Deme supplied; 
+            self.nr_ind_demes = np.ones(len(coords))  # Set everything to 1.
+        else: self.nr_ind_demes = nr_ind_demes
         
         
         super(MLE_f_emp, self).__init__(endog, exog, **kwds)  # Run initializer of full MLE object.
@@ -365,6 +371,7 @@ class MLE_f_emp(GenericLikelihoodModel):
             gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap
             
             frac_genotypes_id, sems = self.calc_mean_indentical(gtps_sample)
+            
             y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
             y_errors = sems[inds]  # Makes vector out of standard errors.
             
@@ -392,12 +399,16 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         # First extract and calculate pairwise distances;
         coords = self.exog
-        inds = self.extract_right_indices(coords)
         
         # Calculate Matrix with fraction of identical genotypes per pair
         genotypes = self.endog
         frac_genotypes_id, sems = self.calc_mean_indentical(genotypes)
+        nr_pair_comps = self.nr_ind_demes[:, None] * self.nr_ind_demes[None, :]  # Calculate Number of pairwise comparisons.
+        
+        # Extract Pairs with right minimum pairwise Distance
+        inds = self.extract_right_indices(coords)
         y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
+        nr_pair_comps = nr_pair_comps[inds]
         y_errors = sems[inds]  # Makes vector out of standard errors.
         
         print("Doing the Fitting...")
@@ -406,9 +417,12 @@ class MLE_f_emp(GenericLikelihoodModel):
         upper_bounds = [np.inf for _ in start_params]  # Sets all upper bounds to infinity
         if len(upper_bounds) == 5:  # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
             upper_bounds[2] = 1.0 
+            
+        sigma = 1.0 / np.sqrt(nr_pair_comps)  # The error in the pairwise values is proportion to 1/sqrt(nr_pair_comps)
         
+        # Do the Fitting:
         parameters, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
-                    p0=start_params, bounds=(lower_bounds, upper_bounds))  # @UnusedVariable p0=(C / 10.0, -r)
+                    p0=start_params, bounds=(lower_bounds, upper_bounds), sigma=sigma)  # @UnusedVariable p0=(C / 10.0, -r)
         
         std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
@@ -435,15 +449,16 @@ def memory_usage_resource():
 
    
 ######################### Some lines to test the code and make plots
-def analyze_barrier(position_list, genotype_mat, position_barrier=500.5, nr_inds=200, fit_t0=0, start_params=[65, 0.005, 0.5]):
+def analyze_barrier(position_list, genotype_mat, ind_deme_nr, position_barrier=2, nr_inds=200, fit_t0=0, start_params=[136.07, 0.0122, 0.375, 0.53]):
     '''Method that analyzes a barrier. Use Method 2.'''
-    inds = range(len(position_list))
-    shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-    inds = inds[:nr_inds]  # Only load first nr_inds
+    # inds = range(len(position_list))
+    # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+    # inds = inds[:nr_inds]  # Only load first nr_inds
     # position_list = position_list[inds, :]
     # genotype_mat = genotype_mat[inds, :]
     
-    MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, start_params=start_params, multi_processing=1, fit_t0=fit_t0)
+    MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_ind_demes=ind_deme_nr,
+                start_params=start_params, multi_processing=1, fit_t0=fit_t0)
     MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier
     tic = time()
     fit = MLE_obj.fit(start_params=start_params)
@@ -484,12 +499,15 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[200,
 
 
 if __name__ == "__main__":
-    position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    # position_list = np.loadtxt('./Data/coordinates00b.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    # genotype_mat = np.loadtxt('./Data/data_genotypes00b.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    # analyze_barrier(position_list, genotype_mat)  # Do not forget to set position of barrier
-    analyze_normal(position_list, genotype_mat)
+    # position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./Data/coordinatesHZall2.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./Data/genotypesHZall2.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  
+    # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
+    analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
+    
+    # analyze_normal(position_list, genotype_mat)
     
 #########################################
 

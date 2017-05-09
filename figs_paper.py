@@ -111,7 +111,7 @@ def multi_ind_single(folder, method):
     
     ax1.hlines(4 * np.pi * 5, 500, 4000, linewidth=2, color="r")
     ax1.errorbar(x_vec, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-    ax1.set_ylim([0, 200])
+    ax1.set_ylim([50, 150])
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.title.set_text("Method: %s" % str(method))
     # ax1.legend()
@@ -662,8 +662,8 @@ if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # multi_nbh_single(multi_nbh_folder, method=0)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    # multi_ind_single(multi_ind_folder, method=2)
-    multi_loci_single(multi_loci_folder, method=2)
+    multi_ind_single(multi_ind_folder, method=2)
+    # multi_loci_single(multi_loci_folder, method=2)
     # multi_secondary_contact_single(secondary_contact_folder, method=2)
     
     # cluster_plot(cluster_folder, method=2)

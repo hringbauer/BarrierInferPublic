@@ -35,7 +35,8 @@ def main():
         print("\nWhat do you want to do?")
         inp = int(input("\n (2) Do Tensor-flow Analysis \n (3) Simulate multiple repl. of correlated allele frequencies \n (4) Simulate correlated allele frequencies"
                         "\n (5) Run grid simulations; multiple Genotypes \n (6) Run grid simulations; multiple Genotypes with barrier"
-                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save \n (10) Exit Program\n "))   
+                        "\n (7) Analyze Samples \n (8) Do forward simulations \n (9) Load / Save" 
+                        "\n (10) Load HZ Data \n (11) Exit Program\n "))   
         
         if inp == 2:
             tf_analysis = TF_Analysis()
@@ -276,7 +277,7 @@ def main():
                 
                 
                 position_list = np.loadtxt('./Data/coordinatesHZall.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
-                position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
+                # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
                 genotype_matrix = np.loadtxt('./Data/genotypesHZall.csv', delimiter='$').astype('float64')
                 
                 
@@ -286,8 +287,33 @@ def main():
                 print("Nr. of Samples:\t\t %i" % np.shape(genotype_matrix)[0])
                 print("Nr. of Genotypes:\t %i" % np.shape(genotype_matrix)[1]) 
          
+        elif inp == 10:
+            while True:
+                inp10 = int(input("\n(1) Load HZ Data \n(2) Save HZ Data \n(3) Clean HZ Data \n(4) Go back\n"))
             
-        if inp == 10:
+                if inp10 == 1:
+                    position_list = np.loadtxt('./Data/coordinatesHZall0.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                    scale_factor = float(input("Scale Factor?\n"))
+                    position_list = position_list / scale_factor  # Normalize; for position_list and genotype Matrix of HZ data!
+                    genotype_matrix = np.loadtxt('./Data/genotypesHZall0.csv', delimiter='$').astype('float64')
+                    
+                    print("Successfully Loaded!")
+                    print("Nr. of Loci: %i" % np.shape(genotype_matrix)[1])
+                    print("Nr. of Individuals: %i" % np.shape(genotype_matrix)[0])
+                    
+                elif inp10 == 2:
+                    np.savetxt("./Data/coordinatesHZall3.csv", position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("./Data/genotypesHZall3.csv", genotype_matrix, delimiter="$")  # Save the data 
+                    
+                elif inp10 == 3:
+                    loci_path = "./Data/loci_info.csv"
+                    analysis = Analysis(position_list, genotype_matrix, loci_path=loci_path)
+                    genotype_matrix, position_list = analysis.clean_hz_data(plot=True)
+                
+                elif inp10 == 4:
+                    break         
+            
+        elif inp == 11:
             print("Future Harald: Keep your shit together - I believe in you. Do not think too much - that just hurts") 
             break
         

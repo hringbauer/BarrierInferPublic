@@ -55,8 +55,8 @@ data_set_nr = data_set_nr - 1
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
 # folder = "./multi_ind_nr/"
-folder ="./multi_loci_nr/"
-#folder = "./multi_2nd/"
+# folder ="./multi_loci_nr/"
+folder = "./multi_2nd/"
 
 # MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
 # MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
@@ -64,8 +64,8 @@ folder ="./multi_loci_nr/"
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
-#MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
-MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
+MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 
 
 

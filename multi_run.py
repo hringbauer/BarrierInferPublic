@@ -1032,11 +1032,10 @@ class MultiSecondaryContact(MultiBarrier):
         t_contact = 100  # Time until secondary Contact.
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)  Loads the right Neighborhood Size
         position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart.
-        nr_loci = 100
-        t = 5000
+        nr_loci = 200
         gridsize_x, gridsize_y = 1000, 1000
         sigma = 0.965  # 0.965 # 1.98
-        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        mu = 0.0001  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
         sd_p = 0.1
         barrier = 500.5  # Where to set the Barrier
                 
@@ -1067,8 +1066,8 @@ class MultiSecondaryContact(MultiBarrier):
         
             
         # Now Pickle Some additional Information:
-        p_names = ["Nr Loci", "t", "p_mean_l", "p_mean_r", "sigma", "mu", "ips", "sd_p", "Barrier", "Position List", "t_contact"]
-        ps = [nr_loci, t, p_mean_l, p_mean_r, sigma, mu, ips, barrier, position_list, t_contact]
+        p_names = ["Nr Loci", "p_mean_l", "p_mean_r", "sigma", "mu", "ips", "Barrier", "Position List", "t_contact"]
+        ps = [nr_loci, p_mean_l, p_mean_r, sigma, mu, ips, barrier, position_list, t_contact]
         additional_info = ("Secondary Contact Simulations; with different allele frequencies left and right")
         self.pickle_parameters(p_names, ps, additional_info)
         
@@ -1076,9 +1075,18 @@ class MultiSecondaryContact(MultiBarrier):
         '''Analyze Data Set data_set_nr. Analyses the Data-Set with various levels of "cleaning"
         I.e. it tries to remove loci with differences in allele frequencies. Then passes Data-Sets to 
         Standard-Analysis Method'''
-        max_r2_vec = [1.0] * 25 + [0.5] * 25 + [0.01] * 25 + [0.005] * 25
-        max_r2 = max_r2_vec[data_set_nr]
-        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+        if data_set_nr >= 100 or data_set_nr <0:
+            raise ValueError("DataSet does not exist.")
+        max_r2_vec = [1.0, 0.5, 0.01, 0.005]
+        
+        # Load the right Data-Set Number (Modulo 25!!)
+        data_set_eff = data_set_nr % 25  # Which data-set to use
+        batch_nr = np.floor(data_set_nr / 25)  # Which batch to use
+        assert(batch_nr * 25 + data_set_eff == data_set_nr)  # Make sure everything works.
+        
+        max_r2 = max_r2_vec[batch_nr] # Load the right Cut-Off
+        
+        position_list, genotype_mat = self.load_data_set(data_set_eff)  # Loads the Data 
         
         # Extract Indices on which side of the Barrier to look at
         # barrier = 500.5
@@ -1476,10 +1484,10 @@ if __name__ == "__main__":
     #    MultiRun.create_data_set(i)
         
     ####################################################
-    MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
-    #MultiRun.create_data_set(0)
+    # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
+    # MultiRun.create_data_set(0)
     # MultiRun.create_data_set(25)
-    MultiRun.analyze_data_set(3, method=0)
+    # MultiRun.analyze_data_set(3, method=0)
     
     ######################################################
     #MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
@@ -1488,13 +1496,12 @@ if __name__ == "__main__":
     
     
     ####################################################
-    #MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
-    # MultiRun.create_data_set(0)
+    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
+    # MultiRun.create_data_set(10)
     # MultiRun.analyze_data_set(30, method=2)
     # MultiRun.analyze_data_set_cleaning(0, method=2)
     
     
-
-
-
-
+    
+    
+    

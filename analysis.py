@@ -5,6 +5,7 @@ Class that analyses the data produced by the grid object.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import itertools
 from scipy.stats import binned_statistic
 from scipy.stats import sem
@@ -40,8 +41,9 @@ class Analysis(object):
     genotypes = []  # List of all genotypes (nxk matrix. n: Individuals k: Genotypes)
     inds_per_deme = []  # Vector storing the number of Individuals per Deme
     barrier = 0  # Where one can find the barrier
+    loci_info = 0  # Will be Pandas Data Frame
 
-    def __init__(self, position_list, genotype_list, barrier=0):
+    def __init__(self, position_list, genotype_list, loci_path=None, barrier=0):
         '''
         Constructor
         '''
@@ -57,6 +59,57 @@ class Analysis(object):
         means = np.mean(self.genotypes, axis=0)  # 
         print("\nMean of Allele Frequencies: %.6f: " % np.mean(means))
         print("Standard Deviations of Allele Frequencies: %.6f" % np.std(means))
+        
+        if loci_path:
+            df = pd.read_csv(loci_path)
+            self.loci_info = df
+            assert(len(self.loci_info) == np.shape(self.genotypes)[1])  # Make sure that Data match!
+            print("Loci Information successfully loaded!")
+    
+    def plot_hz_cleaning(self):
+        '''To Implement'''
+        print("To Implement")
+           
+    def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, plot=False):
+        '''Method to clean HZ Data.
+        Extracts loci with min. Geographic Correlation; min. p-Value for HW
+        min. ld_score and minimal allele Frequency.'''
+        df = self.loci_info
+        
+        inds_okay = (df['Geo_Score'] < geo_r2) & (df['HW p-Value'] > p_HW) & (df['LD_Score'] < ld_r2) & (df['Min All. Freq'] > min_p)
+        inds = np.where(inds_okay)[0]  # Extract Numpy Array Indices
+        
+        print("Filtered from %i to %i Loci." % (len(df), len(inds)))
+        print("Reducing to SNPs:")
+        print(df["Name"][inds_okay])
+        
+        self.genotypes = self.genotypes[:, inds_okay]
+        nr_loci = len(df)
+        
+        if plot == True:
+            f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+            ax1.plot(df['Geo_Score'], 'bo', label="Geo_Score")
+            ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="r")
+            ax1.legend(loc = "upper right")
+            
+            ax2.plot(df['LD_Score'], 'bo', label="LD R2")
+            ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="r")
+            ax2.legend(loc = "upper right")
+            
+            ax3.plot(df['Min All. Freq'], 'bo', label="MAF")
+            ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="r")
+            ax3.legend(loc = "upper right")
+            
+            ax4.plot(df['HW p-Value'], 'bo', label="HW p-Value")
+            ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="r")
+            ax4.legend(loc = "upper right")
+            
+            plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical')
+            plt.show()
+    
+        return self.genotypes, self.position_list
+    
+        
         
     def kinship_coeff(self, p1, p2, p):
         '''Takes two allele frequencies as input and calculates their correlation.'''

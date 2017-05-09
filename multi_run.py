@@ -1077,13 +1077,14 @@ class MultiSecondaryContact(MultiBarrier):
         Standard-Analysis Method'''
         if data_set_nr >= 100 or data_set_nr <0:
             raise ValueError("DataSet does not exist.")
-        max_r2_vec = [1.0, 0.5, 0.01, 0.005]
+        max_r2_vec = np.array([1.0, 0.01, 0.005, 0.002])
         
         # Load the right Data-Set Number (Modulo 25!!)
         data_set_eff = data_set_nr % 25  # Which data-set to use
-        batch_nr = np.floor(data_set_nr / 25)  # Which batch to use
+        batch_nr = int(np.floor(data_set_nr / 25))  # Which batch to use
         assert(batch_nr * 25 + data_set_eff == data_set_nr)  # Make sure everything works.
         
+        print(batch_nr)
         max_r2 = max_r2_vec[batch_nr] # Load the right Cut-Off
         
         position_list, genotype_mat = self.load_data_set(data_set_eff)  # Loads the Data 
@@ -1122,6 +1123,7 @@ class MultiSecondaryContact(MultiBarrier):
         
         x = range(nr_gtps)
         
+        print("Nr. of Loci before cleaning: %i" % nr_gtps)
         good_lc_inds = np.where(tot_corr < max_r2)[0]
         print("Nr. of Loci with difference < %.4f: %i" % (max_r2, len(good_lc_inds)))
         
@@ -1406,7 +1408,6 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_2nd_cont":
         return MultiSecondaryContact(folder, multi_processing=multi_processing)
     
-    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -1498,8 +1499,8 @@ if __name__ == "__main__":
     ####################################################
     MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
     # MultiRun.create_data_set(10)
-    # MultiRun.analyze_data_set(30, method=2)
-    # MultiRun.analyze_data_set_cleaning(0, method=2)
+    # MultiRun.analyze_data_set(26, method=2)
+    MultiRun.analyze_data_set_cleaning(76, method=2)
     
     
     

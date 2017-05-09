@@ -662,9 +662,9 @@ if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # multi_nbh_single(multi_nbh_folder, method=0)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    multi_ind_single(multi_ind_folder, method=2)
+    # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
-    # multi_secondary_contact_single(secondary_contact_folder, method=2)
+    multi_secondary_contact_single(secondary_contact_folder, method=2)
     
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3

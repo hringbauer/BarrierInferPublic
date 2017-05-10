@@ -1132,6 +1132,12 @@ class MultiSecondaryContact(MultiBarrier):
         
         gen_mat_clean = genotype_mat[:, good_lc_inds]
         
+        
+        
+        # Call the original Method of MultiBarrier
+        self.analyze_data_set(data_set_nr, method=method,
+                              position_list=position_list, genotype_mat=gen_mat_clean)
+        
         # Save the number of all and extracted_loci: (Need not check the existence of Path - it was already created
         subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
         path = self.data_folder + subfolder_meth + "nr_good_loci" + str(data_set_nr).zfill(2) + ".csv"
@@ -1139,12 +1145,6 @@ class MultiSecondaryContact(MultiBarrier):
         data = np.array([nr_gtps, len(good_lc_inds)])  # Saves the number of all Genotypes; and the Number of filtered Loci
         np.savetxt(path, data, delimiter="$")  # Save the coordinates
         print("Nr. of filtered Loci successfully saved!!")
-        
-        
-        # Call the original Method of MultiBarrier
-        self.analyze_data_set(data_set_nr, method=method,
-                              position_list=position_list, genotype_mat=gen_mat_clean)
-        
 
 
 ###############################################################################################################################
@@ -1497,7 +1497,7 @@ if __name__ == "__main__":
     MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
     # MultiRun.create_data_set(10)
     # MultiRun.analyze_data_set(26, method=2)
-    MultiRun.analyze_data_set_cleaning(26, method=2)
+    MultiRun.analyze_data_set_cleaning(50, method=2)
     
     
     

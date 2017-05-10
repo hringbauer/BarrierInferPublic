@@ -221,7 +221,7 @@ def multi_secondary_contact_single(folder, method):
     ax3.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
     ax3.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
     ax3.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
-    ax3.hlines(0.1, 0, 100, linewidth=2)
+    ax3.hlines(1, 0, 100, linewidth=2)
     ax3.set_ylim([0, 1])
     ax3.set_ylabel("Barrier", fontsize=18)
     

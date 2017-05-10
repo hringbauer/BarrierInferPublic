@@ -1075,9 +1075,9 @@ class MultiSecondaryContact(MultiBarrier):
         '''Analyze Data Set data_set_nr. Analyses the Data-Set with various levels of "cleaning"
         I.e. it tries to remove loci with differences in allele frequencies. Then passes Data-Sets to 
         Standard-Analysis Method'''
-        if data_set_nr >= 100 or data_set_nr <0:
+        if data_set_nr >= 100 or data_set_nr < 0:
             raise ValueError("DataSet does not exist.")
-        max_r2_vec = np.array([1.0, 0.01, 0.005, 0.002])
+        max_r2_vec = np.array([1.0, 0.02, 0.01, 0.005])
         
         # Load the right Data-Set Number (Modulo 25!!)
         data_set_eff = data_set_nr % 25  # Which data-set to use
@@ -1085,7 +1085,7 @@ class MultiSecondaryContact(MultiBarrier):
         assert(batch_nr * 25 + data_set_eff == data_set_nr)  # Make sure everything works.
         
         print(batch_nr)
-        max_r2 = max_r2_vec[batch_nr] # Load the right Cut-Off
+        max_r2 = max_r2_vec[batch_nr]  # Load the right Cut-Off
         
         position_list, genotype_mat = self.load_data_set(data_set_eff)  # Loads the Data 
         
@@ -1116,6 +1116,7 @@ class MultiSecondaryContact(MultiBarrier):
         x_coords = position_list[:, 0] 
         y_coords = position_list[:, 1]
         nr_gtps = np.shape(genotype_mat)[1]
+        assert(nr_gtps == 200) # Quick Hack to check whether everything okay. Remove if not!!
         
         x_corr = np.array([np.corrcoef(x_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
         y_corr = np.array([np.corrcoef(y_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
@@ -1127,28 +1128,24 @@ class MultiSecondaryContact(MultiBarrier):
         good_lc_inds = np.where(tot_corr < max_r2)[0]
         print("Nr. of Loci with difference < %.4f: %i" % (max_r2, len(good_lc_inds)))
         
+        
+        
         gen_mat_clean = genotype_mat[:, good_lc_inds]
+        
+        # Save the number of all and extracted_loci: (Need not check the existence of Path - it was already created
+        subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        path = self.data_folder + subfolder_meth + "nr_good_loci" + str(data_set_nr).zfill(2) + ".csv"
+        
+        data = np.array([nr_gtps, len(good_lc_inds)])  # Saves the number of all Genotypes; and the Number of filtered Loci
+        np.savetxt(path, data, delimiter="$")  # Save the coordinates
+        print("Nr. of filtered Loci successfully saved!!")
+        
         
         # Call the original Method of MultiBarrier
         self.analyze_data_set(data_set_nr, method=method,
                               position_list=position_list, genotype_mat=gen_mat_clean)
         
-        # Plot the different cut-offs:
-        # plt.figure()
-        # plt.plot(x, p_l, 'ro')
-        # plt.plot(x, p_r, 'bo')
-        # plt.plot(x, np.abs(p_r-p_l), 'bo')
-        # plt.plot(x, x_corr, 'ro')
-        # plt.hlines(1.0, min(x), max(x))
-        # plt.hlines(0.02, min(x), max(x))
-        # plt.hlines(0.01, min(x), max(x))
-        # plt.hlines(0.001, min(x), max(x))
-        # plt.show()
-        
-        # Calculate Allele Frequency to the left and to the right of the Barrier:
 
-       
-        
 
 ###############################################################################################################################
 
@@ -1239,7 +1236,7 @@ class MultiLociNr(MultiNbh):
         
         # Create Vector of Numbers of Individuals:
         nr_loci_vec = range(50, 350, 3)  # From 50 to 350 in steps of 3.
-        assert(len(nr_loci_vec)==100) # Check whether the right length
+        assert(len(nr_loci_vec) == 100)  # Check whether the right length
 
         if 0 <= data_set_nr < 100:  # In case of valid Data-Set Nr.
             '''Create a Data_Set. Override method of MultiNbh.'''
@@ -1491,16 +1488,16 @@ if __name__ == "__main__":
     # MultiRun.analyze_data_set(3, method=0)
     
     ######################################################
-    #MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
-    #MultiRun.create_data_set(5)
-    #MultiRun.analyze_data_set(5, method=2)
+    # MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
+    # MultiRun.create_data_set(5)
+    # MultiRun.analyze_data_set(5, method=2)
     
     
     ####################################################
     MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
     # MultiRun.create_data_set(10)
     # MultiRun.analyze_data_set(26, method=2)
-    MultiRun.analyze_data_set_cleaning(76, method=2)
+    MultiRun.analyze_data_set_cleaning(26, method=2)
     
     
     

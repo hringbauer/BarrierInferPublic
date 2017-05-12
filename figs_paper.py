@@ -191,51 +191,48 @@ def multi_secondary_contact_single(folder, method):
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
-    res_vec[res_numbers,2] =np.where(res_vec[res_numbers,2]>1, 1, res_vec[res_numbers,2])
-            
+    res_vec[res_numbers,2] = np.where(res_vec[res_numbers,2]>1, 1, res_vec[res_numbers,2])
+    subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
     
-    
+    loci_nr_vec = [np.loadtxt(folder + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
+                   for i in res_numbers]
     # plt.figure()
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
     
     ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
     
     ax1.errorbar(res_numbers0, res_vec[res_numbers0, 0], yerr=res_vec[res_numbers0, 0] - unc_vec[res_numbers0, 0, 0], fmt="yo", label="R2=1")
-    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="ro", label="R2=0.5")
-    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="R2=0.1")
-    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="R2=0.01")
+    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="ro", label="R2=0.02")
+    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="R2=0.01")
+    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="R2=0.005")
     ax1.set_ylim([0, 150])
     ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.title.set_text("Various Clustering")
-    ax1.legend()
+    ax1.title.set_text("Varying Quality Cutoff")
+    ax1.legend(loc = "upper right")
     
-    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="yo")
-    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="ro")
-    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="go")
-    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="bo")
-    ax2.hlines(0.006, 0, 100, linewidth=2)
-    ax2.set_ylabel("L", fontsize=18)
+    #ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="yo")
+    #ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="ro")
+    #ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="go")
+    #ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="bo")
+    #ax2.hlines(0.006, 0, 100, linewidth=2)
+    #ax2.set_ylabel("L", fontsize=18)
     # ax2.legend()
     
-    ax3.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
-    ax3.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
-    ax3.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
-    ax3.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
-    ax3.hlines(1, 0, 100, linewidth=2)
-    ax3.set_ylim([0, 1])
-    ax3.set_ylabel("Barrier", fontsize=18)
+    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
+    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
+    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
+    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
+    ax2.hlines(1, 0, 100, linewidth=2)
+    ax2.set_ylim([0, 1])
+    ax2.set_ylabel("Barrier", fontsize=18)
     
-    ax4.errorbar(res_numbers0, res_vec[res_numbers0, 3], yerr=res_vec[res_numbers0, 3] - unc_vec[res_numbers0, 3, 0], fmt="yo")
-    ax4.errorbar(res_numbers1, res_vec[res_numbers1, 3], yerr=res_vec[res_numbers1, 3] - unc_vec[res_numbers1, 3, 0], fmt="ro")
-    ax4.errorbar(res_numbers2, res_vec[res_numbers2, 3], yerr=res_vec[res_numbers2, 3] - unc_vec[res_numbers2, 3, 0], fmt="go")
-    ax4.errorbar(res_numbers3, res_vec[res_numbers3, 3], yerr=res_vec[res_numbers3, 3] - unc_vec[res_numbers3, 3, 0], fmt="bo")
-    ax4.hlines(0.52, 0, 100, linewidth=2)
-    ax4.set_ylim([0.5, 0.53])
-    ax4.set_ylabel("SS", fontsize=18)
-    # plt.xticks([10,35,60,85], ['1x1', '2x2', '3x3','4x4'])
+    ax3.plot(res_numbers, loci_nr_vec, 'ro')
+    ax3.hlines(200,0,100,linewidth=2)
+    ax3.set_ylabel("Nr. of Loci", fontsize=18)
     
     plt.xlabel("Dataset")
     plt.show()
+    
 def multi_barrier(folder):
     '''Prints Inference of multiple Barrier strenghts'''
     print("To Implement")
@@ -270,7 +267,7 @@ def cluster_plot(folder, method=2):
     ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="3x3")
     ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="4x4")
     ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.set_ylabel("Nbh Size", fontsize=18)
     ax1.title.set_text("Various Clustering")
     ax1.legend()
     
@@ -371,7 +368,7 @@ def boots_trap(folder, method=2):
     inds = np.argsort(res_vec[res_numbers, 0])
     ax1.errorbar(res_numbers, res_vec[inds, 0], yerr=res_vec[inds, 0] - unc_vec[inds, 0, 0], fmt="ro")
     ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.set_ylabel("Nbh Size", fontsize=18)
     ax1.title.set_text("BootsTrap over Test Data Set")
     
     inds = np.argsort(res_vec[res_numbers, 1])
@@ -425,7 +422,7 @@ def hz_barrier_bts(folder, subfolder, method=2):
     ax1.errorbar(res_numbers[inds0], res_vec[0, 0],
                  yerr=res_vec[0, 0] - unc_vec[0, 0, 0], fmt="bo")  # Plot first Data Set
     ax1.set_ylim([5, 400])
-    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.set_ylabel("Nbh Size", fontsize=18)
     ax1.hlines(res_vec[0, 0], 0, 100, linewidth=2, color="b")
     ax1.title.set_text("Bootstrap over Hybrid Zone Data")
     

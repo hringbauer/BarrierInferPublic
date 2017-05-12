@@ -65,10 +65,6 @@ class Analysis(object):
             self.loci_info = df
             assert(len(self.loci_info) == np.shape(self.genotypes)[1])  # Make sure that Data match!
             print("Loci Information successfully loaded!")
-    
-    def plot_hz_cleaning(self):
-        '''To Implement'''
-        print("To Implement")
            
     def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, plot=False):
         '''Method to clean HZ Data.
@@ -90,21 +86,27 @@ class Analysis(object):
             f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
             ax1.plot(df['Geo_Score'], 'bo', label="Geo_Score")
             ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="r")
-            ax1.legend(loc = "upper right")
+            ax1.legend(loc="upper right")
             
             ax2.plot(df['LD_Score'], 'bo', label="LD R2")
             ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="r")
-            ax2.legend(loc = "upper right")
+            ax2.legend(loc="upper right")
             
             ax3.plot(df['Min All. Freq'], 'bo', label="MAF")
             ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="r")
-            ax3.legend(loc = "upper right")
+            ax3.legend(loc="upper right")
             
             ax4.plot(df['HW p-Value'], 'bo', label="HW p-Value")
             ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="r")
-            ax4.legend(loc = "upper right")
+            ax4.legend(loc="upper right")
             
             plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical')
+            
+            colors = np.array(["red", ] * nr_loci)
+            colors[inds_okay] = "b"  # Sets the good SNPs to Blue!
+            
+            ax = plt.gca()
+            [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
             plt.show()
     
         return self.genotypes, self.position_list

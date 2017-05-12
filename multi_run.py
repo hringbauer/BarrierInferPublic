@@ -126,6 +126,62 @@ class MultiRun(object):
         path = self.data_folder + "analysis.p"
         (self.param_estimates, self.uncert_estimates) = pickle.load(open(path, "rb"))
         return self.param_estimates, self.uncert_estimates
+    
+    def fit_IBD(self, method, barrier_position, start_params):
+        '''Method to fit no-Barrier-Model'''
+        raise NotImplementedError("Imlement this!")
+        
+    def fit_barrier(self, position_barrier, start_params, data_set_nr, method=2,
+                    res_folder=None, position_list=[], genotype_mat=[], random_ind_nr=None):
+        '''Method to fit a Barrier; and save the estimates and Unc'''
+        # Load Data Sets in case it is needed:
+        if len(position_list) == 0 or len(genotype_mat) == 0:  
+            position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+            
+        # Pick Random_ind_nr many Individuals in case needed:
+        if random_ind_nr:
+            inds = range(len(position_list))
+            shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+            inds = inds[:random_ind_nr]  # Only load first nr_inds
+    
+            position_list = position_list[inds, :]
+            genotype_mat = genotype_mat[inds, :]
+            
+            
+            
+        # First Choose the right MLE-Object and set the right starting Parameters:
+        if method == 0:
+            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+            start_params = start_params + [0.004, ]
+        elif method == 1:
+            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_params = start_params + [0.01, ]
+        elif method == 2:
+            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            start_params = start_params + [0.5, ]
+        elif method == 3:  # Do the fitting based on binned data
+            MLE_obj = Analysis(position_list, genotype_mat) 
+        else: raise ValueError("Wrong Input for Method!!")
+        
+        MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
+        fit = MLE_obj.fit(start_params=start_params)
+
+        params = fit.params
+        conf_ind = fit.conf_int()
+        
+        # Pickle Parameter Estimates:
+        if res_folder == None:  # In case SubFolder was passed on:
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+            
+        else: subfolder_meth = res_folder
+            
+        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+        
+        directory = os.path.dirname(path)  # Extract Directory
+        if not os.path.exists(directory):  # Creates Folder if not already existing
+            os.makedirs(directory)
+            
+        pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
 
 ###############################################################################################################################
 
@@ -517,62 +573,56 @@ class MultiBarrier(MultiRun):
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
-                         position_barrier=500.5, method=0, position_list=[], genotype_mat=[]):
+                         position_barrier=500.5, method=0):
         '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood.
         If no positon list or genotype data is given; load it for the according Data Set.
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
-        
-        if len(position_list) == 0 or len(genotype_mat) == 0:  # Load Data Sets in case it is needed
-            position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
         barrier_strength_list = 100 * [0.5]
         l = 0.006
-
         nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
-        start_list = [[nbh_size, l, bs, 0.004] for bs in barrier_strength_list]  # General Vector for Start-Lists
+        start_list = [[nbh_size, l, bs] for bs in barrier_strength_list]  # General Vector for Start-Lists
         
-        # Pick Random_ind_nr many Individuals:
-        # inds = range(len(position_list))
-        # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-        # inds = inds[:random_ind_nr]  # Only load first nr_inds
-
-        # position_list = position_list[inds, :]
-        # genotype_mat = genotype_mat[inds, :]
+        # Then pick the Starting Parameters:
+        start_params = start_list[data_set_nr]        
+    
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method)
         
-        if method == 0:
-            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-        elif method == 1:
-            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_size, l, bs, 0.01] for bs in barrier_strength_list]  # Update Vector of Start Lists
-        elif method == 2:
-            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_size, l, bs, 0.5] for bs in barrier_strength_list]  # Update Vector of Start Lists
-        elif method == 3:  # Do the fitting based on binned data
-            MLE_obj = Analysis(position_list, genotype_mat) 
-        else: raise ValueError("Wrong Input for Method!!")
         
-        MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
-        
-        fit = MLE_obj.fit(start_params=start_list[data_set_nr])
-
-        params = fit.params
-        conf_ind = fit.conf_int()
-        
-        # Pickle Parameter Estimates:
-        if res_folder == None:
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-            
-        else: subfolder_meth = res_folder
-            
-        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
-        
-        directory = os.path.dirname(path)  # Extract Directory
-        if not os.path.exists(directory):  # Creates Folder if not already existing
-            os.makedirs(directory)
-            
-        pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+#         if method == 0:
+#             MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+#         elif method == 1:
+#             MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+#             start_list = [[nbh_size, l, bs, 0.01] for bs in barrier_strength_list]  # Update Vector of Start Lists
+#         elif method == 2:
+#             MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+#             start_list = [[nbh_size, l, bs, 0.5] for bs in barrier_strength_list]  # Update Vector of Start Lists
+#         elif method == 3:  # Do the fitting based on binned data
+#             MLE_obj = Analysis(position_list, genotype_mat) 
+#         else: raise ValueError("Wrong Input for Method!!")
+#         
+#         MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
+#         
+#         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
+# 
+#         params = fit.params
+#         conf_ind = fit.conf_int()
+#         
+#         # Pickle Parameter Estimates:
+#         if res_folder == None:
+#             subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+#             
+#         else: subfolder_meth = res_folder
+#             
+#         path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+#         
+#         directory = os.path.dirname(path)  # Extract Directory
+#         if not os.path.exists(directory):  # Creates Folder if not already existing
+#             os.makedirs(directory)
+#             
+#         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
     def barrier_ll(self, data_set_nr, nbh, L, t0, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21):
         '''Calculate LL for different strengths of the barrier in GRF Framework'''
@@ -769,7 +819,7 @@ class MultiCluster(MultiBarrier):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=1000, position_barrier=500.5, method=2):
+    def analyze_data_set(self, data_set_nr, random_ind_nr=None, position_barrier=500.5, method=2):
         '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         
@@ -828,53 +878,50 @@ class MultiCluster(MultiBarrier):
             position_list, genotype_mat = group_inds(position_list, genotype_mat, demes_x=6, demes_y=9)  # 4x4 clustering
         
         
-        
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
         barrier_strength_list = 100 * [0.1]
         l = 0.006
 
         nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
-        start_list = [[nbh_size, l, bs, 0.004] for bs in barrier_strength_list]  # General Vector for Start-Lists
         
-        # Pick Random_ind_nr many Individuals:
-        # inds = range(len(position_list))
-        # shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-        # inds = inds[:random_ind_nr]  # Only load first nr_inds
-
-        # position_list = position_list[inds, :]
-        # genotype_mat = genotype_mat[inds, :]
+        start_list = [[nbh_size, l, bs] for bs in barrier_strength_list]  # General Vector for Start-Lists
+        start_params = start_list[data_set_nr]
         
-        if method == 0:
-            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-        elif method == 1:
-            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_size, l, bs, 0.01] for bs in barrier_strength_list]  # Update Vector of Start Lists
-        elif method == 2:
-            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
-            start_list = [[nbh_size, l, bs, 0.5] for bs in barrier_strength_list]  # Update Vector of Start Lists
-        elif method == 3:  # Do the fitting based on binned data
-            MLE_obj = Analysis(position_list, genotype_mat) 
-        else: raise ValueError("Wrong Input for Method!!")
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
+                    position_list=position_list, genotype_mat=genotype_mat, random_ind_nr=random_ind_nr)
         
-        MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
         
-        fit = MLE_obj.fit(start_params=start_list[data_set_nr])
-
-        params = fit.params
-        try:
-            conf_ind = fit.conf_int()
-        except: conf_ind = np.array([[param, param] for param in params])
-        
-        # Pickle Parameter Estimates:
-        subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-        path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
-        
-        directory = os.path.dirname(path)  # Extract Directory
-        if not os.path.exists(directory):  # Creates Folder if not already existing
-            os.makedirs(directory)
-            
-        pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+#         if method == 0:
+#             MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+#         elif method == 1:
+#             MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+#             start_list = [[nbh_size, l, bs, 0.01] for bs in barrier_strength_list]  # Update Vector of Start Lists
+#         elif method == 2:
+#             MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+#             start_list = [[nbh_size, l, bs, 0.5] for bs in barrier_strength_list]  # Update Vector of Start Lists
+#         elif method == 3:  # Do the fitting based on binned data
+#             MLE_obj = Analysis(position_list, genotype_mat) 
+#         else: raise ValueError("Wrong Input for Method!!")
+#         
+#         MLE_obj.kernel.position_barrier = position_barrier  # Sets the Barrier Position
+#         
+#         fit = MLE_obj.fit(start_params=start_list[data_set_nr])
+# 
+#         params = fit.params
+#         try:
+#             conf_ind = fit.conf_int()
+#         except: conf_ind = np.array([[param, param] for param in params])
+#         
+#         # Pickle Parameter Estimates:
+#         subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+#         path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+#         
+#         directory = os.path.dirname(path)  # Extract Directory
+#         if not os.path.exists(directory):  # Creates Folder if not already existing
+#             os.makedirs(directory)
+#             
+#         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
 
 ##############################################################################################################################
@@ -1023,7 +1070,7 @@ class MultiSecondaryContact(MultiBarrier):
     Tests 100 Runs for different Barrier strengths.
     Everything set so that 100 Data-Sets are run; with 4x25 Parameters.
     '''
-    def create_data_set(self, data_set_nr):
+    def create_data_set(self, data_set_nr, barrier_strength=None):
         '''Create a Data_Set for secondary contact.
         Use Secondary Contact Subclass of Grid for Simulations'''
         
@@ -1058,7 +1105,12 @@ class MultiSecondaryContact(MultiBarrier):
             grid.barrier = barrier
             print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
             grid.set_samples(position_list)
-            grid.update_grid_t(t_contact, p1=p_mean_l[i], p2=p_mean_r[i])  # Updates for t Generations with 
+            if barrier_strength:  # If Barrier:
+                grid.barrier_strength = barrier_strength  # Set the strength of the Barrier.
+                grid.update_grid_t(t_contact, barrier=1, p1=p_mean_l[i], p2=p_mean_r[i])
+            
+            else:  # Produce Grid in the normal way: 
+                grid.update_grid_t(t_contact, barrier=0, p1=p_mean_l[i], p2=p_mean_r[i])  # Updates for t Generations with 
             
             genotype_matrix[:, i] = grid.genotypes
             
@@ -1071,7 +1123,7 @@ class MultiSecondaryContact(MultiBarrier):
         additional_info = ("Secondary Contact Simulations; with different allele frequencies left and right")
         self.pickle_parameters(p_names, ps, additional_info)
         
-    def analyze_data_set_cleaning(self, data_set_nr, method=2):
+    def analyze_data_set_cleaning(self, data_set_nr, method=2, res_folder=None):
         '''Analyze Data Set data_set_nr. Analyses the Data-Set with various levels of "cleaning"
         I.e. it tries to remove loci with differences in allele frequencies. Then passes Data-Sets to 
         Standard-Analysis Method'''
@@ -1116,7 +1168,7 @@ class MultiSecondaryContact(MultiBarrier):
         x_coords = position_list[:, 0] 
         y_coords = position_list[:, 1]
         nr_gtps = np.shape(genotype_mat)[1]
-        assert(nr_gtps == 200) # Quick Hack to check whether everything okay. Remove if not!!
+        assert(nr_gtps == 200)  # Quick Hack to check whether everything okay. Remove if not!!
         
         x_corr = np.array([np.corrcoef(x_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
         y_corr = np.array([np.corrcoef(y_coords, genotype_mat[:, i])[0, 1] ** 2 for i in xrange(nr_gtps)])
@@ -1127,18 +1179,25 @@ class MultiSecondaryContact(MultiBarrier):
         print("Nr. of Loci before cleaning: %i" % nr_gtps)
         good_lc_inds = np.where(tot_corr < max_r2)[0]
         print("Nr. of Loci with difference < %.4f: %i" % (max_r2, len(good_lc_inds)))
-        
-        
-        
         gen_mat_clean = genotype_mat[:, good_lc_inds]
         
+        # Set the Position of the Barrier:
+        position_barrier = 500.5  # Where to set the Barrier
         
+        # Set the starting Parameters:
+        bs = 0.1  # Barrier Strength
+        l = 0.006
+        nbh_size = 4 * np.pi * 5
+        start_params = [nbh_size, l, bs]  # General Vector for Start-Lists
         
         # Call the original Method of MultiBarrier
-        self.analyze_data_set(data_set_nr, method=method,
-                              position_list=position_list, genotype_mat=gen_mat_clean)
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
+                    res_folder=res_folder, position_list=position_list, genotype_mat=gen_mat_clean)
         
-        # Save the number of all and extracted_loci: (Need not check the existence of Path - it was already created
+        # self.analyze_data_set(data_set_nr, method=method,
+        #                      position_list=position_list, genotype_mat=gen_mat_clean)
+        
+        # Also Save the number of all and extracted_loci: (Need not check the existence of Path - it was already created
         subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
         path = self.data_folder + subfolder_meth + "nr_good_loci" + str(data_set_nr).zfill(2) + ".csv"
         
@@ -1268,9 +1327,7 @@ class MultiLociNr(MultiNbh):
                 grid.update_grid_t(t, p=p_mean[i])  # Uses p_mean[i] as mean allele Frequency.
                 genotype_matrix[:, i] = grid.genotypes
                 
-            
             self.save_data_set(position_list, genotype_matrix, data_set_nr)
-                
                 
             # Now Pickle Some additional Information:
             p_names = ["Nr Loci", "t0", "p_mean", "sigma", "ss", "mu", "ips", "Position List", "Loci Nr Vec"]
@@ -1280,99 +1337,28 @@ class MultiLociNr(MultiNbh):
             
         else: 
             raise ValueError("Invalid Data-Set Nr.!")
+        
+class MultiBarrierPosition(MultiBarrier):
+    '''Class to analyze multiple Positions of Barriers.
+    For multiple positions; do 10 Bootstrap Estimates'''
+    def create_data_set(self, position_list=[], genotype_matrix=[], data_set_nr=0):
+        '''Simply saves a given data-set'''
+        
+        # In case non given create one
+        if len(position_list) == 0: 
+            super.create_data_set()
+        
+        else: self.save_data_set(position_list, genotype_matrix, data_set_nr)
+        
+    def analyze_data_set(self):
+        '''For everyone in position; do ten bootstrap Estimates'''
+        raise NotImplementedError("Implement This!!")
 
 
        
 ###############################################################################################################################
         
-class TestRun(MultiRun):
-    '''First simple class to test whether everything works'''
-    def __init__(self, folder, nr_data_sets=1, nr_params=4, **kwds):
-        super(TestRun, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
-        self.name = "test_file"
-        # self.data_folder = folder
-        
-    def create_data_set(self, data_set_nr):
-        '''Create a Data_Set. Override method.'''
-        print("Craeting Dataset: %i" % data_set_nr)
-        # First set all the Parameter Values:
-        position_list = np.array([(500 + i, 500 + j) for i in range(-11, 12, 1) for j in range(-17, 18, 1)])  # Original position list
-        nr_loci = 100
-        t = 5000
-        gridsize_x, gridsize_y = 1000, 1000
-        sigma = 0.965  # 0.965 # 1.98
-        ips = 12  # Number of haploid Individuals per Node (For D_e divide by 2)
-        mu = 0.005  # Mutation Rate
-        ss = 0.1
-        p_delta = np.random.normal(scale=ss, size=nr_loci)  # Draw some random Delta p from a normal distribution
-        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
-        p_mean = p_mean + p_delta
-        
-        # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
-        # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
-        
-        genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
-        
-        for i in range(nr_loci):
-            grid = Grid()  # Creates new Grid. Maybe later on use factory Method
-            grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
-            print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
-            grid.set_samples(position_list)
-            grid.update_grid_t(t, p=p_mean[i])  # Uses p_mean[i] as mean allele Frequency.
-            genotype_matrix[:, i] = grid.genotypes
-        self.save_data_set(position_list, genotype_matrix, data_set_nr)
-        
-            
-        # Now Pickle Some additional Information:
-        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "ss", "Position List"]
-        ps = [nr_loci, t, p_mean, sigma, mu, ips, ss, position_list]
-        additional_info = ("1 Test Run for Grid object with high neighborhood size")
-        self.pickle_parameters(p_names, ps, additional_info)
-            
-    def analyze_data_set(self, data_set_nr, random_ind_nr=500):
-        '''Create Data Set. Override Method.'''
-        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
-        
-        # Pick Random_ind_nr many Individuals:
-        inds = range(len(position_list))
-        shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-        inds = inds[:random_ind_nr]  # Only load first nr_inds
 
-        position_list = position_list[inds, :]
-        genotype_mat = genotype_mat[inds, :]
-        
-        start_params = [100.0, 0.005, 0.038]  # Sets the Start Parameters
-        MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat) 
-        fit = MLE_obj.fit(start_params=[100.0, 0.01, 0.04])
-        
-        
-        print(fit.summary())
-    
-        # results0 = ml_estimator.fit(method="BFGS")  # Do the actual fit. method="BFGS" possible
-        params = fit.params
-        try: 
-            conf_ind = fit.conf_int()
-        except:
-            print("Finding Confidence Intervalls failed...")
-            conf_ind = [[param, param] for param in params]  # The CIs
-        
-        print(np.shape(conf_int))
-        print(params)  # Print Parameter Estimates
-        print(conf_ind)  # Print Confidence Intervals
-        
-        
-        print("Trying to save. uhuhuh.")
-        # Saves the results of Analysis to local object
-        self.param_estimates[data_set_nr, :] = fit.params
-        self.uncertain_estimates[data_set_nr, :] = fit.conf_int
-        
-        # Pickles the parameters and confidence intervalls
-        path = self.data_folder + "result" + str(date_set_nr).zfill(2) + ".p"
-        pickle.dump((params, conf_int), open(path, "wb"))  # Pickle the Info
-        
-        # self.param_estimates=fit.
-        # self.uncertain_estimates=fit.
-    
 def fac_method(method, folder, multi_processing=0):
     '''Factory Method to give the right Class which creates and analyzes the data-set'''
     if method == "testrun":
@@ -1404,6 +1390,9 @@ def fac_method(method, folder, multi_processing=0):
         
     elif method == "multi_2nd_cont":
         return MultiSecondaryContact(folder, multi_processing=multi_processing)
+    
+    elif method == "multi_barrier_pos":
+        return MultiBarrierPosition(folder, multi_processing=multi_processing)
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1472,12 +1461,13 @@ if __name__ == "__main__":
     ####Create Multi Cluster Data Set
     # MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
     # MultiRun.create_data_set(51)
-    # MultiRun.analyze_data_set(76, method=2)
+    # MultiRun.analyze_data_set(0, method=2)
     
     
     ####################################################
     ####Create Bootrap Data Set
     # MultiRun = fac_method("multi_bts", "./bts_folder_test/", multi_processing=1)
+    # MultiRun.analyze_data_set(0, method=2)
     # for i in xrange(100):
     #    MultiRun.create_data_set(i)
         
@@ -1494,10 +1484,10 @@ if __name__ == "__main__":
     
     
     ####################################################
-    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd/", multi_processing=1)
-    # MultiRun.create_data_set(10)
-    # MultiRun.analyze_data_set(26, method=2)
-    MultiRun.analyze_data_set_cleaning(50, method=2)
+    MultiRun = fac_method("multi_2nd_cont", "./multi_2nd_b/", multi_processing=1)
+    # MultiRun.create_data_set(10, barrier_strength=0.05)
+    # MultiRun.analyze_data_set(10, method=2)
+    MultiRun.analyze_data_set_cleaning(50, method=2, res_folder="TestYOLO/")
     
     
     

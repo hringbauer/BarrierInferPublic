@@ -13,4 +13,5 @@
 #$ -t 1-100:1
 
 export OMP_NUM_THREADS=1
+module load tensorflow/python-2.7/1.1.0
 python script_bignick.py $SGE_TASK_ID

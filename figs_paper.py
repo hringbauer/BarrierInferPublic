@@ -23,6 +23,7 @@ hz_folder = "./hz_folder/"
 multi_ind_folder = "./multi_ind_nr/"
 multi_loci_folder = "./multi_loci_nr/"
 secondary_contact_folder = "./multi_2nd/"
+secondary_contact_folder_b = "./multi_2nd_b/"  # With a 0.05 Barrier
 
 
 
@@ -40,10 +41,45 @@ def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
 
+def calc_bin_correlations(positions, genotypes, bins=50, p=0.5, correction=True):
+    '''Helper function Calculates Correlations and Bin them'''
+    # Load the data:
+    # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
+    
+    analysis = Analysis(positions, genotypes)
+    distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
+    correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
+    entry = 0
+    
+    for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
+        distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
+        correlation[entry] = analysis.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
+        entry += 1 
+    bin_dist, bin_corr, stand_errors, corr_factor = bin_correlations(distance, correlation, bins=bins, correction=correction)
+    return bin_dist, bin_corr, stand_errors, corr_factor 
+            
+def bin_correlations(distance, correlation, bins=50, statistic='mean', correction=False):
+    '''Bin the Correlations.'''
+    bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
+    stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
+    
+    bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
+    
+    corr_factor = 0
+    if correction == True:
+        # Substract IBD of distant individuals
+        corr_factor = np.mean(bin_corr[int(bins * 1 / 3):int(bins * 2 / 3)]) 
+        bin_corr = bin_corr - corr_factor
+    return bin_dist, bin_corr, stand_errors, corr_factor 
+
+######################################################################################
+# Do the actual Plots:
+
+
 def multi_nbh_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    # res_numbers = range(0, 100)
+    res_numbers = range(0, 100)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
     
@@ -191,7 +227,7 @@ def multi_secondary_contact_single(folder, method):
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
-    res_vec[res_numbers,2] = np.where(res_vec[res_numbers,2]>1, 1, res_vec[res_numbers,2])
+    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
     subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
     
     loci_nr_vec = [np.loadtxt(folder + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
@@ -208,14 +244,14 @@ def multi_secondary_contact_single(folder, method):
     ax1.set_ylim([0, 150])
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.title.set_text("Varying Quality Cutoff")
-    ax1.legend(loc = "upper right")
+    ax1.legend(loc="upper right")
     
-    #ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="yo")
-    #ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="ro")
-    #ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="go")
-    #ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="bo")
-    #ax2.hlines(0.006, 0, 100, linewidth=2)
-    #ax2.set_ylabel("L", fontsize=18)
+    # ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="yo")
+    # ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="ro")
+    # ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="go")
+    # ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="bo")
+    # ax2.hlines(0.006, 0, 100, linewidth=2)
+    # ax2.set_ylabel("L", fontsize=18)
     # ax2.legend()
     
     ax2.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
@@ -227,8 +263,88 @@ def multi_secondary_contact_single(folder, method):
     ax2.set_ylabel("Barrier", fontsize=18)
     
     ax3.plot(res_numbers, loci_nr_vec, 'ro')
-    ax3.hlines(200,0,100,linewidth=2)
+    ax3.hlines(200, 0, 100, linewidth=2)
     ax3.set_ylabel("Nr. of Loci", fontsize=18)
+    
+    plt.xlabel("Dataset")
+    plt.show()
+    
+def multi_secondary_contact_all(folder, folder_b, method=2):
+    '''Prints results of Multi Secondary Contact Simulations -
+    left: wo Barrier; right Barrier'''
+    res_numbers0 = range(0, 25)
+    res_numbers1 = range(25, 50)
+    res_numbers2 = range(50, 75)
+    res_numbers3 = range(75, 100)
+    res_numbers = res_numbers0 + res_numbers1 + res_numbers2 + res_numbers3
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    res_vec_b = np.array([load_pickle_data(folder_b, i, 0, method) for i in res_numbers])
+    unc_vec_b = np.array([load_pickle_data(folder_b, i, 1, method) for i in res_numbers])
+    
+    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
+    res_vec_b[res_numbers, 2] = np.where(res_vec_b[res_numbers, 2] > 1, 1, res_vec_b[res_numbers, 2])
+    
+    subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+    
+    loci_nr_vec = [np.loadtxt(folder + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
+                   for i in res_numbers]
+    loci_nr_vec_b = [np.loadtxt(folder_b + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
+                   for i in res_numbers]
+    
+    
+    # plt.figure()
+    f, ((ax1, ax4), (ax2, ax5), (ax3, ax6)) = plt.subplots(3, 2, sharex=True)
+    
+    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    
+    ax1.errorbar(res_numbers0, res_vec[res_numbers0, 0], yerr=res_vec[res_numbers0, 0] - unc_vec[res_numbers0, 0, 0], fmt="yo", label="R2=1")
+    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="ro", label="R2=0.02")
+    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="R2=0.01")
+    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="R2=0.005")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("No Barrier")
+    ax1.legend(loc="upper right")
+    
+    ax4.errorbar(res_numbers0, res_vec_b[res_numbers0, 0], yerr=res_vec_b[res_numbers0, 0] - unc_vec_b[res_numbers0, 0, 0], fmt="yo", label="R2=1")
+    ax4.errorbar(res_numbers1, res_vec_b[res_numbers1, 0], yerr=res_vec_b[res_numbers1, 0] - unc_vec_b[res_numbers1, 0, 0], fmt="ro", label="R2=0.02")
+    ax4.errorbar(res_numbers2, res_vec_b[res_numbers2, 0], yerr=res_vec_b[res_numbers2, 0] - unc_vec_b[res_numbers2, 0, 0], fmt="go", label="R2=0.01")
+    ax4.errorbar(res_numbers3, res_vec_b[res_numbers3, 0], yerr=res_vec_b[res_numbers3, 0] - unc_vec_b[res_numbers3, 0, 0], fmt="bo", label="R2=0.005")
+    ax4.set_ylim([0, 200])
+    ax4.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    ax4.title.set_text("Barrier: 0.05")
+    ax4.yaxis.tick_right()
+    #ax4.legend(loc="upper right")
+    
+
+    
+    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
+    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
+    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
+    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
+    ax2.hlines(1, 0, 100, linewidth=2)
+    ax2.set_ylim([0, 1])
+    ax2.set_ylabel("Barrier", fontsize=18)
+    
+    ax5.errorbar(res_numbers0, res_vec_b[res_numbers0, 2], yerr=res_vec_b[res_numbers0, 2] - unc_vec_b[res_numbers0, 2, 0], fmt="yo")
+    ax5.errorbar(res_numbers1, res_vec_b[res_numbers1, 2], yerr=res_vec_b[res_numbers1, 2] - unc_vec_b[res_numbers1, 2, 0], fmt="ro")
+    ax5.errorbar(res_numbers2, res_vec_b[res_numbers2, 2], yerr=res_vec_b[res_numbers2, 2] - unc_vec_b[res_numbers2, 2, 0], fmt="go")
+    ax5.errorbar(res_numbers3, res_vec_b[res_numbers3, 2], yerr=res_vec_b[res_numbers3, 2] - unc_vec_b[res_numbers3, 2, 0], fmt="bo")
+    ax5.hlines(0.05, 0, 100, linewidth=2)
+    ax5.set_ylim([0, 0.1])
+    ax5.yaxis.tick_right()
+    
+    ax3.plot(res_numbers, loci_nr_vec, 'ro')
+    ax3.hlines(200, 0, 100, linewidth=2)
+    ax3.set_ylabel("Nr. of Loci", fontsize=18)
+    
+    
+    ax6.plot(res_numbers, loci_nr_vec_b, 'ro')
+    ax6.hlines(200, 0, 100, linewidth=2)
+    ax6.yaxis.tick_right()
     
     plt.xlabel("Dataset")
     plt.show()
@@ -529,7 +645,7 @@ def barrier_var_pos(folder, subfolder0, subfolder1, subfolder2, method=2):
     
     
 def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
-                       bins=50, p=0.5, nr_bootstraps=200):
+                       bins=50, p=0.5, nr_bootstraps=10):
     '''Plot IBD of real data and bootstrapped real data (over loci).
     Load from Result Folder and plot binned IBD from HZ'''  
     
@@ -537,32 +653,6 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
     
-    def calc_bin_correlations(positions, genotypes, bins=50, correction=True):
-        '''Calculates Binwise Correlations'''
-        # Load the data:
-        # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-        
-        analysis = Analysis(positions, genotypes)
-        distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
-        correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
-        entry = 0
-        
-        for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
-            distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
-            correlation[entry] = analysis.kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
-            entry += 1 
-           
-        bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
-        stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
-        
-        bin_dist = (bin_edges[:-1] + bin_edges[1:]) / 2.0  # Calculate the mean of the bins
-        
-        corr_factor = 0
-        if correction == True:
-            # Substract IBD of distant individuals
-            corr_factor = np.mean(bin_corr[int(bins * 1 / 3):int(bins * 2 / 3)]) 
-            bin_corr = bin_corr -  corr_factor
-        return bin_dist, bin_corr, stand_errors, corr_factor 
     
     # Calculate best Estimates
     bin_dist, bin_corr0, stand_errors, corr_factor_e = calc_bin_correlations(positions, genotypes, bins=bins)
@@ -571,9 +661,9 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     inds_l = np.where(positions[:, 0] < 0)[0]
     inds_r = np.where(positions[:, 0] > 0)[0]
     
-    bin_dist_l, bin_corr_l, stds_l, _ = calc_bin_correlations(positions[inds_l, :], 
+    bin_dist_l, bin_corr_l, stds_l, _ = calc_bin_correlations(positions[inds_l, :],
                                     genotypes[inds_l, :], bins=bins / 3.0, correction=False)
-    bin_dist_r, bin_corr_r, stds_r, _ = calc_bin_correlations(positions[inds_r, :], 
+    bin_dist_r, bin_corr_r, stds_r, _ = calc_bin_correlations(positions[inds_r, :],
                                     genotypes[inds_r, :], bins=bins / 3.0, correction=False)
     
     # Take the same correction as Overall
@@ -652,16 +742,70 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     # plt.xscale("log")
     plt.show()
     
+def plot_IBD_across_Zone(position_path, genotype_path, bins=30, bin_size=5, nr_bootstraps=10):
+    '''Plot IBD in bins across hybrid zones.
+    Includes BT estimates; so that one knows about the order of the error.'''
+    
+    # ## First Produce the Data:
+    # Load the raw data:
+    positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
+    nr_genotypes = np.shape(genotypes)[1]
+    
+    # Do Bootstrapping
+    def get_f_vec(position_list, genotype_mat, bins=30, bin_size=5):
+        '''Given Nr of Bins and Bin Size;
+        calculate mean F within bins across HZ'''
+        x_coords = position_list[:, 0]  # Get the x_coordinates
+        x_min = np.min(x_coords) - 0.000001  # So that everything falls into something
+        x_max = np.max(x_coords) + 0.000001
+        
+        # Get the x_Bins:
+        x_bins = np.linspace(x_min, x_max + 0.001, num=bins + 1)
+        x_ccords_mean = (x_bins[1:] + x_bins[:-1]) / 2.0
+        
+        for i in range(bins):
+            # For indices going beyond edge of array:
+            min_ind = np.max(i - bin_size, 0)
+            max_ind = np.min(i + bin_size, bins + 1)
+            
+            # Where to cut off:
+            bin_minx = x_bins[min_ind]
+            bin_maxx = x_bins[max_ind]
+            
+            # All inds that fall into bin:
+            inds = np.where((x_coords > bin_minx) & (x_coords <= bin_maxx))[0]
+            
+            # Send this to F-Calculation!
+        
+        
+        return f_vec
+    
+    f_res = -np.ones(bins, nr_bootstraps)  # Set everything to minus 1; so that errors are realized
+        
+    
+    f_res[:, 0] = get_f_vec(positions, genotype_mat, bins=bins, bin_size=bin_size)
+    
+    for i in xrange(1, nr_bootstraps):
+        print("Calculating BootsTrap Nr. %i" % i)
+        r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
+        gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap; pick the columns
+        
+        f_res[:, i] = get_f_vec(positions, gtps_sample, bins=bins, bin_size=bin_size)
+    
+    
+    
     
     
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    # multi_nbh_single(multi_nbh_folder, method=0)
+    # multi_nbh_single(multi_nbh_folder, method=2)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
     # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
-    multi_secondary_contact_single(secondary_contact_folder, method=2)
+    # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
+    multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
@@ -670,5 +814,5 @@ if __name__ == "__main__":
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    # plot_IBD_bootstrap("./Data/coordinatesHZall.csv", "./Data/genotypesHZall.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # lot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set

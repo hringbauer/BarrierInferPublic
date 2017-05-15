@@ -282,7 +282,7 @@ class MultiNbh(MultiRun):
         additional_info = ("1 Test Run for Grid object with high neighborhood size")
         self.pickle_parameters(p_names, ps, additional_info)
             
-    def analyze_data_set(self, data_set_nr, random_ind_nr=4000, method=0, fit_t0=0):
+    def analyze_data_set(self, data_set_nr, random_ind_nr=4000, method=2, fit_t0=0):
         '''Create Data Set. Override Method. fit_t0: Whether to fit t0. (at the moment only for method 2!)
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
@@ -299,7 +299,7 @@ class MultiNbh(MultiRun):
         # Pick the right DataSet
         start_params = start_params_vec[data_set_nr]
 
-        self.fit_IBD(start_params, data_set_nr, method=2,
+        self.fit_IBD(start_params, data_set_nr, method=method,
                     res_folder=None, position_list=[], genotype_mat=[], random_ind_nr=None)
         
 #         if method == 0:
@@ -1462,10 +1462,10 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    #MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
-    MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
+    # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
+    # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
     # MultiRun.create_data_set(30)
-    MultiRun.analyze_data_set(0, method=0, fit_t0=0)
+    # MultiRun.analyze_data_set(0, method=0, fit_t0=0)
     
     
     # MultiRun.temp_visualize(method=2)
@@ -1486,10 +1486,10 @@ if __name__ == "__main__":
     # MultiRun.create_data_set(i)
         
     ####################################################
-    # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
+    MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
     # MultiRun.create_data_set(0)
     # MultiRun.create_data_set(25)
-    # MultiRun.analyze_data_set(3, method=0)
+    MultiRun.analyze_data_set(3, method=0)
     
     ######################################################
     # MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)

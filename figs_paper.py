@@ -126,6 +126,7 @@ def multi_ind_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
     res_numbers = range(0, 100)
+    # res_numbers = range(3, 4)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
     
@@ -802,10 +803,10 @@ if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # multi_nbh_single(multi_nbh_folder, method=2)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    # multi_ind_single(multi_ind_folder, method=2)
+    multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
-    multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
+    # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3

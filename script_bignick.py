@@ -73,7 +73,7 @@ MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 
 ########### For creating and analyzing the data sets ###############
 #MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
+#MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
 
 
 ########### For analyzing the data set ##############

@@ -455,7 +455,7 @@ def group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
 
 def bootstrap_genotypes(genotype_mat):
     '''Short helper Function to Bootstrap over Genotypes'''
-    nr_inds, nr_genotypes = np.shape(genotype_matrix)  # Get the shape of the Genotype Matrix
+    nr_inds, nr_genotypes = np.shape(genotype_mat)  # Get the shape of the Genotype Matrix
     sample_inds = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices of random resampling
     
     gtps_sample = genotype_mat[:, sample_inds]  # Do the actual Bootstrap; pick the columns

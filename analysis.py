@@ -118,6 +118,14 @@ class Analysis(object):
         f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
+    def mean_kinship_coeff(self, genotype_mat, p_mean=0.5):
+        '''Calculate the mean Kinship coefficient for a Genotype_matrix; given some mean Vector 
+        p_mean'''
+        p_mean_emp = np.mean(genoytpe_mat, axis=0)  # Calculate the mean allele frequencies
+        f_vec = (p_mean_emp - p_mean) * (p_mean_emp - p_mean) / (p_mean * (1 - p_mean))  # Calculate the mean f per locus
+        f = np.mean(f_vec)  # Calculate the overall mean f
+        return f
+    
     def fit(self, p=0.5, nr_inds=10000, bins=50, start_params=[50, 0.005, 0.04]):
         '''Fits pairwise co-variance matrices'''
         # Some Code to draw random samples
@@ -360,49 +368,12 @@ class Analysis(object):
     def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
         '''Function that groups indviduals into demes and gives back mean deme position
         and mean deme genotype'''
-        nr_inds, nr_markers = np.shape(genotypes)
-        
-        x_coords, y_coords = position_list[:, 0], position_list[:, 1]
-        
-        x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
-        y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
-        
-        x_inds = np.digitize(x_coords, x_bins)
-        y_inds = np.digitize(y_coords, y_bins)
-        
-        nr_demes = demes_x * demes_y
-        
-        position_list_new = np.zeros((nr_demes, 2)) - 1.0  # Defaults everything to -1.
-        genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0  # Same.
-        inds_per_deme = np.zeros(nr_demes)
-        
-        # Iterate over every deme
-        
-        row = 0
-        for i in xrange(1, demes_x + 1):
-            for j in range(1, demes_y + 1):
-                inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
-                
-                # row = (i - 1) * demes_y + (j - 1)  # Which row to set the data 
-                
-                if len(inds) <= min_ind_nr:  # In case no Individual fits in the grid space
-                    continue
-                      
-                position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
-                inds_per_deme[row] = len(inds)
-                
-                matching_genotypes = genotypes[inds, :]
-                genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
-                row += 1
-        
-        # Extract only the set individuals:
-        position_list_new = position_list_new[:row, :]
-        genotypes_new = genotypes_new[:row, :]
-        inds_per_deme = inds_per_deme[:row]
-        
+        position_list_new, genotypes_new, inds_per_deme = group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0)
         self.position_list, self.genotypes, self.inds_per_deme = position_list_new, genotypes_new, inds_per_deme
         return position_list_new, genotypes_new, inds_per_deme
                 
+#####################################################################################################################
+# Some Helper Functions:
         
 def fit_log_linear(t, y):
     '''Fitting log decay and returns parameters: y = A + B * ln(t) as (A,B)'''
@@ -439,4 +410,61 @@ def fit_rbf_kernel(f, r, error, guess=[25, 0.2]):
     parameters, cov_matrix = curve_fit(rbf_kernel, r, f,
                             sigma=error, absolute_sigma=True, p0=guess, bounds=(0, np.inf))  # @UnusedVariable p0=(C / 10.0, -r)
     return parameters, cov_matrix
+
+def group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
+    '''Function that groups indviduals into demes and gives back mean deme position
+    and mean deme genotype'''
+    nr_inds, nr_markers = np.shape(genotypes)
+    x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+    
+    x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
+    y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
+    
+    x_inds = np.digitize(x_coords, x_bins)
+    y_inds = np.digitize(y_coords, y_bins)
+    
+    nr_demes = demes_x * demes_y
+    position_list_new = np.zeros((nr_demes, 2)) - 1.0  # Defaults everything to -1.
+    genotypes_new = np.zeros((nr_demes, nr_markers)) - 1.0  # Same.
+    inds_per_deme = np.zeros(nr_demes)
+    
+    # Iterate over every deme
+    
+    row = 0
+    for i in xrange(1, demes_x + 1):
+        for j in range(1, demes_y + 1):
+            inds = np.where((x_inds == i) * (y_inds == j))[0]  # Ectract all individuals where match
+            
+            # row = (i - 1) * demes_y + (j - 1)  # Which row to set the data 
+            
+            if len(inds) <= min_ind_nr:  # In case no Individual fits in the grid space
+                continue
+                  
+            position_list_new[row, :] = [(x_bins[i - 1] + x_bins[i]) / 2.0, (y_bins[j - 1] + y_bins[j]) / 2.0]
+            inds_per_deme[row] = len(inds)
+            
+            matching_genotypes = genotypes[inds, :]
+            genotypes_new[row, :] = np.mean(matching_genotypes, axis=0)  # Sets the new genotypes
+            row += 1
+    
+    # Extract only the set individuals:
+    position_list_new = position_list_new[:row, :]
+    genotypes_new = genotypes_new[:row, :]
+    inds_per_deme = inds_per_deme[:row]
+    return position_list_new, genotypes_new, inds_per_deme
+
+def bootstrap_genotypes(genotype_mat):
+    '''Short helper Function to Bootstrap over Genotypes'''
+    nr_inds, nr_genotypes = np.shape(genotype_matrix)  # Get the shape of the Genotype Matrix
+    sample_inds = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices of random resampling
+    
+    gtps_sample = genotype_mat[:, sample_inds]  # Do the actual Bootstrap; pick the columns
+    return gtps_sample
+
+
+
+
+
+
+
          

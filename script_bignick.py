@@ -46,7 +46,7 @@ def analyze_barrier_strengths_ll():
 
 
 data_set_nr = int(sys.argv[1])  # Which data-set to use
-#data_set_nr = 5
+# data_set_nr = 1
 print("Starting Dataset Nr %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -56,8 +56,9 @@ data_set_nr = data_set_nr - 1
 # folder = "./hz_folder/"
 # folder = "./multi_ind_nr/"
 # folder ="./multi_loci_nr/"
-#folder = "./multi_2nd/"
-folder = "./multi_2nd_b/"
+# folder = "./multi_2nd/"
+# folder = "./multi_2nd_b/"
+folder = "./multi_barrier_synth/"
 
 # MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
 # MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
@@ -65,7 +66,8 @@ folder = "./multi_2nd_b/"
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
-MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
+MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 
 # MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 
@@ -82,16 +84,10 @@ MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=18.0, res_folder="barrier18m/" ,method=2)
 # MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 # MultiRun.analyze_data_set(data_set_nr, method=1)
-# MultiRun.analyze_data_set(data_set_nr, method=2)
-MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
+MultiRun.analyze_data_set(data_set_nr, method=2)
+# MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)
-
-
-
-
-
-
 
 
 

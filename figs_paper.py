@@ -9,6 +9,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import itertools
+from time import time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from analysis import Analysis
 from scipy.stats import binned_statistic
@@ -26,6 +27,16 @@ secondary_contact_folder = "./multi_2nd/"
 secondary_contact_folder_b = "./multi_2nd_b/"  # With a 0.05 Barrier
 
 
+######################################################################################
+#### First some helper functions
+
+def mean_kinship_coeff(genotype_mat, p_mean=0.5):
+        '''Calculate the mean Kinship coefficient for a 
+        Genotype_matrix; given some mean Vector p_mean'''
+        p_mean_emp = np.mean(genotype_mat, axis=0)  # Calculate the mean allele frequencies
+        f_vec = (p_mean_emp - p_mean) * (p_mean_emp - p_mean) / (p_mean * (1 - p_mean))  # Calculate the mean f per locus
+        f = np.mean(f_vec)  # Calculate the overall mean f
+        return f
 
 def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
             '''Function To load pickled Data.
@@ -318,7 +329,7 @@ def multi_secondary_contact_all(folder, folder_b, method=2):
     ax4.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
     ax4.title.set_text("Barrier: 0.05")
     ax4.yaxis.tick_right()
-    #ax4.legend(loc="upper right")
+    # ax4.legend(loc="upper right")
     
 
     
@@ -743,59 +754,91 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     # plt.xscale("log")
     plt.show()
     
-def plot_IBD_across_Zone(position_path, genotype_path, bins=30, bin_size=5, nr_bootstraps=10):
+def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr_bootstraps=100):
     '''Plot IBD in bins across hybrid zones.
     Includes BT estimates; so that one knows about the order of the error.'''
     
     # ## First Produce the Data:
     # Load the raw data:
-    positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    position_list = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    nr_inds = len(position_list)
+    
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
     nr_genotypes = np.shape(genotypes)[1]
+    x_coords = position_list[:, 0]  # Get the x_coordinates
+    x_min = np.min(x_coords) - 0.000001  # So that everything falls into something
+    x_max = np.max(x_coords) + 0.000001
     
-    # Do Bootstrapping
-    def get_f_vec(position_list, genotype_mat, bins=30, bin_size=5):
+    
+        
+    # Get the x_Bins:
+    x_bins = np.linspace(x_min, x_max + 0.001, num=bins + 1)
+    x_coords_mean = (x_bins[1:] + x_bins[:-1]) / 2.0  # Calculate the mean x-Values
+    delta_x = x_bins[1] - x_bins[0]
+    
+    print("Calculating Distance Matrix...")
+    tic = time()
+    dist_mat = np.linalg.norm(position_list[:, None] - position_list, axis=2)
+    close_inds = dist_mat < max_dist  # Calculate Boolean Matrix of all nearby Individuals
+    toc = time()
+    print("Runtime Dist_Mat: %.4f" % (toc - tic))
+    nr_nearby_inds = [np.sum(nearby_inds) for nearby_inds in close_inds]  # Calculate the total Number of nearby Individuals
+    power = np.array(nr_nearby_inds) ** 2  # Number of Pairwise comparisons grows quadratically; so thus the weight factor
+    
+    
+    def get_f_vec(position_list, genotype_mat, x_bins, bin_size=5):
         '''Given Nr of Bins and Bin Size;
         calculate mean F within bins across HZ'''
-        x_coords = position_list[:, 0]  # Get the x_coordinates
-        x_min = np.min(x_coords) - 0.000001  # So that everything falls into something
-        x_max = np.max(x_coords) + 0.000001
+        nr_inds = len(position_list)
+        f_nb = -100 * np.ones(nr_inds)
         
-        # Get the x_Bins:
-        x_bins = np.linspace(x_min, x_max + 0.001, num=bins + 1)
-        x_ccords_mean = (x_bins[1:] + x_bins[:-1]) / 2.0
+        # Calculate the deviation from mean of all nearby individuals
+        f_mean_tot = np.array([mean_kinship_coeff(genotype_mat[nearby_inds, :], p_mean=0.5) for nearby_inds in close_inds])  # Get F-Mean over total HZ
+        assert(len(power) == nr_inds)  # Sanity Check
         
+        # Do the binning:
+        f_vec = -100 * np.ones(bins)
         for i in range(bins):
-            # For indices going beyond edge of array:
-            min_ind = np.max(i - bin_size, 0)
-            max_ind = np.min(i + bin_size, bins + 1)
-            
             # Where to cut off:
-            bin_minx = x_bins[min_ind]
-            bin_maxx = x_bins[max_ind]
+            bin_minx = x_bins[i]
+            bin_maxx = x_bins[i+1]
             
-            # All inds that fall into bin:
-            inds = np.where((x_coords > bin_minx) & (x_coords <= bin_maxx))[0]
+            # All inds that fall into the x-bin:
+            inds = np.where((x_coords >= bin_minx) & (x_coords <= bin_maxx))[0]
+            # Calculate F-Mean withing this bin
+            f_vec[i] = np.sum(f_mean_tot[inds] * power[inds]) / np.sum(power[inds])
             
-            # Send this to F-Calculation!
-        
-        
-        return f_vec
+        f_tot = mean_kinship_coeff(genotype_mat, p_mean=0.5) # Calculate the total Mean
+        return f_vec - f_tot
     
-    f_res = -np.ones(bins, nr_bootstraps)  # Set everything to minus 1; so that errors are realized
-        
     
-    f_res[:, 0] = get_f_vec(positions, genotype_mat, bins=bins, bin_size=bin_size)
+    
+    f_res = -np.ones((bins, nr_bootstraps))  # Set everything to minus 1; so that errors are realized
+    
+    f_res[:, 0] = get_f_vec(position_list, genotypes, x_bins)
     
     for i in xrange(1, nr_bootstraps):
         print("Calculating BootsTrap Nr. %i" % i)
-        r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
-        gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap; pick the columns
+        r_gtps_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
+        gtps_sample = genotypes[:, r_gtps_ind]  # Do the actual Bootstrap; pick the columns
         
-        f_res[:, i] = get_f_vec(positions, gtps_sample, bins=bins, bin_size=bin_size)
+        f_res[:, i] = get_f_vec(position_list, gtps_sample, x_bins)
+        
+
+    # Now do the Plot:    
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
     
+    ax1.set_title("Excess F within %i m" % (max_dist * 50))
+    ax1.plot(x_coords_mean, f_res[:, 1:], 'go', alpha=0.2)
+    ax1.plot(x_coords_mean, f_res[:, 0], 'ro', label="Empricial Values")
+    ax1.hlines(0, min(position_list[:, 0]), max(position_list[:, 0]), alpha=0.8)
+    ax1.legend(loc="upper right")
     
-    
+    f_mean_tot = np.array([mean_kinship_coeff(genotypes[nearby_inds, :], p_mean=0.5) for nearby_inds in close_inds])  # Get F-Mean over total HZ
+    ax2.scatter(position_list[:, 0], position_list[:, 1], c = f_mean_tot) # c = nr_nearby_inds
+    for x in x_bins:
+        plt.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.6)
+    plt.show()
     
     
 ######################################################
@@ -803,17 +846,21 @@ if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # multi_nbh_single(multi_nbh_folder, method=2)
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
-    multi_ind_single(multi_ind_folder, method=2)
+    # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    # cluster_plot(cluster_folder, method=2)
+    cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    # lot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
+    # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
+    
+    
+    

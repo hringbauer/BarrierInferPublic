@@ -654,7 +654,9 @@ def barrier_var_pos(folder, subfolder0, subfolder1, subfolder2, method=2):
     plt.xlabel("Dataset")
     plt.show()
     
-    
+def plot_multi_barrier_pos(position_path, result_folder, subfolder):
+    '''Loads and plots the multiple Bootstrap per Position Estimates.'''
+    print("ToDo")  
     
 def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
                        bins=50, p=0.5, nr_bootstraps=10):

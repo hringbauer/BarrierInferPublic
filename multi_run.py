@@ -1157,7 +1157,7 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=10, nr_y_bins=5, nr_bts=10, res_folder=None, min_ind_nr=1):
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=10, nr_y_bins=5, nr_bts=20, res_folder=None, min_ind_nr=1):
         '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.'''
         
         # First load and bin the data:

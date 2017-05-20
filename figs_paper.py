@@ -25,8 +25,9 @@ multi_ind_folder = "./multi_ind_nr/"
 multi_loci_folder = "./multi_loci_nr/"
 secondary_contact_folder = "./multi_2nd/"
 secondary_contact_folder_b = "./multi_2nd_b/"  # With a 0.05 Barrier
+multi_pos_syn_folder = "./multi_barrier_synth/"
 
-
+met2_folder = "method2/"
 ######################################################################################
 #### First some helper functions
 
@@ -83,6 +84,9 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
         bin_corr = bin_corr - corr_factor
     return bin_dist, bin_corr, stand_errors, corr_factor 
 
+
+######################################################################################
+######################################################################################
 ######################################################################################
 # Do the actual Plots:
 
@@ -133,7 +137,7 @@ def multi_nbh_single(folder, method):
     plt.show()
     
 
-def multi_ind_single(folder, method):
+def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
     res_numbers = range(0, 100)
@@ -803,14 +807,14 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
         for i in range(bins):
             # Where to cut off:
             bin_minx = x_bins[i]
-            bin_maxx = x_bins[i+1]
+            bin_maxx = x_bins[i + 1]
             
             # All inds that fall into the x-bin:
             inds = np.where((x_coords >= bin_minx) & (x_coords <= bin_maxx))[0]
             # Calculate F-Mean withing this bin
             f_vec[i] = np.sum(f_mean_tot[inds] * power[inds]) / np.sum(power[inds])
             
-        f_tot = mean_kinship_coeff(genotype_mat, p_mean=0.5) # Calculate the total Mean
+        f_tot = mean_kinship_coeff(genotype_mat, p_mean=0.5)  # Calculate the total Mean
         return f_vec - f_tot
     
     
@@ -837,9 +841,80 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
     ax1.legend(loc="upper right")
     
     f_mean_tot = np.array([mean_kinship_coeff(genotypes[nearby_inds, :], p_mean=0.5) for nearby_inds in close_inds])  # Get F-Mean over total HZ
-    ax2.scatter(position_list[:, 0], position_list[:, 1], c = f_mean_tot) # c = nr_nearby_inds
+    ax2.scatter(position_list[:, 0], position_list[:, 1], c=f_mean_tot)  # c = nr_nearby_inds
     for x in x_bins:
         plt.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.6)
+    plt.show()
+    
+    
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 180), nr_bts=20, barrier_pos=500.5):
+    '''Plots multiple Barrier positions throughout the area.
+    Upper Plot: For every Barrier-Position plot the most likely estimate -
+    as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
+    Demes/Individuals'''
+    
+    # Load the Results
+    res_vec = np.array([load_pickle_data(folder, i, 0, subfolder=method_folder) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, subfolder=method_folder) for i in res_numbers])
+    
+    # Put the Barrier Estimates >1 to 1:
+    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(3):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    # Mean Estimates:
+    mean_inds = range(0, np.max(res_numbers), nr_bts)
+    res_mean = res_vec[mean_inds, :]  
+    print(res_mean)   
+            
+    # Load the Barrier Positions:
+    barrier_fn = "barrier_pos.csv"
+    path = folder + method_folder + barrier_fn
+    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
+    
+    barrier_pos = barrier_pos[:]
+    
+    print("Barrier Positions loaded: ")
+    print(barrier_pos)
+    barr_pos_plot = [val for val in barrier_pos for _ in xrange(nr_bts)]
+    # print(barr_pos_plot)
+    
+    # Load the Position File:
+    path_pos = folder + "mb_pos_coords00.csv"
+    position_list = np.loadtxt(path_pos, delimiter='$').astype('float64')
+    print("Position List loaded: %i Entries" % len(position_list))
+    
+    
+    # Do the plotting:
+    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+    # Plot the Nbh Estiamtes:
+    ax1.plot(barr_pos_plot, res_vec[res_numbers, 0], 'ko', label="Bootstrap Estimate", alpha=0.5)
+    ax1.plot(barrier_pos, res_mean[:, 0], 'go', label="Mean Estimate")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.hlines(4 * np.pi * 5, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    # ax1.title.set_text("No Barrier")
+    ax1.legend(loc="upper right")
+    
+    ax2.plot(barr_pos_plot, res_vec[res_numbers, 2], 'ko', label="Bootstrap Estimate", alpha=0.5)
+    ax2.plot(barrier_pos, res_mean[:, 2], 'go', label="Mean Estimate")
+    ax2.set_ylim([0, 1])
+    ax2.set_ylabel("Barrier", fontsize=18)
+    ax2.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    
+    # ax1.title.set_text("No Barrier")
+    # ax2.legend(loc="upper right")
+    
+    # Plot the Positions:
+    ax3.scatter(position_list[:, 0], position_list[:, 1])  # c = nr_nearby_inds
+    for x in barrier_pos:
+        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
+    ax3.vlines(500.5, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6)
     plt.show()
     
     
@@ -853,9 +928,10 @@ if __name__ == "__main__":
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    cluster_plot(cluster_folder, method=2)
+    # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
+    multi_pos_plot(multi_pos_syn_folder, met2_folder)
     
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data

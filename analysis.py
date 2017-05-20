@@ -417,8 +417,9 @@ def group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
     nr_inds, nr_markers = np.shape(genotypes)
     x_coords, y_coords = position_list[:, 0], position_list[:, 1]
     
-    x_bins = np.linspace(min(x_coords), max(x_coords) + 0.001, num=demes_x + 1)
-    y_bins = np.linspace(min(y_coords), max(y_coords) + 0.001, num=demes_y + 1)
+    x_bins = np.linspace(min(x_coords), max(x_coords) + 0.00001, num=demes_x + 1)
+    #print(x_bins)
+    y_bins = np.linspace(min(y_coords), max(y_coords) + 0.00001, num=demes_y + 1)
     
     x_inds = np.digitize(x_coords, x_bins)
     y_inds = np.digitize(y_coords, y_bins)

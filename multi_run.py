@@ -616,7 +616,7 @@ class MultiBarrier(MultiRun):
         
         
         #position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
-        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 1) for j in range(-12, 13, 1)])  # 1000 Individuals; space 2 sigma apart.
+        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-9, 11, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
         nr_loci = 200
         t = 5000
@@ -624,7 +624,7 @@ class MultiBarrier(MultiRun):
         barrier_pos = 500.5
         sigma = 0.965  # 0.965 # 1.98
         mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
-        sd_p = 0.1
+        sd_p = 0.1  # Standard Deviation Allele Frequency
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
         p_mean = p_mean + p_delta
@@ -1157,7 +1157,7 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=10, nr_y_bins=5, nr_bts=20, res_folder=None, min_ind_nr=1):
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=10, nr_bts=20, res_folder=None, min_ind_nr=1):
         '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.'''
         
         # First load and bin the data:
@@ -1166,15 +1166,22 @@ class MultiBarrierPosition(MultiRun):
         print("Nr of total Inds: %i" % nr_inds)
         print("Nr of total Genotypes: %i" % nr_genotypes)
         
+        # Group Inds:
         position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat, 
                                                     demes_x=nr_x_bins, demes_y=nr_y_bins, min_ind_nr=min_ind_nr)  
         
         print(nr_inds)
         nr_inds, nr_genotypes = np.shape(genotype_mat)
         print("Nr of analyzed Inds: %i" % nr_inds)
-        print("Nr of anaylzed Genotypes: %i" % nr_genotypes)
+        print("Nr of analyzed Genotypes: %i" % nr_genotypes)
+        
+        
         x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
+        
+        
         x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
+        x_barriers = x_barriers[0::2] # Only take every second Barrier Step. 1 Start for uneven
+        print(x_barriers)
         
         effective_data_set_nr = data_set_nr / nr_bts  # Get the effetive number; i.e. what position of the Barreier
         assert(0 <= effective_data_set_nr <= len(x_barriers))  # Sanity Check
@@ -1183,7 +1190,7 @@ class MultiBarrierPosition(MultiRun):
         
         # For the non-bootstrap data-sets:
         if (data_set_nr % nr_bts) != 0:  
-            genotype_mat = bootstrap_genotypes(genotype_mat)
+            genotype_mat = bootstrap_genotypes(genotype_mat) 
         
         # Create start parameters:
         bs = 0.5
@@ -1470,9 +1477,9 @@ if __name__ == "__main__":
     ####################################################
     # Multi Barrier Position Data Set:
     MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
-    MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords00.csv", 
-                             genotype_path="./Data/barrier_file_genotypes00.csv")
-    #MultiRun.analyze_data_set(0, method=2)
+    #MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords00.csv", 
+    #                         genotype_path="./Data/barrier_file_genotypes00.csv")
+    MultiRun.analyze_data_set(299, method=2)
     
 
     

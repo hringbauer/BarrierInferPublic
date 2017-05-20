@@ -847,7 +847,7 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
     plt.show()
     
     
-def multi_pos_plot(folder, method_folder, res_numbers=range(0, 180), nr_bts=20, barrier_pos=500.5):
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 280), nr_bts=20, barrier_pos=500.5):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -877,7 +877,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 180), nr_bts=20, 
     path = folder + method_folder + barrier_fn
     barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
     
-    barrier_pos = barrier_pos[:]
+    barrier_pos = barrier_pos[:14]
     
     print("Barrier Positions loaded: ")
     print(barrier_pos)
@@ -928,7 +928,7 @@ if __name__ == "__main__":
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    # cluster_plot(cluster_folder, method=2)
+    #cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     multi_pos_plot(multi_pos_syn_folder, met2_folder)

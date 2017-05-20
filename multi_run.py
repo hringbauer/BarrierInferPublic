@@ -608,15 +608,15 @@ class MultiBarrier(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Creating Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
-        barrier_strength = barrier_strength_list[data_set_nr]
+        #barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
+        #barrier_strength = barrier_strength_list[data_set_nr]
         barrier_strength = 0.05
         
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
         
         #position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
-        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-9, 11, 1)])  # 1000 Individuals; space 2 sigma apart.
+        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
         nr_loci = 200
         t = 5000
@@ -654,11 +654,16 @@ class MultiBarrier(MultiRun):
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
-                         position_barrier=500.5, method=0):
+                         position_barrier=500.5, nr_x_demes=0, nr_y_demes=0, method=0):
         '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood.
         If no positon list or genotype data is given; load it for the according Data Set.
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         
+        if nr_x_demes>0 and nr_y_demes>0: # If Binning required:
+            position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat, 
+                                                    demes_x=nr_x_demes, demes_y=nr_y_demes, min_ind_nr=min_ind_nr)  
+        
+            
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
         barrier_strength_list = 100 * [0.5]
@@ -1157,7 +1162,7 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=10, nr_bts=20, res_folder=None, min_ind_nr=1):
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20, res_folder=None, min_ind_nr=1):
         '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.'''
         
         # First load and bin the data:
@@ -1432,11 +1437,11 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    # MultiRun = fac_method("multi_barrier", "./Data/", multi_processing=1)
+    #MultiRun = fac_method("multi_barrier", "./Data/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
-    # MultiRun.create_data_set(0)
-    # MultiRun.analyze_data_set(0, method=0, fit_t0=0)
+    # MultiRun.create_data_set(1)
+    #MultiRun.analyze_data_set(0, method=2)
     
     
     # MultiRun.temp_visualize(method=2)
@@ -1477,9 +1482,9 @@ if __name__ == "__main__":
     ####################################################
     # Multi Barrier Position Data Set:
     MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
-    #MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords00.csv", 
-    #                         genotype_path="./Data/barrier_file_genotypes00.csv")
-    MultiRun.analyze_data_set(299, method=2)
+    MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
+                           genotype_path="./Data/barrier_file_genotypes01.csv")
+    #MultiRun.analyze_data_set(299, method=2)
     
 
     

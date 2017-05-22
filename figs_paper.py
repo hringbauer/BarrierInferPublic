@@ -53,7 +53,7 @@ def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
             res = pickle.load(open(path, "rb"))  # Loads the Data
             return res[arg_nr]
 
-def calc_bin_correlations(positions, genotypes, bins=50, p=0.5, correction=True):
+def calc_bin_correlations(positions, genotypes, bins=25, p=0.5, correction=True):
     '''Helper function Calculates Correlations and Bin them'''
     # Load the data:
     # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
@@ -714,7 +714,7 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
         print("Doing BootsTrap Nr. %i" % i)
         r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
         gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap; pick the columns
-        _, bin_corr, _, _ = calc_bin_correlations(positions, gtps_sample)
+        _, bin_corr, _, _ = calc_bin_correlations(positions, gtps_sample, bins=bins)
         f_estimates[i, :] = bin_corr
     
     upper = np.percentile(f_estimates, 97.5, axis=0)  # Calculate Upper Bound
@@ -847,7 +847,7 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
     plt.show()
     
     
-def multi_pos_plot(folder, method_folder, res_numbers=range(0, 280), nr_bts=20, barrier_pos=500.5):
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 300), nr_bts=20, barrier_pos=500.5):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -877,7 +877,8 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 280), nr_bts=20, 
     path = folder + method_folder + barrier_fn
     barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
     
-    barrier_pos = barrier_pos[:14]
+    # Add upper bound here if lower number of results are available
+    barrier_pos = barrier_pos[:]  
     
     print("Barrier Positions loaded: ")
     print(barrier_pos)
@@ -912,6 +913,8 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 280), nr_bts=20, 
     
     # Plot the Positions:
     ax3.scatter(position_list[:, 0], position_list[:, 1])  # c = nr_nearby_inds
+    ax3.set_xlabel("x-Position", fontsize=18)
+    ax3.set_ylabel("y-Position", fontsize=18)
     for x in barrier_pos:
         ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
     ax3.vlines(500.5, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6)
@@ -928,15 +931,15 @@ if __name__ == "__main__":
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    #cluster_plot(cluster_folder, method=2)
+    # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
-    multi_pos_plot(multi_pos_syn_folder, met2_folder)
+    # multi_pos_plot(multi_pos_syn_folder, met2_folder)
     
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
     

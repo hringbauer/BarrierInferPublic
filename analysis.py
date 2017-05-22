@@ -70,46 +70,14 @@ class Analysis(object):
         '''Method to clean HZ Data.
         Extracts loci with min. Geographic Correlation; min. p-Value for HW
         min. ld_score and minimal allele Frequency.'''
-        df = self.loci_info
+        loci_info = self.loci_info
+        genotypes = self.genotypes
         
-        inds_okay = (df['Geo_Score'] < geo_r2) & (df['HW p-Value'] > p_HW) & (df['LD_Score'] < ld_r2) & (df['Min All. Freq'] > min_p)
-        inds = np.where(inds_okay)[0]  # Extract Numpy Array Indices
+        # Call the cleaning Method:
+        genotypes = clean_hz_data(genotypes, loci_info, 
+                                  geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, plot=plot)
         
-        print("Filtered from %i to %i Loci." % (len(df), len(inds)))
-        print("Reducing to SNPs:")
-        print(df["Name"][inds_okay])
-        
-        self.genotypes = self.genotypes[:, inds_okay]
-        nr_loci = len(df)
-        
-        if plot == True:
-            f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
-            ax1.plot(df['Geo_Score'], 'bo', label="Geo_Score")
-            ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="r")
-            ax1.legend(loc="upper right")
-            
-            ax2.plot(df['LD_Score'], 'bo', label="LD R2")
-            ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="r")
-            ax2.legend(loc="upper right")
-            
-            ax3.plot(df['Min All. Freq'], 'bo', label="MAF")
-            ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="r")
-            ax3.legend(loc="upper right")
-            
-            ax4.plot(df['HW p-Value'], 'bo', label="HW p-Value")
-            ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="r")
-            ax4.legend(loc="upper right")
-            
-            plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical')
-            
-            colors = np.array(["red", ] * nr_loci)
-            colors[inds_okay] = "b"  # Sets the good SNPs to Blue!
-            
-            ax = plt.gca()
-            [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
-            plt.show()
-    
-        return self.genotypes, self.position_list
+        return genotypes, self.position_list
     
         
         
@@ -232,12 +200,16 @@ class Analysis(object):
         # plt.xscale("log")
         plt.show()
        
-    def plot_positions(self, row=1):
-        '''Method to plot position of Samples'''
+    def plot_positions(self, row=1, inds=[]):
+        '''Method to plot position of Samples.
+        If inds given; plot them'''
         plt.figure()
         plt.title("Sample Distribution", fontsize=30)
         color = self.genotypes[:, row].astype("float")
-        print(color)
+        
+        if len(inds)>0:
+            color=inds
+            
         plt.scatter(self.position_list[:, 0], self.position_list[:, 1], label="Samples", c=color)
         # pylab.vlines(0, min(X_data[:,1]), max(X_data[:,1]), linewidth=2, color="red", label="Barrier")
         plt.xlabel("X-Coordinate", fontsize=30)
@@ -357,10 +329,7 @@ class Analysis(object):
     def flip_gtps(self, genotypes): 
         '''Randomly flip Genotypes
         There for the case when SNPs are somehow ascertained'''
-        nr_genotypes = np.shape(genotypes)[1]
-    
-        flip = np.random.random(size=nr_genotypes) < 0.5  # Whether to flip or not
-        genotypes_new = (1 - flip[None, :]) * genotypes + flip[None, :] * (1 - genotypes)  # Does the flipping
+        genotypes_new = flip_gtps(genotypes)
         self.genotypes = genotypes_new
         return genotypes_new
         
@@ -368,7 +337,7 @@ class Analysis(object):
     def group_inds(self, position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
         '''Function that groups indviduals into demes and gives back mean deme position
         and mean deme genotype'''
-        position_list_new, genotypes_new, inds_per_deme = group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0)
+        position_list_new, genotypes_new, inds_per_deme = group_inds(position_list, genotypes, demes_x=demes_x, demes_y=demes_y, min_ind_nr=min_ind_nr)
         self.position_list, self.genotypes, self.inds_per_deme = position_list_new, genotypes_new, inds_per_deme
         return position_list_new, genotypes_new, inds_per_deme
                 
@@ -463,7 +432,63 @@ def bootstrap_genotypes(genotype_mat):
     return gtps_sample
 
 
+def clean_hz_data(genotypes, loci_info, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, plot=False):
+    '''Method to clean HZ Data.
+    Extracts loci with min. Geographic Correlation; min. p-Value for HW
+    min. ld_score and minimal allele Frequency.
+    Genotypes: Genotype-Matrix
+    Loci_Info: Where to find information about Loci - as Pandas Dataframe'''
+    df = loci_info
+    
+    inds_okay = (df['Geo_Score'] < geo_r2) & (df['HW p-Value'] > p_HW) & (df['LD_Score'] < ld_r2) & (df['Min All. Freq'] > min_p)
+    inds = np.where(inds_okay)[0]  # Extract Numpy Array Indices
+    
+    print("Filtered from %i to %i Loci." % (len(df), len(inds)))
+    print("Reducing to SNPs:")
+    print(df["Name"][inds_okay])
+    
+    genotypes = genotypes[:, inds_okay]
+    nr_loci = len(df)
+    
+    if plot == True:
+        f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+        ax1.plot(df['Geo_Score'], 'bo', label="Geo_Score")
+        ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="r")
+        ax1.legend(loc="upper right")
+        
+        ax2.plot(df['LD_Score'], 'bo', label="LD R2")
+        ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="r")
+        ax2.legend(loc="upper right")
+        
+        ax3.plot(df['Min All. Freq'], 'bo', label="MAF")
+        ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="r")
+        ax3.legend(loc="upper right")
+        
+        ax4.plot(df['HW p-Value'], 'bo', label="HW p-Value")
+        ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="r")
+        ax4.legend(loc="upper right")
+        
+        plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical')
+        
+        colors = np.array(["red", ] * nr_loci)
+        colors[inds_okay] = "b"  # Sets the good SNPs to Blue!
+        
+        ax = plt.gca()
+        [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
+        plt.show()
 
+    return genotypes
+
+
+def flip_gtps(genotypes): 
+    '''Randomly flip Genotypes
+    There for the case when SNPs are somehow ascertained'''
+    nr_genotypes = np.shape(genotypes)[1]
+
+    flip = np.random.random(size=nr_genotypes) < 0.5  # Whether to flip or not
+    genotypes_new = (1 - flip[None, :]) * genotypes + flip[None, :] * (1 - genotypes)  # Does the flipping
+    genotypes = genotypes_new
+    return genotypes_new
 
 
 

@@ -17,12 +17,11 @@ from mle_class import calculate_ss
 from mle_pairwise import MLE_pairwise
 from mle_pairwise import MLE_f_emp
 from random import shuffle 
-from analysis import Analysis
-from analysis import group_inds
-from analysis import bootstrap_genotypes
+from analysis import Analysis, group_inds, bootstrap_genotypes, clean_hz_data, flip_gtps
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import os
 import pickle as pickle
 from gtk._gtk import accel_map_load
@@ -175,7 +174,7 @@ class MultiRun(object):
         try:
             conf_ind = fit.conf_int()
         except:  # In case Covariances failed (i.e. Inverting Hessian failed...)
-            conf_ind = np.array([param, param] for param in params)  # Set CI to 0
+            conf_ind = np.array([[param, param] for param in params])  # Set CI to 0
         
         # Pickle Parameter Estimates:
         if res_folder == None:  # In case SubFolder was passed on:
@@ -191,26 +190,20 @@ class MultiRun(object):
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
-    def save_mat(self, file, filename="add_info.csv", method=2, res_folder=None):
-        '''Method to save additional Information via np.savetxt'''
-        if res_folder == None:  # In case SubFolder was passed:
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-        else: subfolder_meth = res_folder
-        
-        path = self.data_folder + subfolder_meth + filename
-        
-        directory = os.path.dirname(path)  # Extract Directory
-        if not os.path.exists(directory):  # Creates Folder if not already existing!
-            os.makedirs(directory)
-            
-        np.savetxt(path, file, delimiter="$")  # Save the additional Info
         
     def fit_barrier(self, position_barrier, start_params, data_set_nr, method=2,
-                    res_folder=None, position_list=[], genotype_mat=[], random_ind_nr=None):
+                    res_folder=None, position_list=[], genotype_mat=[], nr_inds=[], random_ind_nr=None,
+                    deme_x_nr=0, deme_y_nr=0):
         '''Method to fit a Barrier; and save the estimates and Unc'''
-        # Load Data Sets in case it is needed:
+        # Load Data Sets in case not given:
         if len(position_list) == 0 or len(genotype_mat) == 0:  
             position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+          
+        # Group Individuals in case Deme_Nr is given:  
+        if deme_x_nr > 0 and deme_y_nr > 0:
+            position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
+                                                demes_x=deme_x_nr, demes_y=deme_y_nr, min_ind_nr=1)  
+            print(nr_inds)
             
         # Pick Random_ind_nr many Individuals in case needed:
         if random_ind_nr:
@@ -231,7 +224,7 @@ class MultiRun(object):
             MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_params = start_params + [0.01, ]
         elif method == 2:
-            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_inds=nr_inds, multi_processing=self.multi_processing)
             start_params = start_params + [0.5, ]
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
@@ -260,7 +253,23 @@ class MultiRun(object):
             os.makedirs(directory)
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+        
 
+    def save_mat(self, file, filename="add_info.csv", method=2, res_folder=None):
+        '''Method to save additional Information via np.savetxt'''
+        if res_folder == None:  # In case SubFolder was passed:
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        else: subfolder_meth = res_folder
+        
+        path = self.data_folder + subfolder_meth + filename
+        
+        directory = os.path.dirname(path)  # Extract Directory
+        if not os.path.exists(directory):  # Creates Folder if not already existing!
+            os.makedirs(directory)
+            
+        np.savetxt(path, file, delimiter="$")  # Save the additional Info
+        
+        
 ###############################################################################################################################
 
 class MultiNbh(MultiRun):
@@ -608,14 +617,14 @@ class MultiBarrier(MultiRun):
         '''Create a Data_Set. Override method.'''
         print("Creating Dataset: %i" % data_set_nr)
         # First set all the Parameter Values:
-        #barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
-        #barrier_strength = barrier_strength_list[data_set_nr]
+        # barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
+        # barrier_strength = barrier_strength_list[data_set_nr]
         barrier_strength = 0.05
         
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
         
-        #position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
+        # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
         position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
         nr_loci = 200
@@ -654,16 +663,11 @@ class MultiBarrier(MultiRun):
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
-                         position_barrier=500.5, nr_x_demes=0, nr_y_demes=0, method=0):
+                         position_barrier=500.5, deme_x_nr=0, deme_y_nr=0, method=0):
         '''Create Data Set. Override Method. mle_pw: Whether to use Pairwise Likelihood.
         If no positon list or genotype data is given; load it for the according Data Set.
         method 0: GRF; method 1: Pairwise LL method 2: Individual Curve Fit. method 3: Binned Curve fit.'''
         
-        if nr_x_demes>0 and nr_y_demes>0: # If Binning required:
-            position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat, 
-                                                    demes_x=nr_x_demes, demes_y=nr_y_demes, min_ind_nr=min_ind_nr)  
-        
-            
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
         barrier_strength_list = 100 * [0.5]
@@ -674,7 +678,8 @@ class MultiBarrier(MultiRun):
         # Then pick the Starting Parameters:
         start_params = start_list[data_set_nr]        
     
-        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method)
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
+                         deme_x_nr=deme_x_nr, deme_y_nr=deme_y_nr)
         
         
     def barrier_ll(self, data_set_nr, nbh, L, t0, random_ind_nr=1000, position_barrier=500.5, barrier_strengths=21):
@@ -1162,8 +1167,9 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20, res_folder=None, min_ind_nr=1):
-        '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.'''
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20, res_folder=None, min_ind_nr=5):
+        '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.
+        For synthetic data set: nr_x_bins=30; nr_y_bins=20. For HZ: nr_x_bins=50; nr_y_bins=10'''
         
         # First load and bin the data:
         position_list, genotype_mat = self.load_data_set(0)  # Load the Data
@@ -1172,12 +1178,13 @@ class MultiBarrierPosition(MultiRun):
         print("Nr of total Genotypes: %i" % nr_genotypes)
         
         # Group Inds:
-        position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat, 
+        position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
                                                     demes_x=nr_x_bins, demes_y=nr_y_bins, min_ind_nr=min_ind_nr)  
-        
+        print("Demes: ")
         print(nr_inds)
-        nr_inds, nr_genotypes = np.shape(genotype_mat)
-        print("Nr of analyzed Inds: %i" % nr_inds)
+        
+        nr_individuals, nr_genotypes = np.shape(genotype_mat)
+        print("Nr of analyzed Inds: %i" % nr_individuals)
         print("Nr of analyzed Genotypes: %i" % nr_genotypes)
         
         
@@ -1185,7 +1192,7 @@ class MultiBarrierPosition(MultiRun):
         
         
         x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
-        x_barriers = x_barriers[0::2] # Only take every second Barrier Step. 1 Start for uneven
+        x_barriers = x_barriers[0::2]  # Only take every second Barrier Step. 1 Start for uneven
         print(x_barriers)
         
         effective_data_set_nr = data_set_nr / nr_bts  # Get the effetive number; i.e. what position of the Barreier
@@ -1204,11 +1211,55 @@ class MultiBarrierPosition(MultiRun):
         start_params = [nbh_size, l, bs]
         
         # Fit the Barrier:
-        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, 
-                         res_folder=res_folder, position_list=position_list, genotype_mat=genotype_mat)
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
+                         res_folder=res_folder, position_list=position_list, genotype_mat=genotype_mat, nr_inds = nr_inds)
         
         # Save the Barrier Positions which have been used:
         self.save_mat(x_barriers, filename="barrier_pos.csv", method=2, res_folder=res_folder)
+        
+class MultiHZPosition(MultiBarrierPosition):
+    '''Analyzes Multiple Barrier-Positions throughout the HZ. 
+    Inherits from the MultiBarrierPosition Class to do the analysis;
+    and it has some some create part that picks the data based on the full HZ-data
+    with custom cutoffs'''
+    
+    name = "mb_posHZ"
+    
+    def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
+        super(MultiHZPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        
+    def create_data_set(self, data_set_nr=0, position_path="", genotype_path="", loci_path="",
+            scale_factor=50, chromosome=0, geo_r2=0.015, p_HW=0.00001,
+            ld_r2=0.03, min_p=0.15):
+        '''Creates the HZ Data-Set. Takes raw Data and pre-processes it:
+        Filtering out number of Loci; based on chromosome
+        Position_Path: Where to find the Positions of one Individual
+        Genotype_Path: Where to find the Genotypes of one Individual
+        loci_path: Where to find the loci information'''
+        # Load the row data
+        # Raw Data from Hybrid Zone
+        position_list = np.loadtxt(position_path, delimiter='$').astype('float64')
+        position_list = position_list / scale_factor
+        print("Position List successfully loaded and scaled. ")
+        genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
+        print("Genotype position sucessfully loaded. ")
+        assert(len(genotypes) == len(position_list))  # Sanity Check
+        print("Nr. of Individuals: %i" % np.shape(genotypes)[0])
+        print("Nr. of Genotypes: %i" % np.shape(genotypes)[1])
+        
+        # Raw Data from Loci:
+        loci_info = pd.read_csv(loci_path)
+        assert(len(loci_info) == np.shape(genotypes)[1])  # Make sure that Data match!
+        
+        genotypes = clean_hz_data(genotypes, loci_info, geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, plot=True)
+        
+        # Randomly flip some Genotypes:
+        genotypes = flip_gtps(genotypes)
+        print("Randomly flipping Genotypes: Done")
+        
+        print("Nr. of cleaned Genotypes: %i " % np.shape(genotypes)[1])
+        
+        self.save_data_set(position_list, genotypes, data_set_nr)
         
 
 ###############################################################################################################################
@@ -1382,6 +1433,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_barrier_pos":
         return MultiBarrierPosition(folder, multi_processing=multi_processing)
     
+    elif method == "multi_hz_pos":
+        return MultiHZPosition(folder, multi_processing=multi_processing)
+    
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1437,11 +1491,11 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    #MultiRun = fac_method("multi_barrier", "./Data/", multi_processing=1)
+    # MultiRun = fac_method("multi_barrier", "./Data/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
     # MultiRun.create_data_set(1)
-    #MultiRun.analyze_data_set(0, method=2)
+    # MultiRun.analyze_data_set(1, method=2, deme_x_nr=30, deme_y_nr=20)
     
     
     # MultiRun.temp_visualize(method=2)
@@ -1449,9 +1503,9 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Cluster Data Set:
-    #MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
+    # MultiRun = fac_method("multi_cluster", "./cluster_folder/", multi_processing=1)
     # MultiRun.create_data_set(51)
-    #MultiRun.analyze_data_set(99, method=2)
+    # MultiRun.analyze_data_set(99, method=2)
     
     
     ####################################################
@@ -1481,10 +1535,20 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Barrier Position Data Set:
-    MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
-    MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
-                           genotype_path="./Data/barrier_file_genotypes01.csv")
-    #MultiRun.analyze_data_set(299, method=2)
+    # MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
+    # MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
+    #                       genotype_path="./Data/barrier_file_genotypes01.csv")
+    # MultiRun.analyze_data_set(299, method=2)
+    
+    ####################################################
+    # Multi Position Hybrid Zone Data Set:
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
+    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
+    #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
+    MultiRun.analyze_data_set(460, method=2, res_folder="all/")
+    
+    #####################################################
+    
     
 
     

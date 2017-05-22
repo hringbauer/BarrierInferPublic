@@ -206,11 +206,6 @@ def main():
                     barrier_pos = float(input("Where is the barrier?\n"))
                     analysis.geo_comparison(barrier=barrier_pos)
                     
-                if inp1 == 4:
-                    np.savetxt("coordinates00.csv", analysis.position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("data_genotypes00.csv", analysis.genotypes, delimiter="$")  # Save the data 
-                    print("Saving Complete...")
-                    
                 if inp1 == 5:
                     print(np.mean(genotype_matrix, axis=0))
                     analysis.ind_correlation(np.mean(genotype_matrix, axis=0))
@@ -221,7 +216,7 @@ def main():
                 if inp1 == 7:
                     # Plot the data
                     row = int(input("What genotype raw? \n"))
-                    analysis.plot_positions(row)
+                    analysis.plot_positions(row) # inds_per_deme
 
                 if inp1 == 8:
                     analysis.plot_all_freqs()

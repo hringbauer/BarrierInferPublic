@@ -251,7 +251,7 @@ class MLE_f_emp(GenericLikelihoodModel):
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
                 multi_processing=0, fit_t0=0, min_distance=0,
-                nr_ind_demes=[], **kwds):
+                nr_inds=[], **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
@@ -260,9 +260,9 @@ class MLE_f_emp(GenericLikelihoodModel):
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
         
-        if len(nr_ind_demes) == 0:  # In case no Nr. of Inds per Deme supplied; 
+        if len(nr_inds) == 0:  # In case no Nr. of Inds per Deme supplied; 
             self.nr_ind_demes = np.ones(len(coords))  # Set everything to 1.
-        else: self.nr_ind_demes = nr_ind_demes
+        else: self.nr_ind_demes = nr_inds
         
         
         super(MLE_f_emp, self).__init__(endog, exog, **kwds)  # Run initializer of full MLE object.

@@ -5,12 +5,12 @@
 #$ -M hringbauer@ist.ac.at
 #$ -N "SecondarySimB"
 #$ -m ea
-#$ -l mf=16g
-#$ -l mem_free=16g
-#$ -l h_vmem=16g
+#$ -l mf=8g
+#$ -l mem_free=8g
+#$ -l h_vmem=8g
 #$ -l h_rt=24:00:00
 #$ -cwd
-#$ -t 1-100:1
+#$ -t 1-460:1
 
 export OMP_NUM_THREADS=1
 module load tensorflow/python-2.7/1.1.0

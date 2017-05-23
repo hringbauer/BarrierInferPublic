@@ -19,6 +19,7 @@ from kernels import fac_kernel  # Factory Method which yields Kernel Object
 
 multi_nbh_folder = "./nbh_folder/"
 multi_nbh_gauss_folder = "./nbh_folder_gauss/"
+multi_barrier_folder = "./barrier_folder1/"
 cluster_folder = "./cluster_folder/"
 hz_folder = "./hz_folder/"
 multi_ind_folder = "./multi_ind_nr/"
@@ -136,7 +137,58 @@ def multi_nbh_single(folder, method):
     plt.xlabel("Dataset")
     plt.show()
     
+def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15]):
+    '''Print Estimates from several Barrier strength from Folder.'''
+    # Define the Result Numbers:
+    res_numbers0 = range(0, 25)
+    res_numbers1 = range(25, 50)
+    res_numbers2 = range(50, 75)
+    res_numbers3 = range(75, 100)
+    res_numbers = res_numbers0 + res_numbers1 + res_numbers2 + res_numbers3
+    
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(4):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    
+    
+    # plt.figure()
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    ax1.hlines(4 * np.pi * 5, res_numbers[0], res_numbers[-1], linewidth=2, color="r")
+    ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Method: %s" % str(method))
+    # ax1.legend()
+    
+    ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
+    ax2.hlines(0.006, 0, 100, linewidth=2)
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    ax3.errorbar(res_numbers, res_vec[res_numbers, 2], yerr=res_vec[res_numbers, 2] - unc_vec[res_numbers, 2, 0], fmt="yo")
+    ax3.hlines(barrier_strengths[0], res_numbers0[0], res_numbers0[-1], linewidth=2, color="r")
+    ax3.hlines(barrier_strengths[1], res_numbers1[0], res_numbers1[-1], linewidth=2, color="r")
+    ax3.hlines(barrier_strengths[2], res_numbers2[0], res_numbers2[-1], linewidth=2, color="r")
+    ax3.hlines(barrier_strengths[3], res_numbers3[0], res_numbers3[-1], linewidth=2, color="r")
+    ax3.set_ylabel("Barrier", fontsize=18)
 
+    
+    ax4.errorbar(res_numbers, res_vec[:, 3], yerr=res_vec[:, 3] - unc_vec[:, 3, 0], fmt="ko", label="ss")
+    ax4.hlines(0.52, 0, 100, linewidth=2)
+    ax4.set_ylabel("SS", fontsize=18)
+    # ax3.legend()
+    plt.xlabel("Dataset")
+    plt.show()
+    
+    
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
@@ -928,6 +980,7 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
     # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
+    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
@@ -939,7 +992,7 @@ if __name__ == "__main__":
     # Plots for Hybrid Zone Data
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
+    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/")    # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
     

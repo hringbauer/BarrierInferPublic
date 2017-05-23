@@ -190,6 +190,9 @@ class MultiRun(object):
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
         
+        print("Successfully saved to: ")
+        print(path)
+        
         
     def fit_barrier(self, position_barrier, start_params, data_set_nr, method=2,
                     res_folder=None, position_list=[], genotype_mat=[], nr_inds=[], random_ind_nr=None,
@@ -253,6 +256,8 @@ class MultiRun(object):
             os.makedirs(directory)
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+        print("Successfully saved to: ")
+        print(path)
         
 
     def save_mat(self, file, filename="add_info.csv", method=2, res_folder=None):
@@ -1545,7 +1550,7 @@ if __name__ == "__main__":
     MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
     # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
-    MultiRun.analyze_data_set(460, method=2, res_folder="all/")
+    MultiRun.analyze_data_set(458, method=2, res_folder="all/")
     
     #####################################################
     

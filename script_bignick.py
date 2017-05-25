@@ -47,7 +47,7 @@ def analyze_barrier_strengths_ll():
 
 data_set_nr = int(sys.argv[1])  # Which data-set to use
 #data_set_nr = 100
-print("Starting Dataset Nr %i:" % data_set_nr)
+print("Starting Dataset Nr. %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -87,8 +87,10 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
 # MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 # MultiRun.analyze_data_set(data_set_nr, method=1)
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="all/")
-MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
-                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
+#MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
+#                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
+MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="range_res/", barrier_pos=[2.0,], use_ind_nr=0,
+                              min_dist=0.5, max_dist=42, nr_bts=100)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)

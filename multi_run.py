@@ -19,13 +19,10 @@ from mle_pairwise import MLE_f_emp
 from random import shuffle 
 from analysis import Analysis, group_inds, bootstrap_genotypes, clean_hz_data, flip_gtps
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
 import pickle as pickle
-from gtk._gtk import accel_map_load
-    
 
 class MultiRun(object):
     '''
@@ -196,7 +193,7 @@ class MultiRun(object):
         
     def fit_barrier(self, position_barrier, start_params, data_set_nr, method=2,
                     res_folder=None, position_list=[], genotype_mat=[], nr_inds=[], random_ind_nr=None,
-                    deme_x_nr=0, deme_y_nr=0):
+                    deme_x_nr=0, deme_y_nr=0, min_dist=0, max_dist=0):
         '''Method to fit a Barrier; and save the estimates and Unc'''
         # Load Data Sets in case not given:
         if len(position_list) == 0 or len(genotype_mat) == 0:  
@@ -218,7 +215,6 @@ class MultiRun(object):
             genotype_mat = genotype_mat[inds, :]
             
             
-            
         # First Choose the right MLE-Object and set the right starting Parameters:
         if method == 0:
             MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
@@ -227,7 +223,8 @@ class MultiRun(object):
             MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_params = start_params + [0.01, ]
         elif method == 2:
-            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_inds=nr_inds, multi_processing=self.multi_processing)
+            MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_inds=nr_inds,
+                                min_dist=min_dist, max_dist=max_dist, multi_processing=self.multi_processing)
             start_params = start_params + [0.5, ]
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
@@ -379,171 +376,7 @@ class MultiNbh(MultiRun):
 #         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
 
         
-    def visualize_results(self):
-        '''Load and visualize the Results'''
-        param_estimates, uncert_estimates = self.load_analysis()  # Loads and saves Parameter Estimates and Uncertainty estimates
-        
-        plt.figure()
-        plt.errorbar()  # Fully Implement this plotting.
-        plt.show()
-        
-    def temp_visualize(self, method=0):
-        '''Temporary Function to plot the Estimates
-        that were run on cluster.'''
-        
-        
-        # First quick function to unpickle the data:
-        def load_pickle_data(i, arg_nr, method=2):
-            '''Function To load pickled Data.
-            Also visualizes it.'''
-            data_folder = self.data_folder
-            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
-            
-            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
-            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            # Coordinates for more :
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            
-            res = pickle.load(open(path, "rb"))  # Loads the Data
-            return res[arg_nr]
-        
-        res_numbers = range(0, 100)
-        # res_numbers = range(2, 7) + range(8, 86)
-        # res_numbers = range(0, 2) + range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
-        # res_numbers = range(30,31)# To analyze Dataset 30
-        
-        res_vec = np.array([load_pickle_data(i, 0, method) for i in res_numbers])
-        unc_vec = np.array([load_pickle_data(i, 1, method) for i in res_numbers])
-        
-        for l in range(len(res_numbers)):
-            i = res_numbers[l]
-            print("\nRun: %i" % i)
-            for j in range(3):
-                print("Parameter: %i" % j)
-                print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
-                
-        
-        
-        # plt.figure()
-        f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
-        
-        ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
-        ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
-        ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-        ax1.set_ylim([0, 200])
-        ax1.set_ylabel("Nbh", fontsize=18)
-        # ax1.legend()
-        
-        ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
-        ax2.hlines(0.006, 0, 100, linewidth=2)
-        ax2.set_ylabel("L", fontsize=18)
-        # ax2.legend()
-        
-        ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.52, 0, 100, linewidth=2)
-        ax3.set_ylabel("SS", fontsize=18)
-        # ax3.legend()
-        plt.xlabel("Dataset")
-        plt.show()
-        
-    def visualize_all_methods(self):
-        '''Visualizes the estimates of all three Methods
-        Method0: GRF Method1: ML, Method2: Curve Fit'''
-                # First quick function to unpickle the data:
-        def load_pickle_data(i, arg_nr, method=2):
-            '''Function To load pickled Data.
-            Also visualizes it.'''
-            data_folder = self.data_folder
-            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
-            
-            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
-            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            # Coordinates for more :
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            
-            res = pickle.load(open(path, "rb"))  # Loads the Data
-            return res[arg_nr]
-        
-        res_numbers = range(2, 7) + range(8, 68)
-        # res_numbers = range(0,86)
-        # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
-        # res_numbers = range(30,31)# To analyze Dataset 30
-        
-        # Load the Data for all three methods
-        res_vec0 = np.array([load_pickle_data(i, 0, 0) for i in res_numbers])
-        unc_vec0 = np.array([load_pickle_data(i, 1, 0) for i in res_numbers])
-        
-        res_vec1 = np.array([load_pickle_data(i, 0, 1) for i in res_numbers])
-        unc_vec1 = np.array([load_pickle_data(i, 1, 1) for i in res_numbers])
-        
-        res_vec2 = np.array([load_pickle_data(i, 0, 2) for i in res_numbers])
-        unc_vec2 = np.array([load_pickle_data(i, 1, 2) for i in res_numbers])
-        
-        
-        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True)
-        
-        ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
-        ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
-        ax1.errorbar(res_numbers, res_vec0[:, 0], yerr=res_vec0[:, 0] - unc_vec0[:, 0, 0], fmt="bo", label="Nbh")
-        ax1.set_ylim((0, 180))
-        ax1.set_ylabel("Nbh", fontsize=18)
-
-        ax2.errorbar(res_numbers, res_vec0[:, 1], yerr=res_vec0[:, 1] - unc_vec0[:, 1, 0], fmt="go", label="L")
-        ax2.hlines(0.006, 0, 100, linewidth=2)
-        ax2.set_ylabel("L", fontsize=18)
-        ax2.set_ylim((0, 0.02))
-        
-        ax3.errorbar(res_numbers, res_vec0[:, 2], yerr=res_vec0[:, 2] - unc_vec0[:, 2, 0], fmt="ko", label="ss")
-        ax3.hlines(0.04, 0, 100, linewidth=2)
-        ax3.set_ylabel("SS", fontsize=18)
-        
-        ax4.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax4.hlines(4 * np.pi * 9, 50, 75, color="r")
-        ax4.hlines(4 * np.pi * 13, 75, 100, color="r")
-        ax4.errorbar(res_numbers, res_vec1[:, 0], yerr=res_vec1[:, 0] - unc_vec1[:, 0, 0], fmt="bo", label="Nbh")
-        ax4.set_ylim((0, 180))
-        ax4.set_yticks([])
-        
-        ax5.errorbar(res_numbers, res_vec1[:, 1], yerr=res_vec1[:, 1] - unc_vec1[:, 1, 0], fmt="go", label="L")
-        ax5.hlines(0.006, 0, 100, linewidth=2)
-        ax5.set_ylim((0, 0.02))
-        ax5.set_yticks([])
-        
-        ax6.errorbar(res_numbers, res_vec1[:, 2], yerr=res_vec1[:, 2] - unc_vec1[:, 2, 0], fmt="ko", label="ss")
-        ax6.hlines(0.01, 0, 100, linewidth=2)
-        ax6.set_yticks([])
-        
-        ax7.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
-        ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
-        ax7.hlines(4 * np.pi * 9, 50, 75, color="r")
-        ax7.hlines(4 * np.pi * 13, 75, 100, color="r")
-        ax7.errorbar(res_numbers, res_vec2[:, 0], yerr=res_vec2[:, 0] - unc_vec2[:, 0, 0], fmt="bo", label="Nbh")
-        ax7.set_ylim((0, 180))
-        ax7.set_yticks([])
-        # ax1.legend()
-        
-        ax8.errorbar(res_numbers, res_vec2[:, 1], yerr=res_vec2[:, 1] - unc_vec2[:, 1, 0], fmt="go", label="L")
-        ax8.hlines(0.006, 0, 100, linewidth=2)
-        ax8.set_ylim((0, 0.02))
-        ax8.set_yticks([])
-        
-        ax9.errorbar(res_numbers, res_vec2[:, 2], yerr=res_vec2[:, 2] - unc_vec2[:, 2, 0], fmt="ko", label="ss")
-        ax9.hlines(0.52, 0, 100, linewidth=2)
-        ax9.set_yticks([])
-        
-        # ax3.legend()
-        plt.show()
+    
 
 ###############################################################################################################################
 
@@ -603,9 +436,6 @@ class MultiNbhModel(MultiNbh):
         self.pickle_parameters(p_names, ps, additional_info)
         
         
-
-
-
 ###############################################################################################################################
 
 class MultiBarrier(MultiRun):
@@ -713,120 +543,7 @@ class MultiBarrier(MultiRun):
             os.makedirs(directory)
             
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
-        
-    
-        
-    def visualize_barrier_strengths(self, res_numbers=range(0, 100)):
-        '''Method to visualize the strengths of the Barrier'''
-        
-        def load_pickle_data(i):
-            '''Function To load pickled Data.
-            Also visualizes it.'''
-            data_folder = self.data_folder
-            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
-            
-            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
-            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            # Coordinates for more :
-            subfolder_meth = "method_k0" + "/"  # Sets subfolder to which Method to use.
-            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            res = pickle.load(open(path, "rb"))  # Loads the Data
-            return res
-        
-        ll_vecs = np.array([load_pickle_data(i) for i in res_numbers])
-        ll_vecs_max = np.max(ll_vecs, axis=1)
-        
-        ll_rel_vecs = ll_vecs - ll_vecs_max[:, None]
-        
-        # How many Barrier Strengths:
-        k_len = len(ll_vecs[0])
-        k_vec = np.linspace(0.0, 1, k_len)  # Creates the Grid for k
-        
-        plt.figure()
-        ax = plt.gca()
-        # ax.set_aspect('equal')
-        im = ax.imshow(ll_rel_vecs.T, cmap="seismic", vmin=-6)
-        plt.ylabel("Reduced Migration")
-        plt.xlabel("Data Set")
-        plt.title("Marginal Likelihood Barrier")
-        plt.yticks(range(len(k_vec)), k_vec[::-1])
-        plt.hlines(0 * (k_len - 1), -0.5, 24.5, linewidth=1, color="g")
-        plt.hlines(0.25 * (k_len - 1), 24.5, 49.5, linewidth=1, color="g")
-        plt.hlines(0.5 * (k_len - 1), 49.5, 74.5, linewidth=1, color="g")
-        plt.hlines(1.0 * (k_len - 1), 74.5, 99.5, linewidth=1, color="g")
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        plt.colorbar(im, cax=cax)
-        plt.show()
-        
-    def temp_visualize(self, method=0):
-        '''Temporary Function to plot the Estimates
-        that were run on cluster.'''
-        # First quick function to unpickle the data:
-        def load_pickle_data(i, arg_nr, method=2):
-            '''Function To load pickled Data.
-            Also visualizes it.'''
-            data_folder = self.data_folder
-            # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
-            
-            # subfolder_meth = "estimate" + str(2) + "/"  # Path to binned Estimates
-            # path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            # Coordinates for more :
-            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-            path = self.data_folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            
-            res = pickle.load(open(path, "rb"))  # Loads the Data
-            return res[arg_nr]
-        
-        
-        res_numbers = range(1, 100)  # + range(8, 100)
-        # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
-        print(res_numbers)
-        # res_numbers = range(30,31)# To analyze Dataset 30
-        
-        res_vec = np.array([load_pickle_data(i, 0, method) for i in res_numbers])
-        unc_vec = np.array([load_pickle_data(i, 1, method) for i in res_numbers])
-        
-        for l in range(len(res_numbers)):
-            i = res_numbers[l]
-            print("\nRun: %i" % i)
-            for j in range(3):
-                print("Parameter: %i" % j)
-                print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
-                
-        
-        
-        # plt.figure()
-        f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
-        
-        ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="r")
-        ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
-        # ax1.set_ylim([0, 200])
-        ax1.set_ylabel("Nbh", fontsize=18)
-        # ax1.legend()
-        
-        ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
-        ax2.hlines(0.006, 0, 100, linewidth=2)
-        ax2.set_ylabel("L", fontsize=18)
-        # ax2.legend()
-        
-        ax3.errorbar(res_numbers, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
-        # ax3.hlines(0.04, 0, 100, linewidth=2)
-        ax3.set_ylabel("k", fontsize=18)
-        
-        ax3.hlines(0.0, 0, 25, linewidth=2, color="r")
-        ax3.hlines(0.05, 25, 50, linewidth=2, color="r")
-        ax3.hlines(0.1, 50, 75, linewidth=2, color="r")
-        ax3.hlines(0.15, 75, 100, linewidth=2, color="r")
-        ax3.set_ylim([0, 0.5])
-        # ax3.set_ylim([0,0.01])
-        # ax3.legend()
-        plt.xlabel("Dataset")
-        plt.show()
+
         
 ##############################################################################################################################
 class MultiCluster(MultiBarrier):
@@ -1169,8 +886,9 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20, 
-                         res_folder=None, min_ind_nr=5, barrier_pos=[], use_ind_nr=1):
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
+                         res_folder=None, min_ind_nr=5, barrier_pos=[], use_ind_nr=1,
+                         min_dist=0, max_dist=0):
         '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.
         For synthetic data set: nr_x_bins=30; nr_y_bins=20. For HZ: nr_x_bins=50; nr_y_bins=10'''
         
@@ -1184,7 +902,7 @@ class MultiBarrierPosition(MultiRun):
         position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
                                                     demes_x=nr_x_bins, demes_y=nr_y_bins, min_ind_nr=min_ind_nr)  
         # If not wished to use individual number:
-        if use_ind_nr==0:
+        if use_ind_nr == 0:
             nr_inds = np.ones(len(position_list))
             
         print("Demes: ")
@@ -1195,13 +913,13 @@ class MultiBarrierPosition(MultiRun):
         print("Nr of analyzed Genotypes: %i" % nr_genotypes)
         
         
-        if len(barrier_pos)==0:
+        if len(barrier_pos) == 0:
             x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
             x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
             x_barriers = x_barriers[0::2]  # Only take every second Barrier Step. 1 Start for uneven
             print(x_barriers)
         
-        else: x_barriers=barrier_pos
+        else: x_barriers = barrier_pos
         
         effective_data_set_nr = data_set_nr / nr_bts  # Get the effetive number; i.e. what position of the Barreier
         assert(0 <= effective_data_set_nr <= len(x_barriers))  # Sanity Check
@@ -1220,7 +938,8 @@ class MultiBarrierPosition(MultiRun):
         
         # Fit the Barrier:
         self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
-                         res_folder=res_folder, position_list=position_list, genotype_mat=genotype_mat, nr_inds = nr_inds)
+                         res_folder=res_folder, position_list=position_list, genotype_mat=genotype_mat, nr_inds=nr_inds,
+                         min_dist=min_dist, max_dist=max_dist)
         
         # Save the Barrier Positions which have been used:
         self.save_mat(x_barriers, filename="barrier_pos.csv", method=2, res_folder=res_folder)
@@ -1553,7 +1272,8 @@ if __name__ == "__main__":
     MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
     # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
-    MultiRun.analyze_data_set(458, method=2, res_folder="ind_info/", barrier_pos=[], use_ind_nr=0)
+    MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
+                              min_dist=1.0, max_dist=42, nr_bts=100)
     
     #####################################################
     

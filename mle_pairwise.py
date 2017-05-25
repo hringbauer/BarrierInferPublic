@@ -250,12 +250,15 @@ class MLE_f_emp(GenericLikelihoodModel):
     fit_t0 = 0  # Whether to fit t0 as well
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                multi_processing=0, fit_t0=0, min_distance=0,
+                multi_processing=0, fit_t0=0, min_dist=0, max_dist=0,
                 nr_inds=[], **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
-        self.min_distance = min_distance
+        self.min_distance = min_dist  # What is the minimum Distance for pairs
+        self.max_distance = max_dist  # What is the maximum Distance for pairs
+        if max_dist == 0:
+            self.max_distance = np.inf  # Set maximum Distance to Infinity in case not given.
         self.fit_t0 = fit_t0
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
@@ -324,7 +327,9 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         pw_dist_mat = np.sqrt(np.sum((coords[:, None] - coords[None, :]) ** 2, axis=2))  # Calculates Pw. Distances.
         pw_dist_list = pw_dist_mat[inds]
-        inds_md = np.where(pw_dist_list > self.min_distance)[0]  # Extract indices where greater than min. Distance
+        
+        # Extract indices where greater than min. Distance and smaller than max. Distance:
+        inds_md = np.where((pw_dist_list > self.min_distance) & (pw_dist_list < self.max_distance))[0]  
         inds = (inds0[inds_md], inds1[inds_md])  # Extracts right Matrix indices
         self.inds = inds  # Remembers so that class
         return inds
@@ -341,56 +346,6 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         return frac_genotypes_id, frac_genotypes_sem
     
-    def bootstrap(self, nr_replicates=100, start_params=None,):
-        '''Method that Bootstraps over nr_replicates many loci to get uncertainty estimates'''
-        if start_params == None:
-            start_params = self.start_params  # Set the starting parameters for the fit
-            
-        # First extract and calculate pairwise distances:
-        coords = self.exog
-        genotypes = self.endog
-        inds = self.extract_right_indices(coords)  # 
-        
-        
-        print("Starting da bootstrap...")
-        
-        lower_bounds = 0.0  # Lower Bound for the fit.
-        upper_bounds = [np.inf for _ in start_params]  # Sets all upper bounds to infinity
-        if len(upper_bounds) == 5:  # If Barrier is fitted as well set upper bound to 1.0 (no barrier)
-            upper_bounds[2] = 1.0 
-        
-        # Create Empty Containers where the estimates will go into:
-        parameters = np.zeros((nr_replicates, len(start_params)))
-        stds = np.zeros((nr_replicates, len(start_params)))
-        
-        nr_genotypes = np.shape(genotypes)[1]
-        
-        for i in range(nr_replicsts):
-            # Calculate Matrix with fraction of identical genotypes per pair
-            r_ind = np.random.randint(len(nr_genotypes), size=len(nr_genotypes))  # Get Indices of random resampling
-            gtps_sample = genotypes[:, r_ind]  # Do the actual Bootstrap
-            
-            frac_genotypes_id, sems = self.calc_mean_indentical(gtps_sample)
-            
-            y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
-            y_errors = sems[inds]  # Makes vector out of standard errors.
-            
-            params, cov_matrix = curve_fit(self.fit_function, coords, y_values,  # sigma=y_errors, absolute_sigma=True
-                        p0=start_params, bounds=(lower_bounds, upper_bounds))  # @UnusedVariable p0=(C / 10.0, -r)
-            
-            std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
-            
-            # Set Parameter Estimates and Standard Deviations to a certain value
-            parameters[i, :] = params
-            stds[i, :] = std_params
-            
-            start_params = params  # Save Start Parameters for next Bootstrap
-        
-        pickle.dump((params, stds), open("bootstrap_estimates.p", "wb"))  # Pickle the results
-        return parameters, stds
-    
-        
-
         
     def fit(self, start_params=None, maxiter=500, maxfun=1000, **kwds):  # maxiter was 5000; maxfun was 5000
         # we have one additional parameter and we need to add it for summary
@@ -399,6 +354,7 @@ class MLE_f_emp(GenericLikelihoodModel):
         
         # First extract and calculate pairwise distances;
         coords = self.exog
+        nr_inds = len(coords)
         
         # Calculate Matrix with fraction of identical genotypes per pair
         genotypes = self.endog
@@ -406,11 +362,13 @@ class MLE_f_emp(GenericLikelihoodModel):
         nr_pair_comps = self.nr_ind_demes[:, None] * self.nr_ind_demes[None, :]  # Calculate Number of pairwise comparisons.
         
         # Extract Pairs with right minimum pairwise Distance
+        print("Nr of all pairwise comparisons: %i" % (nr_inds * (nr_inds - 1) / 2))
         inds = self.extract_right_indices(coords)
         y_values = frac_genotypes_id[inds]  # Makes a vector out of identical Genotypes
         nr_pair_comps = nr_pair_comps[inds]
-        y_errors = sems[inds]  # Makes vector out of standard errors.
-        
+        y_errors = sems[inds]  # Makes vector out of standard errors.        
+        print("Extracted pairwise comparisons: %i" % len(y_values))
+        print("Assumed Barrier Position: %g" % self.kernel.position_barrier)
         print("Doing the Fitting...")
         
         lower_bounds = 0.0  # Lower Bound for the fit.
@@ -449,7 +407,7 @@ def memory_usage_resource():
 
    
 ######################### Some lines to test the code and make plots
-def analyze_barrier(position_list, genotype_mat, ind_deme_nr, 
+def analyze_barrier(position_list, genotype_mat, ind_deme_nr,
                     position_barrier=2, nr_inds=200, fit_t0=0, start_params=[136.07, 0.0122, 0.375, 0.53]):
     '''Method that analyzes a barrier. Use Method 2.'''
     # inds = range(len(position_list))

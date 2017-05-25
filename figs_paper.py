@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import itertools
 from time import time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from analysis import kinship_coeff  # Import function from Analysis
+from analysis import kinship_coeff, calc_f_mat  # Import functions from Analysis
 from scipy.stats import binned_statistic
 from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
@@ -57,20 +57,25 @@ def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
         
 def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     '''Helper Function that gives stats of results'''
-    res_vec=np.array([load_pickle_data(folder,i,0,method, subfolder) for i in res_vec])
+    res_vec = np.array([load_pickle_data(folder, i, 0, method, subfolder) for i in res_vec])
     _, nr_params = np.shape(res_vec)
     
-    means= np.mean(res_vec, axis=0)
-    std= np.std(res_vec, axis=0)
+    means = np.mean(res_vec, axis=0)
+    std = np.std(res_vec, axis=0)
     upper = np.percentile(res_vec, 97.5, axis=0)  # Calculate Upper Bound
     lower = np.percentile(res_vec, 2.5, axis=0)  # Calculate Lower Bound
     
     for i in xrange(nr_params):
-        print("\nParameter: %i" %i)
-        print("Mean: %g" % means[i])
-        print("SD: %g" % std[i])
-        print("2.5 Percent Quantile: %g" % lower[i])
-        print("97.5 Percent Quantile: %g" % upper[i])
+        print("\nParameter: %i" % i)
+        print("Mean:\t\t\t %g" % means[i])
+        print("SD:\t\t\t %g" % std[i])
+        print("2.5 Percent Quantile:\t %g" % lower[i])
+        print("97.5 Percent Quantile:\t %g" % upper[i])
+        
+    plt.figure()
+    plt.boxplot(res_vec[:,0])
+    plt.title("Nbh Size")
+    plt.show()
     
     
 
@@ -83,10 +88,18 @@ def calc_bin_correlations(positions, genotypes, bins=25, p=0.5, correction=True)
     correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
     entry = 0
     
+    f_mat = calc_f_mat(genotypes, p)  # Does the whole calculation a bit quicker
+    dist_mat = np.linalg.norm(positions[:, None] - positions, axis=2) # Calculate the whole Distance Matrix
+    
+    # Calculate everything:
     for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
-        distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
-        correlation[entry] = kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
+        # distance[entry] = np.linalg.norm(np.array(positions[i]) - np.array(positions[j]))  # Calculate the pairwise distance
+        distance[entry] = dist_mat[i, j]
+        # correlation[entry] = kinship_coeff(genotypes[i, :], genotypes[j, :], p)  # Kinship coeff. per pair, averaged over loci  
+        correlation[entry] = f_mat[i, j]
         entry += 1 
+          
+    # Now bin them:
     bin_dist, bin_corr, stand_errors, corr_factor = bin_correlations(distance, correlation, bins=bins, correction=correction)
     return bin_dist, bin_corr, stand_errors, corr_factor 
             
@@ -100,8 +113,8 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
     corr_factor = 0
     if correction == True:
         # Substract IBD of distant individuals
-        ind_min=int(bins * 1 / 3)
-        ind_max=int(bins * 1 / 2)
+        ind_min = int(bins * 1 / 3)
+        ind_max = int(bins * 1 / 2)
         print("Min Dist for Correction: %.4f" % bin_edges[ind_min])
         print("Max Dist for correction: %.4f" % bin_edges[ind_max])
         corr_factor = np.mean(bin_corr[ind_min:ind_max]) 
@@ -159,6 +172,84 @@ def multi_nbh_single(folder, method):
     # ax3.legend()
     plt.xlabel("Dataset")
     plt.show()
+    
+    
+def visualize_all_methods(folder, res_numbers=range(100)):
+        '''Visualizes the estimates of all three Methods
+        Method0: GRF Method1: ML, Method2: Curve Fit. NEEEDS LOVE AND CHECKIN'''
+    
+        # res_numbers = range(0,86)
+        # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
+        # res_numbers = range(30,31)# To analyze Dataset 30
+        
+        # Load the Data for all three methods
+        res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers])
+        unc_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers])
+        
+        res_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers])
+        unc_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers])
+        
+        res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
+        unc_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
+        
+        
+        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True)
+        
+        ax1.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
+        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
+        ax1.hlines(4 * np.pi * 9, 50, 75, color="r")
+        ax1.hlines(4 * np.pi * 13, 75, 100, color="r")
+        ax1.errorbar(res_numbers, res_vec0[:, 0], yerr=res_vec0[:, 0] - unc_vec0[:, 0, 0], fmt="bo", label="Nbh")
+        ax1.set_ylim((0, 180))
+        ax1.set_ylabel("Nbh", fontsize=18)
+
+        ax2.errorbar(res_numbers, res_vec0[:, 1], yerr=res_vec0[:, 1] - unc_vec0[:, 1, 0], fmt="go", label="L")
+        ax2.hlines(0.006, 0, 100, linewidth=2)
+        ax2.set_ylabel("L", fontsize=18)
+        ax2.set_ylim((0, 0.02))
+        
+        ax3.errorbar(res_numbers, res_vec0[:, 2], yerr=res_vec0[:, 2] - unc_vec0[:, 2, 0], fmt="ko", label="ss")
+        ax3.hlines(0.04, 0, 100, linewidth=2)
+        ax3.set_ylabel("SS", fontsize=18)
+        
+        ax4.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
+        ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
+        ax4.hlines(4 * np.pi * 9, 50, 75, color="r")
+        ax4.hlines(4 * np.pi * 13, 75, 100, color="r")
+        ax4.errorbar(res_numbers, res_vec1[:, 0], yerr=res_vec1[:, 0] - unc_vec1[:, 0, 0], fmt="bo", label="Nbh")
+        ax4.set_ylim((0, 180))
+        ax4.set_yticks([])
+        
+        ax5.errorbar(res_numbers, res_vec1[:, 1], yerr=res_vec1[:, 1] - unc_vec1[:, 1, 0], fmt="go", label="L")
+        ax5.hlines(0.006, 0, 100, linewidth=2)
+        ax5.set_ylim((0, 0.02))
+        ax5.set_yticks([])
+        
+        ax6.errorbar(res_numbers, res_vec1[:, 2], yerr=res_vec1[:, 2] - unc_vec1[:, 2, 0], fmt="ko", label="ss")
+        ax6.hlines(0.01, 0, 100, linewidth=2)
+        ax6.set_yticks([])
+        
+        ax7.hlines(4 * np.pi, 0, 25, linewidth=2, color="r")
+        ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color="r")
+        ax7.hlines(4 * np.pi * 9, 50, 75, color="r")
+        ax7.hlines(4 * np.pi * 13, 75, 100, color="r")
+        ax7.errorbar(res_numbers, res_vec2[:, 0], yerr=res_vec2[:, 0] - unc_vec2[:, 0, 0], fmt="bo", label="Nbh")
+        ax7.set_ylim((0, 180))
+        ax7.set_yticks([])
+        # ax1.legend()
+        
+        ax8.errorbar(res_numbers, res_vec2[:, 1], yerr=res_vec2[:, 1] - unc_vec2[:, 1, 0], fmt="go", label="L")
+        ax8.hlines(0.006, 0, 100, linewidth=2)
+        ax8.set_ylim((0, 0.02))
+        ax8.set_yticks([])
+        
+        ax9.errorbar(res_numbers, res_vec2[:, 2], yerr=res_vec2[:, 2] - unc_vec2[:, 2, 0], fmt="ko", label="ss")
+        ax9.hlines(0.52, 0, 100, linewidth=2)
+        ax9.set_yticks([])
+        
+        # ax3.legend()
+        plt.show()
+    
     
 def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15]):
     '''Print Estimates from several Barrier strength from Folder.'''
@@ -943,64 +1034,97 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     rel_pos = position_list[:, None] - position_list  # Make the list of relative Positions
     dist_mat = np.linalg.norm(rel_pos, axis=2)
     # print(dist_mat[0, :5])
-    
+     
     angles_rad = np.arctan(rel_pos[:, :, 1] / (rel_pos[:, :, 0] + 0.000000001))
+    angles_rad = angles_rad + np.pi * (rel_pos[:,:,0]<0)   # Add 180 degrees if x<0
     angles = np.degrees(angles_rad)  # Add something to denominator to make it numerically stable
     toc = time()
-    # print("Runtime calculating Angle Matrix: %.4f " % (toc-tic))
+    print("Runtime calculating Angle Matrix: %.4f " % (toc - tic))
     
+    # Calculate F-Matrix:
+    print("\nCalculating F-Matrix... ")
+    tic = time()
+    f_mat = calc_f_mat(genotypes)
+    toc = time()
+    print("Runtime F-Matrix: %.4f" % (toc - tic))
     
     # Define the Bins:
-    angle_bins = np.linspace(-90.0001, 90.0001, 19)
+    angle_bins = np.linspace(-90, 270, 17)
     angle_bins_rad = np.deg2rad(angle_bins)  # Convert for printing to Rad
-    dist_bins = np.array([-0.001, 200, 500, 1000000]) / scale_factor
-#     
-#     # Calculate their means:
-#     angle_means = (angle_bins[1:] + angle_bins[:-1]) / 2.0
-#     dist_means = (dist_bins[1:] + dist_bins[:-1]) / 2.0
-#     
-#     angle_inds = np.digitize(angles, angle_bins)
-#     geo_inds = np.digitize(dist_mat, dist_bins)
-#     
-#     print(np.min(geo_inds))
-#     print(np.max(geo_inds))
-#     
-#     f_means = -np.ones((len(angle_bins)-1, len(dist_bins)-1)) * 100    # Set to minus 100; so that errors are obvious
-#     nr_comps = -np.ones((len(angle_bins)-1, len(dist_bins)-1)) * 100    # How the Individuals are distributed
-#     #print(f_means)
-#     
-#     for a in xrange(1, len(angle_bins)):
-#         for d in xrange(1, len(dist_bins)):
-#             print("\nParameters")
-#             print(angle_bins[a])
-#             print(dist_bins[d])
-#             inds = np.where((angle_inds==a) & (geo_inds==d))[0]  # Extract corresponding individuals
-#             print(len(inds))
-#             
-#             nr_comps[a-1,d-1] = len(inds)
-#     
-#     
-#     
-#     print("Total Number of Comparisons: %i" % np.sum(nr_comps))
-#     # Make three length and nine angle categories
-#     
-#     #close_inds = dist_mat < max_dist  # Calculate Boolean Matrix of all nearby Individuals
+    dist_bins = np.array([20, 100, 400, 2000]) / float(scale_factor) # Float so that Division works
+     
+    # Calculate their means:
+    angle_means = (angle_bins[1:] + angle_bins[:-1]) / 2.0
+    dist_means = (dist_bins[1:] + dist_bins[:-1]) / 2.0
+     
+    angle_inds = np.digitize(angles, angle_bins)
+    geo_inds = np.digitize(dist_mat, dist_bins)
+     
+    print(np.min(geo_inds))
+    print(np.max(geo_inds))
+     
+    f_means = -np.ones((len(angle_bins) - 1, len(dist_bins) - 1)) * 100  # Set to minus 100; so that errors are obvious
+    nr_comps = -np.ones((len(angle_bins) - 1, len(dist_bins) - 1)) * 100  # How the Individuals are distributed)
+    f_mean =np.mean(f_mat) # Calculate the overall mean
+     
+    for a in xrange(1, len(angle_bins)):
+        for d in xrange(1, len(dist_bins)):
+            print("\nParameters")
+            print(angle_bins[a])
+            print(dist_bins[d])
+            # Extract corresponding individuals
+            inds = np.where((angle_inds == a) & (geo_inds == d))  # Is 2D Array!!
+            print("Nr. of individuals in bin: %i" % len(inds[0]))
+            nr_comps[a - 1, d - 1] = len(inds[0])
+            f_means[a - 1, d - 1] = t= np.mean(f_mat[inds] - f_mean)  # Take the mean f of all pairwise comps in this category
+            print(f_means[a - 1, d - 1])
+     
+     
+    print("Total Number of Comparisons: %i" % np.sum(nr_comps))
+    # Make three length and nine angle categories
+     
+    # close_inds = dist_mat < max_dist  # Calculate Boolean Matrix of all nearby Individuals
     
     # Do the Plotting:
     
     
     azimuths = angle_bins_rad
-    zeniths = np.array([0, 1, 2, 3])  # np.arange(0, 70, 10)
+    zeniths = np.array([0, 1.5, 2.3, 3])  # np.arange(0, 70, 10)
     
     r, theta = np.meshgrid(zeniths, azimuths)
-    values = np.random.random((azimuths.size, zeniths.size))
+    # values = np.random.random((azimuths.size, zeniths.size))
+    # values = np.ones((azimuths.size, zeniths.size))
+    values = np.log10(nr_comps)
+    # values[0, 2] = 0.0 # Set 0 for testing reasons
     # values = np.random.random((10,4))
     
     #-- Plot... ------------------------------------------------
     fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
-    ax.pcolor(theta, r, values)
+    cax = ax.pcolor(theta, r, values)
     ax.set_yticklabels([])
+    cbar = fig.colorbar(cax)  # ticks=[0, 0.5, 1]
+    tick_pos=zeniths
+    myticks = [str(i*scale_factor) + "m" for i in dist_bins]
+    ax.set_yticks(tick_pos)
+    ax.set_yticklabels(myticks)
+    ax.set_rlabel_position(112.5)
+    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented colorbar
+    plt.title("Nr. Pairwise Comparisons")
+    plt.show()
     
+    # Plot F-Means:
+    values = f_means
+    
+    fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
+    cax = ax.pcolor(theta, r, values)
+    tick_pos=zeniths
+    myticks = [str(i*scale_factor) + "m" for i in dist_bins]
+    ax.set_yticks(tick_pos)
+    ax.set_yticklabels(myticks)
+    ax.set_rlabel_position(112.5)
+    cbar = fig.colorbar(cax)  # ticks=[0, 0.5, 1]
+    # cbar.ax.set_yticklabels(['< -1', '0', '> 1'])  # vertically oriented colorbar
+    plt.title("Pairwise F")
     plt.show()
         
     
@@ -1102,17 +1226,20 @@ if __name__ == "__main__":
     
     
     # ## Plots for Hybrid Zone Data
-    multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=1, res_numbers=range(0, 460))
+    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
-    #barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
+    # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "all/", res_number=1, nr_bootstraps=200)
-    # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
+    #plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
     # plot_IBD_anisotropy("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv")
     
-    #give_result_stats(hz_folder, subfolder="barrier20m/")
-    # give_result_stats(multi_pos_hz_folder, subfolder="all/")
+    # give_result_stats(hz_folder, subfolder="barrier20m/")
+    
+    
+    #give_result_stats(multi_pos_hz_folder, subfolder="allind/")
+    give_result_stats(multi_pos_hz_folder, subfolder="noind/")

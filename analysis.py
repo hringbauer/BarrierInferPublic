@@ -74,7 +74,7 @@ class Analysis(object):
         genotypes = self.genotypes
         
         # Call the cleaning Method:
-        genotypes = clean_hz_data(genotypes, loci_info, 
+        genotypes = clean_hz_data(genotypes, loci_info,
                                   geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, plot=plot)
         
         return genotypes, self.position_list
@@ -84,7 +84,7 @@ class Analysis(object):
     def kinship_coeff(self, p1, p2, p):
         '''Takes two allele frequencies as input and calculates their correlation.'''
         f = kinship_coeff(p1, p2, p)
-        #f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
+        # f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
     def mean_kinship_coeff(self, genotype_mat, p_mean=0.5):
@@ -208,8 +208,8 @@ class Analysis(object):
         plt.title("Sample Distribution", fontsize=30)
         color = self.genotypes[:, row].astype("float")
         
-        if len(inds)>0:
-            color=inds
+        if len(inds) > 0:
+            color = inds
             
         plt.scatter(self.position_list[:, 0], self.position_list[:, 1], label="Samples", c=color)
         # pylab.vlines(0, min(X_data[:,1]), max(X_data[:,1]), linewidth=2, color="red", label="Barrier")
@@ -388,7 +388,7 @@ def group_inds(position_list, genotypes, demes_x=10, demes_y=10, min_ind_nr=0):
     x_coords, y_coords = position_list[:, 0], position_list[:, 1]
     
     x_bins = np.linspace(min(x_coords), max(x_coords) + 0.00001, num=demes_x + 1)
-    #print(x_bins)
+    # print(x_bins)
     y_bins = np.linspace(min(y_coords), max(y_coords) + 0.00001, num=demes_y + 1)
     
     x_inds = np.digitize(x_coords, x_bins)
@@ -495,6 +495,14 @@ def kinship_coeff(p1, p2, p):
     '''Takes two allele frequencies as input and calculates their correlation.'''
     f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
     return f
+
+def calc_f_mat(genotypes, p=0.5):
+    '''Calculates whole pairwise F-matrix for all Genotypes'''
+    nr_inds=np.shape(genotypes)[0]
+    f_mat=np.zeros((nr_inds, nr_inds))
+    for i in xrange(nr_inds):
+        f_mat[i,:] = np.mean((genotypes[i,:]-0.5)*(genotypes-0.5)/(p*(1-p)), axis=1)
+    return f_mat
 
 
 

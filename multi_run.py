@@ -256,6 +256,7 @@ class MultiRun(object):
             os.makedirs(directory)
             
         pickle.dump((params, conf_ind), open(path, "wb"))  # Pickle the Info
+        
         print("Successfully saved to: ")
         print(path)
         
@@ -1012,13 +1013,9 @@ class MultiBT_HZ(MultiBarrier):
         if data_set_nr == 0: 
             self.save_data_set(position_list, genotype_matrix, data_set_nr)
             return 
-    
         
-        nr_inds, nr_genotypes = np.shape(genotype_matrix)  # Could in principle also bootstrap over Individuals
-        
-        
-        r_ind = np.random.randint(nr_genotypes, size=nr_genotypes)  # Get Indices for random resampling
-        gtps_sample = genotype_matrix[:, r_ind]  # Do the actual Bootstrap; pick the columns
+        # Do the Bootstrap
+        gtps_sample = bootstrap_genotypes(genotype_mat)
         
         self.save_data_set(position_list, gtps_sample, data_set_nr)  # Save the Data Set
         
@@ -1172,7 +1169,8 @@ class MultiBarrierPosition(MultiRun):
     def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
         super(MultiBarrierPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
     
-    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20, res_folder=None, min_ind_nr=5):
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20, 
+                         res_folder=None, min_ind_nr=5, barrier_pos=[], use_ind_nr=1):
         '''Analyzes the data-set. First bins the Data; then do nr_bts many estimates.
         For synthetic data set: nr_x_bins=30; nr_y_bins=20. For HZ: nr_x_bins=50; nr_y_bins=10'''
         
@@ -1185,6 +1183,10 @@ class MultiBarrierPosition(MultiRun):
         # Group Inds:
         position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
                                                     demes_x=nr_x_bins, demes_y=nr_y_bins, min_ind_nr=min_ind_nr)  
+        # If not wished to use individual number:
+        if use_ind_nr==0:
+            nr_inds = np.ones(len(position_list))
+            
         print("Demes: ")
         print(nr_inds)
         
@@ -1193,12 +1195,13 @@ class MultiBarrierPosition(MultiRun):
         print("Nr of analyzed Genotypes: %i" % nr_genotypes)
         
         
-        x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
+        if len(barrier_pos)==0:
+            x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
+            x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
+            x_barriers = x_barriers[0::2]  # Only take every second Barrier Step. 1 Start for uneven
+            print(x_barriers)
         
-        
-        x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
-        x_barriers = x_barriers[0::2]  # Only take every second Barrier Step. 1 Start for uneven
-        print(x_barriers)
+        else: x_barriers=barrier_pos
         
         effective_data_set_nr = data_set_nr / nr_bts  # Get the effetive number; i.e. what position of the Barreier
         assert(0 <= effective_data_set_nr <= len(x_barriers))  # Sanity Check
@@ -1550,7 +1553,7 @@ if __name__ == "__main__":
     MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
     # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
-    MultiRun.analyze_data_set(458, method=2, res_folder="all/")
+    MultiRun.analyze_data_set(458, method=2, res_folder="ind_info/", barrier_pos=[], use_ind_nr=0)
     
     #####################################################
     

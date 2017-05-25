@@ -83,7 +83,8 @@ class Analysis(object):
         
     def kinship_coeff(self, p1, p2, p):
         '''Takes two allele frequencies as input and calculates their correlation.'''
-        f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
+        f = kinship_coeff(p1, p2, p)
+        #f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
         return f
     
     def mean_kinship_coeff(self, genotype_mat, p_mean=0.5):
@@ -342,7 +343,7 @@ class Analysis(object):
         return position_list_new, genotypes_new, inds_per_deme
                 
 #####################################################################################################################
-# Some Helper Functions:
+# Some Helper Functions for other classes to import from:
         
 def fit_log_linear(t, y):
     '''Fitting log decay and returns parameters: y = A + B * ln(t) as (A,B)'''
@@ -489,6 +490,11 @@ def flip_gtps(genotypes):
     genotypes_new = (1 - flip[None, :]) * genotypes + flip[None, :] * (1 - genotypes)  # Does the flipping
     genotypes = genotypes_new
     return genotypes_new
+
+def kinship_coeff(p1, p2, p):
+    '''Takes two allele frequencies as input and calculates their correlation.'''
+    f = np.mean((p1 - p) * (p2 - p) / (p * (1 - p)))
+    return f
 
 
 

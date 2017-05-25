@@ -559,9 +559,15 @@ class DiffusionK0(Kernel):
         #objgraph.show_most_common_types(limit=50)
         #objgraph.show_growth()
         return output
+    
+    def calc_f_vec(self, r_vec):
+        '''Simple Function to calculate IBD (f) at r_vec'''
+        argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in r_vec]  # Create vector with all arguments
+        pool_outputs = map(numerical_integration_mr, argument_vec)
+        results = pool_outputs + self.ss  # Add the constant term
+        return results
         
-        
-# In[98]:
+
 
 class RBFBarrierK(Kernel):
     '''Class for the radial base function kernel'''

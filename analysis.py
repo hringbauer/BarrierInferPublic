@@ -145,8 +145,9 @@ class Analysis(object):
             entry += 1     
         self.vis_correlation(distance, correlation, bins=bins)  # Visualize the correlation
     
-    def vis_correlation(self, distance, correlation, bins=50):
-        '''Take pairwise correlation and distances as inputs and visualizes them'''
+    def vis_correlation(self, distance, correlation, bins=50, cut_off_frac=0.75):
+        '''Take pairwise correlation and distances as inputs and visualizes them.
+        Cut_Off_Frac: At which fraction to do the cut-off'''
         bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
         stand_errors, _, _ = binned_statistic(distance, correlation, bins=bins, statistic=sem)
         
@@ -173,7 +174,7 @@ class Analysis(object):
         print(Nb_std)
         
         
-        x_plot = np.linspace(min(bin_dist), max(bin_dist) / 2.0, 100)
+        x_plot = np.linspace(min(bin_dist), max(bin_dist) * cut_off_frac, 100)
         y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
         # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
@@ -187,7 +188,7 @@ class Analysis(object):
         print(coords[:5])
         kernel = KC.calc_kernel_mat(coords)
         
-        plt.errorbar(bin_dist[:bins / 2], bin_corr[:bins / 2], stand_errors[:bins / 2], fmt='ro', label="Binwise estimated Correlation")
+        plt.errorbar(bin_dist[:int(bins * cut_off_frac)], bin_corr[:int(bins * cut_off_frac)], stand_errors[:int(bins * cut_off_frac)], fmt='ro', label="Binwise estimated Correlation")
         plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted Log Decay")
         
         plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")

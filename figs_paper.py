@@ -930,8 +930,6 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     plt.ylabel("F / Correlation")
     plt.xlabel("Distance [m]")
     plt.title("IBD in HZ")
-    # plt.ylim([0,0.05])
-    # plt.xscale("log")
     plt.show()
     
 def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr_bootstraps=100):
@@ -1231,8 +1229,8 @@ if __name__ == "__main__":
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
-    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "all/", res_number=1, nr_bootstraps=200)
-    #plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
+    plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
+    # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
@@ -1241,5 +1239,6 @@ if __name__ == "__main__":
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     
     
-    #give_result_stats(multi_pos_hz_folder, subfolder="allind/")
-    give_result_stats(multi_pos_hz_folder, subfolder="noind/")
+    # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
+    # give_result_stats(multi_pos_hz_folder, subfolder="noind/")
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")

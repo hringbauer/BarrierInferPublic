@@ -1273,7 +1273,7 @@ if __name__ == "__main__":
     # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
     MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
-                              min_dist=1.0, max_dist=42, nr_bts=100)
+                              min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3)
     
     #####################################################
     

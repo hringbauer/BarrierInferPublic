@@ -829,10 +829,12 @@ def plot_multi_barrier_pos(position_path, result_folder, subfolder):
     print("ToDo")  
     
 def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
-                       bins=50, p=0.5, nr_bootstraps=10, res_number=1, scale_factor=50):
+                       bins=50, p=0.5, nr_bootstraps=10, res_number=1, scale_factor=50,
+                       max_frac=0.75):
     '''Plot IBD of real data and bootstrapped real data (over loci).
     Load from Result Folder and plot binned IBD from HZ
-    res_number: How many results to plot'''  
+    res_number: How many results to plot.
+    max_frac: Fraction of x-Values until which to plot.'''  
     
     # res_numbers = range(0, 100)
     positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
@@ -886,7 +888,7 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     lower = np.percentile(f_estimates, 2.5, axis=0)  # Calculate Lower Bound
     
     
-    x_plot = np.linspace(min(bin_dist), max(bin_dist) / 2.0, 100)
+    x_plot = np.linspace(min(bin_dist), max(bin_dist) * max_frac, 100)
     coords = [[0, 0], ] + [[0, i] for i in x_plot]  # Coordsvector
     
     corr_fit = np.zeros((res_number, len(x_plot)))
@@ -902,21 +904,21 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     
     
     plt.figure()
-    
+    # Plot Parameter Fits
     for i in xrange(1, res_number):
         plt.plot(x_plot * scale_factor, corr_fit[i, :], 'b-', linewidth=2, alpha=0.5)
         
     # ## Plot real Data and all Bootstraps
     # First Bootstrap:
-    plt.plot(bin_dist[:bins / 2] * scale_factor, f_estimates[0, :bins / 2], 'r-', alpha=0.5, label="Bootstrap over GTPs")
+    plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, f_estimates[0, :int(bins * max_frac)], 'r-', alpha=0.5, label="Bootstrap over GTPs")
     # All Bootstraps over Genotypes:
     for i in xrange(1, nr_bootstraps):
-        plt.plot(bin_dist[:bins / 2] * scale_factor, f_estimates[i, :bins / 2], 'r-', alpha=0.5)
-    plt.errorbar(bin_dist[:bins / 2] * scale_factor, bin_corr0[:bins / 2], stand_errors[:bins / 2], fmt='go', label="Mean Correlation")
+        plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, f_estimates[i, :int(bins * max_frac)], 'r-', alpha=0.5)
+    plt.errorbar(bin_dist[:int(bins * max_frac)] * scale_factor, bin_corr0[:int(bins * max_frac)], stand_errors[:int(bins * max_frac)], fmt='go', label="Mean Correlation")
         
         
-    plt.plot(bin_dist[:bins / 2] * scale_factor, lower[:bins / 2], 'k-', label="Bootstrap 2.5 %")
-    plt.plot(bin_dist[:bins / 2] * scale_factor, upper[:bins / 2], 'k-', label="Bootstrap 97.5 %")
+    plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, lower[:int(bins * max_frac)], 'k-', label="Bootstrap 2.5 %")
+    plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, upper[:int(bins * max_frac)], 'k-', label="Bootstrap 97.5 %")
     
     # Plot IBD of Left and Right half of HZ:
     nr_bins_l = 10
@@ -1229,7 +1231,7 @@ if __name__ == "__main__":
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     # Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
-    plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
+    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
@@ -1241,4 +1243,7 @@ if __name__ == "__main__":
     
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="noind/")
-    # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")  # 25-2100 m
+    give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
+    give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
+

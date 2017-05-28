@@ -89,8 +89,9 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="all/")
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
-MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="range_res/", barrier_pos=[2.0,], use_ind_nr=0,
-                              min_dist=1.0, max_dist=50.0, nr_bts=100)
+
+MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="range_res11/", barrier_pos=[2.0,], use_ind_nr=0,
+                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=1)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)

@@ -952,7 +952,7 @@ class MultiHZPosition(MultiBarrierPosition):
     
     name = "mb_posHZ"
     
-    def __init__(self, folder, nr_data_sets=200, nr_params=5, **kwds):
+    def __init__(self, folder, nr_data_sets=1000, nr_params=5, **kwds):
         super(MultiHZPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
         
     def create_data_set(self, data_set_nr=0, position_path="", genotype_path="", loci_path="",
@@ -978,7 +978,11 @@ class MultiHZPosition(MultiBarrierPosition):
         loci_info = pd.read_csv(loci_path)
         assert(len(loci_info) == np.shape(genotypes)[1])  # Make sure that Data match!
         
-        genotypes = clean_hz_data(genotypes, loci_info, geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, plot=True)
+        genotypes = clean_hz_data(genotypes, loci_info, geo_r2=geo_r2, 
+                                  p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, chromosome=chromosome, plot=True)
+        
+        # Filter out based on chromosome:
+        
         
         # Randomly flip some Genotypes:
         genotypes = flip_gtps(genotypes)
@@ -1269,11 +1273,13 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
-    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
-    #                      genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv")
-    MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
-                              min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3)
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=1)
+    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
+                         genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv",
+                         chromosome=0)
+    #MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
+    #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,
+    #                          chromosome=5)
     
     #####################################################
     

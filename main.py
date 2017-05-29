@@ -271,9 +271,9 @@ def main():
                 # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
                 
                 
-                position_list = np.loadtxt('./Data/coordinatesHZall2.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = np.loadtxt('./multi_barrier_hz/chr0/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./Data/genotypesHZall2.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('./multi_barrier_hz/chr0/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')
                 
                 
                 
@@ -297,8 +297,8 @@ def main():
                     print("Nr. of Individuals: %i" % np.shape(genotype_matrix)[0])
                     
                 elif inp10 == 2:
-                    np.savetxt("./Data/coordinatesHZall0.csv", position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("./Data/genotypesHZall0.csv", genotype_matrix, delimiter="$")  # Save the data 
+                    np.savetxt("./Data/coordinatesHZall3.csv", position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("./Data/genotypesHZall3.csv", genotype_matrix, delimiter="$")  # Save the data 
                     
                 elif inp10 == 3:
                     loci_path = "./Data/loci_info.csv"

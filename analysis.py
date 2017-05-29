@@ -66,7 +66,7 @@ class Analysis(object):
             assert(len(self.loci_info) == np.shape(self.genotypes)[1])  # Make sure that Data match!
             print("Loci Information successfully loaded!")
            
-    def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, plot=False):
+    def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False):
         '''Method to clean HZ Data.
         Extracts loci with min. Geographic Correlation; min. p-Value for HW
         min. ld_score and minimal allele Frequency.'''
@@ -75,7 +75,8 @@ class Analysis(object):
         
         # Call the cleaning Method:
         genotypes = clean_hz_data(genotypes, loci_info,
-                                  geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, plot=plot)
+                                  geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, 
+                                  min_p=min_p, plot=plot, chromosome=chromosome)
         
         return genotypes, self.position_list
     
@@ -434,7 +435,8 @@ def bootstrap_genotypes(genotype_mat):
     return gtps_sample
 
 
-def clean_hz_data(genotypes, loci_info, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, plot=False):
+def clean_hz_data(genotypes, loci_info, geo_r2=0.015, 
+                  p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False):
     '''Method to clean HZ Data.
     Extracts loci with min. Geographic Correlation; min. p-Value for HW
     min. ld_score and minimal allele Frequency.
@@ -443,6 +445,11 @@ def clean_hz_data(genotypes, loci_info, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, 
     df = loci_info
     
     inds_okay = (df['Geo_Score'] < geo_r2) & (df['HW p-Value'] > p_HW) & (df['LD_Score'] < ld_r2) & (df['Min All. Freq'] > min_p)
+    
+    # In case that also chromosomes should be filtered:
+    if chromosome>0:
+        inds_okay = inds_okay & (df["LG"] == chromosome)
+        
     inds = np.where(inds_okay)[0]  # Extract Numpy Array Indices
     
     print("Filtered from %i to %i Loci." % (len(df), len(inds)))

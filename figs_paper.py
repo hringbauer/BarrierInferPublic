@@ -1244,6 +1244,8 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="noind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")  # 25-2100 m
-    give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
-    give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res15/")   # 100x20bins; 1.0-42
+    give_result_stats(multi_pos_hz_folder, subfolder="range_res11/")   # 100x20bins; 1.0-42 Same as above but with 1 ind per deme
 

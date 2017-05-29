@@ -46,7 +46,7 @@ def analyze_barrier_strengths_ll():
 
 
 data_set_nr = int(sys.argv[1])  # Which data-set to use
-#data_set_nr = 100
+#data_set_nr = 461
 print("Starting Dataset Nr. %i:" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -70,7 +70,8 @@ folder = "./multi_barrier_hz_all/"
 # MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 #MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
+#MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
+MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis
 
 
 
@@ -90,8 +91,8 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=1)
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
 
-MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="range_res11/", barrier_pos=[2.0,], use_ind_nr=0,
-                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=1)
+MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
+                          min_dist=1.0, max_dist=42, nr_bts=20, nr_x_bins=50, nr_y_bins=10, min_ind_nr=5)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)

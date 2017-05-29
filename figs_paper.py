@@ -61,6 +61,7 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     _, nr_params = np.shape(res_vec)
     
     means = np.mean(res_vec, axis=0)
+    median = np.median(res_vec, axis=0)
     std = np.std(res_vec, axis=0)
     upper = np.percentile(res_vec, 97.5, axis=0)  # Calculate Upper Bound
     lower = np.percentile(res_vec, 2.5, axis=0)  # Calculate Lower Bound
@@ -68,6 +69,7 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     for i in xrange(nr_params):
         print("\nParameter: %i" % i)
         print("Mean:\t\t\t %g" % means[i])
+        print("Median:\t\t\t %g" % median[i])
         print("SD:\t\t\t %g" % std[i])
         print("2.5 Percent Quantile:\t %g" % lower[i])
         print("97.5 Percent Quantile:\t %g" % upper[i])
@@ -1145,7 +1147,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     for l in range(len(res_numbers)):
         i = res_numbers[l]
         print("\nRun: %i" % i)
-        for j in range(3):
+        for j in range(4):
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
@@ -1205,6 +1207,72 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     ax3.legend()
     plt.show()
     
+def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5):
+    '''Plots multiple Barrier positions throughout the area. Plots k only.
+    Upper Plot: For every Barrier-Position plot the most likely estimate -
+    as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
+    Demes/Individuals'''
+    
+    # Load the Results
+    res_vec = np.array([load_pickle_data(folder, i, 0, subfolder=method_folder) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, subfolder=method_folder) for i in res_numbers])
+    
+    # Put the Barrier Estimates >1 to 1:
+    res_vec[res_numbers, 0] = np.where(res_vec[res_numbers, 0] > 1, 1, res_vec[res_numbers, 0])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(len(res_vec)):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    # Mean Estimates:
+    mean_inds = range(0, np.max(res_numbers), nr_bts)
+    res_mean = res_vec[mean_inds, :]  
+    print(res_mean)   
+            
+    # Load the Barrier Positions:
+    barrier_fn = "barrier_pos.csv"
+    path = folder + method_folder + barrier_fn
+    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
+    
+    ##############################################################
+    # Add upper bound here if lower number of results are available
+    barrier_pos = barrier_pos[:]  
+    ##############################################################
+    
+    print("Barrier Positions loaded: ")
+    print(barrier_pos)
+    barr_pos_plot = [val for val in barrier_pos for _ in xrange(nr_bts)]
+    # print(barr_pos_plot)
+    
+    # Load the Position File:
+    path_pos = folder + "mb_pos_coords00.csv"
+    position_list = np.loadtxt(path_pos, delimiter='$').astype('float64')
+    print("Position List loaded: %i Entries" % len(position_list))
+    
+    
+    # Do the plotting:
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    ax1.plot(barr_pos_plot, res_vec[res_numbers, 0], 'ko', label="Bootstrap Estimate", alpha=0.5)
+    ax1.plot(barrier_pos, res_mean[:, 0], 'go', label="Mean Estimate")
+    ax1.set_ylim([0, 1])
+    ax1.set_ylabel("Barrier", fontsize=18)
+    ax1.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    
+
+    
+    # Plot the Positions:
+    ax2.scatter(position_list[:, 0], position_list[:, 1])  # c = nr_nearby_inds
+    ax2.set_xlabel("x-Position", fontsize=18)
+    ax2.set_ylabel("y-Position", fontsize=18)
+    for x in barrier_pos:
+        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
+    ax2.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier")
+    ax2.legend()
+    plt.show()
+    
 
     
     
@@ -1222,7 +1290,7 @@ if __name__ == "__main__":
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
-    # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
+    multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
     
     
     # ## Plots for Hybrid Zone Data
@@ -1247,5 +1315,6 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res15/")   # 100x20bins; 1.0-42
-    give_result_stats(multi_pos_hz_folder, subfolder="range_res11/")   # 100x20bins; 1.0-42 Same as above but with 1 ind per deme
+    # give_result_stats(multi_pos_hz_folder, subfolder="range_res11/")   # 100x20bins; 1.0-42 Same as above but with 1 ind per deme
+    # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
 

@@ -15,6 +15,7 @@ from random import shuffle
 from scipy.stats import sem
 from analysis import Fit_class
 from scipy.optimize.minpack import curve_fit
+from analysis import group_inds
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -240,23 +241,26 @@ class MLE_f_emp(GenericLikelihoodModel):
     '''
     # Diverse variables:
     estimates = []  # Array for the fitted estimates
+    fixed_params = []  # Vector of all params that are fixed
     start_params = []  # The starting Parameters for the Fit
     kernel = 0  # Class that can calculate the Kernel
     nr_params = 0
     parameter_names = []
     nr_ind_demes = []  # Nr of Individuals per Deme  
+    fit_params = []  # Which parameters to fit - the rest is fixed to start parameters
     min_distance = 0  # The minimum pairwise Distance that is analyzed
     inds = []  # Which indices to use based on min pw. distance
     fit_t0 = 0  # Whether to fit t0 as well
     
-    def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                multi_processing=0, fit_t0=0, min_dist=0, max_dist=0,
-                nr_inds=[], **kwds):
-        '''Initializes the Class.'''
+    def __init__(self, kernel_class, coords, genotypes, multi_processing=0,
+                fit_t0=0, min_dist=0, max_dist=0, nr_inds=[],
+                fit_params=[], fixed_params=[], start_params=[], **kwds):
+        '''Initializes the Class and loads everything'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
         self.min_distance = min_dist  # What is the minimum Distance for pairs
         self.max_distance = max_dist  # What is the maximum Distance for pairs
+        
         if max_dist == 0:
             self.max_distance = np.inf  # Set maximum Distance to Infinity in case not given.
         self.fit_t0 = fit_t0
@@ -273,10 +277,30 @@ class MLE_f_emp(GenericLikelihoodModel):
         # Load Parameters and Parameter names
         self.nr_params = self.kernel.give_nr_parameters()
         self.parameter_names = self.kernel.give_parameter_names()
-        if start_params != None:
-            self.start_params = start_params 
 
         
+        # Sets the fixed Parameters; i.e. the base for fitting:
+        if len(fixed_params) == 0:
+            raise RuntimeError("Supply Fixed Parameters!!")
+        else: self.fixed_params = np.array(fixed_params)
+        
+        assert(len(self.fixed_params)==self.kernel.give_nr_parameters()) # Sanity Check.
+        
+        # Load which parameters to fit:
+        if len(fit_params) == 0:
+            self.fit_params = range(self.kernel.give_nr_parameters())  # All parameters are fit!
+        else:
+            self.fit_params = fit_params
+            
+        # Check for old version of code:
+        if start_params == None:
+            raise ValueError("Supply Starting Parameters!")
+        if len(self.start_params) == 0:
+            self.start_params = self.fixed_params[self.fit_params]
+        
+        # Sanity Check
+        assert(len(self.fit_params) == len(self.start_params))
+
         
         # Some Output that everything loaded successfully:
         nr_inds, nr_loci = np.shape(genotypes)
@@ -294,18 +318,17 @@ class MLE_f_emp(GenericLikelihoodModel):
         print(args)  # Prints arguments so that one knows where one is
         args = np.array(args)  # Make Arguments Numpy array so that it everything is fluent
         
-        if self.fit_t0 == 1:  # In case t0 is actually fitted as well
-            var = args[-1]
-            args[-1] = 0  # sets ss=0
-            
-        elif self.fit_t0 == 0:
-            var = args[-1]  # Gets the variance Parameter
-            args[-1] = 1.0  # Sets t0   
-            args = np.append(args, 0)  # appends ss=0
-            
+        params = np.array(self.fixed_params)  # Set the base value
+        params[self.fit_params] = args  # Overwrite the values to fit
+        
+        var = params[-1] # Extract Variance
+        params[-1] = 0  # Set ss=0
+        
+        print("Parameters Sent to Kernel:")
+        print(params)
         # Sets the variance Parameter 0; so that one can calculate the Kernel fluently
-        assert(self.kernel.give_nr_parameters() == len(args))  # Checks whether Nr. of Parameters is right.
-        self.kernel.set_parameters(args)  # Sets the kernel parameters
+        assert(self.kernel.give_nr_parameters() == len(params))  # Checks whether Nr. of Parameters is right.
+        self.kernel.set_parameters(params)  # Sets the kernel parameters
         
         tic = time()   
         kernel_mat = self.kernel.calc_kernel_mat(coords)  # Calculates the full kernel matrix
@@ -368,7 +391,6 @@ class MLE_f_emp(GenericLikelihoodModel):
         nr_pair_comps = nr_pair_comps[inds]
         y_errors = sems[inds]  # Makes vector out of standard errors.        
         print("Extracted pairwise comparisons: %i" % len(y_values))
-        print("Assumed Barrier Position: %g" % self.kernel.position_barrier)
         print("Doing the Fitting...")
         
         lower_bounds = 0.0  # Lower Bound for the fit.
@@ -392,10 +414,6 @@ class MLE_f_emp(GenericLikelihoodModel):
         # Create and fill up Fit object
         fit = Fit_class(parameters, std_params)
         return fit
-    
-    def fit_k_only(self, start_params=None, full_parameters=None, maxiter=500, maxfun=1000, **kwds):
-        '''Method that fits only k'''
-        print("To be implemented...")
 
 ######################################################### 
 def memory_usage_resource():
@@ -425,18 +443,27 @@ def analyze_barrier(position_list, genotype_mat, ind_deme_nr,
     toc = time()
     print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[200, 0.01, 0.5], fit_t0=0):
+def analyze_normal(position_list, genotype_mat, nr_inds=1000, fixed_params=[62, 0.006, 1 ,0.5], fit_params=[0,1,3], limit_inds=0,
+                   nr_x_bins=0, nr_y_bins=0, min_ind_nr=1):
     '''Method that analyzes data without a barrier. Use Method 2.'''
     # Load only certain Number of Individuals
-    inds = range(len(position_list))
-    shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
-    inds = inds[:nr_inds]  # Only load first nr_inds
-    
+    if limit_inds == 1:
+        inds = range(len(position_list))
+        shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+        inds = inds[:nr_inds]  # Only load first nr_inds
 
+
+    # Group Inds:
+    if nr_x_bins > 0 or nr_y_bins > 0:
+        position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
+                demes_x=nr_x_bins, demes_y=nr_y_bins, min_ind_nr=min_ind_nr)  
+        
+        
     # position_list = position_list[inds, :]
     # genotype_mat = genotype_mat[inds, :]
     # MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, start_params=[75, 0.02, 0.01], multi_processing=1) 
-    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, start_params=start_params, multi_processing=1, fit_t0=fit_t0)
+    MLE_obj = MLE_f_emp("DiffusionK0", position_list, genotype_mat, fixed_params=fixed_params, 
+                        fit_params=fit_params, multi_processing=1)
     
     # MLE_obj.loglike([200, 0.001, 1, 0.04])  # Test Run for a Likelihood
     
@@ -452,7 +479,7 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[200,
     
     
     # Do the actual Fitting: 
-    fit = MLE_obj.fit(start_params=start_params)  # Could alter method here. nbh, mu
+    fit = MLE_obj.fit()  # Could alter method here. nbh, mu
     pickle.dump(fit, open("fit.p", "wb"))  # Pickle
         
 
@@ -460,13 +487,13 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, start_params=[200,
 if __name__ == "__main__":
     # position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./Data/coordinatesHZall2.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/genotypesHZall2.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./multi_barrier_synth/mb_pos_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./multi_barrier_synth/mb_pos_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  
     # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
-    analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
+    #analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
     
-    # analyze_normal(position_list, genotype_mat)
+    analyze_normal(position_list, genotype_mat, nr_x_bins=30, nr_y_bins=20)
     
 #########################################
 

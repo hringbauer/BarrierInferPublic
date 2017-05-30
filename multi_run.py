@@ -195,7 +195,7 @@ class MultiRun(object):
     def fit_barrier(self, position_barrier, start_params, data_set_nr=0, method=2,
                     res_folder=None, position_list=[], genotype_mat=[], nr_inds=[], random_ind_nr=None,
                     deme_x_nr=0, deme_y_nr=0, min_dist=0, max_dist=0,
-                    fit_params=[0, 1, 2, 4], fixed_params=[50, 0.005, 0.5, 1, 0]):
+                    fit_params=[0, 1, 2, 4], fixed_params=[50, 0.005, 0.5, 1, 0], loci=[]):
         '''Method to fit a Barrier; and save the estimates and Unc.
         position_barrier: Where to fit the Barrier
         data_set_nr: Which data_set to load; or to save to.
@@ -206,7 +206,8 @@ class MultiRun(object):
         max_dist: Maximum Distance
         fixed_params: Base for fitting
         fit_params: Which Parameters to fit; i.e. overwrite from fixed params
-        start_params: Where to start from'''
+        start_params: Where to start from
+        Loci: Vector. Describes which Loci to actually fit.'''
         # Load Data Sets in case not given:
         if len(position_list) == 0 or len(genotype_mat) == 0:  
             position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
@@ -216,6 +217,11 @@ class MultiRun(object):
             position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
                                                 demes_x=deme_x_nr, demes_y=deme_y_nr, min_ind_nr=1)  
             print(nr_inds)
+        
+        # Pick Loci if given:
+        if len(loci) > 0:
+            genotype_mat = genotype_mat[:, loci]
+            print("Reduced to %i loci." % len(genotype_mat[0, :]))
             
         # Pick Random_ind_nr many Individuals in case needed:
         if random_ind_nr:
@@ -273,18 +279,6 @@ class MultiRun(object):
         
         print("Successfully saved to: ")
         print(path)
-        
-    def fit_barrier_only(self, nbh_size, l, start_params, position_barrier=0, t0=1, **kwargs):
-            '''Method to only fit the Barrier and fluctuations of allele Frequencies.
-            Assumes Nbh Size and l as fixed.
-            '''
-            assert(len(start_params == 2))  # Make it so that length of Start Parameters is 2.
-            fix_params = [nbh_size, l, start_params[1], t0, start_params[2]]
-            fit_params = [2, 4]  # Fit k and ss
-            
-            # Call the fit_barrier function
-            self.fit_barrier(position_barrier, start_params, fix_params=fix_params, fit_params=fit_params, **kwargs)
-        
 
     def save_mat(self, file, filename="add_info.csv", method=2, res_folder=None):
         '''Method to save additional Information via np.savetxt'''
@@ -975,9 +969,10 @@ class MultiBarrierPosition(MultiRun):
     
     def analyze_data_set_k_only(self, data_set_nr, nbh=50, l=0.003, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
                          res_folder=None, min_ind_nr=1, barrier_pos=[], use_ind_nr=0,
-                         min_dist=0, max_dist=0):
+                         min_dist=0, max_dist=0, loci=[]):
         '''Analyzes the data-set. Only does the estimation of k and ss. First bins the Data; then do nr_bts many estimates.
-        For synthetic data set: nr_x_bins=30; nr_y_bins=20. For HZ: nr_x_bins=50; nr_y_bins=10'''
+        For synthetic data set: nr_x_bins=30; nr_y_bins=20. For HZ: nr_x_bins=50; nr_y_bins=10
+        Loci: Which Loci to use for the Analysis'''
         
         # First load and bin the data:
         position_list, genotype_mat = self.load_data_set(0)  # Load the Data
@@ -992,8 +987,8 @@ class MultiBarrierPosition(MultiRun):
         if use_ind_nr == 0:
             nr_inds = np.ones(len(position_list))
             
-        print("Demes: ")
-        print(nr_inds)
+        print("First 10 Demes: ")
+        print(nr_inds[:10])
         
         nr_individuals, nr_genotypes = np.shape(genotype_mat)
         print("Nr of analyzed Inds: %i" % nr_individuals)
@@ -1016,6 +1011,7 @@ class MultiBarrierPosition(MultiRun):
         # For the non-bootstrap data-sets:
         if (data_set_nr % nr_bts) != 0:  
             genotype_mat = bootstrap_genotypes(genotype_mat) 
+            print("Bootstrapping...")
         
         # Create start parameters; fixed and fit Params:
         bs = 0.5
@@ -1023,12 +1019,12 @@ class MultiBarrierPosition(MultiRun):
         
         fixed_params = [nbh, l, bs, 1, 0]
         fit_params = [2, 4]  # Fit k and ss
-        start_params = [bs, ] # Ss will get added above
+        start_params = [bs, ]  # Ss will get added above
         
         # Fit the Barrier:
         self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
                          res_folder=res_folder, position_list=position_list, genotype_mat=genotype_mat, nr_inds=nr_inds,
-                         min_dist=min_dist, max_dist=max_dist, fit_params=fit_params, fixed_params=fixed_params)
+                         min_dist=min_dist, max_dist=max_dist, fit_params=fit_params, fixed_params=fixed_params, loci=loci)
         
         # Save the Barrier Positions which have been used:
         self.save_mat(x_barriers, filename="barrier_pos.csv", method=2, res_folder=res_folder)
@@ -1069,8 +1065,6 @@ class MultiHZPosition(MultiBarrierPosition):
         
         genotypes = clean_hz_data(genotypes, loci_info, geo_r2=geo_r2,
                                   p_HW=p_HW, ld_r2=ld_r2, min_p=min_p, chromosome=chromosome, plot=True)
-        
-        # Filter out based on chromosome:
         
         
         # Randomly flip some Genotypes:
@@ -1359,13 +1353,13 @@ if __name__ == "__main__":
     # MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
     #                       genotype_path="./Data/barrier_file_genotypes01.csv")
     # MultiRun.analyze_data_set(1, method=2)
-    #MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-    #                     res_folder="test_k/", min_ind_nr=1)
+    MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+                         res_folder="test_k/", min_ind_nr=1, loci=range(10))
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=1)
-    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
+    # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=1)
+    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                     genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv",
     #                     chromosome=0)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,

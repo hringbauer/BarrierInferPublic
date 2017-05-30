@@ -45,9 +45,9 @@ def analyze_barrier_strengths_ll():
     
 
 
-#data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 460
-print("Starting Dataset Nr. %i:" % data_set_nr)
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+# data_set_nr = 1
+print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -58,7 +58,7 @@ data_set_nr = data_set_nr - 1
 # folder ="./multi_loci_nr/"
 # folder = "./multi_2nd/"
 # folder = "./multi_2nd_b/"
-# folder = "./multi_barrier_synth/"
+folder = "./multi_barrier_synth/"
 # folder = "./multi_barrier_hz_all/"
 
 # MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
@@ -69,9 +69,9 @@ data_set_nr = data_set_nr - 1
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
-# MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
+MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
+# MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
 
 
 
@@ -91,11 +91,16 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processi
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
 
-# MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
+#MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
 #                          min_dist=1.0, max_dist=42, nr_bts=20, nr_x_bins=50, nr_y_bins=10, min_ind_nr=5)
 
-MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
-            res_folder="k_only/", min_ind_nr=5)
+#MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
+#            res_folder="k_only/", min_ind_nr=5)
+
+
+MultiRun.analyze_data_set_k_only(data_set_nr, nbh=60.06, l=0.0078575, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+                         res_folder="k_only_10/", min_ind_nr=1, loci=range(10))
+
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)

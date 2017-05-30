@@ -1028,6 +1028,9 @@ class MultiBarrierPosition(MultiRun):
         
         # Save the Barrier Positions which have been used:
         self.save_mat(x_barriers, filename="barrier_pos.csv", method=2, res_folder=res_folder)
+        # Save the Parameters for nbh and l which have been used:
+        params_used = np.array([nbh, l])
+        self.save_mat(params_used, filename="fix_params.csv", method=2, res_folder=res_folder)
         
 class MultiHZPosition(MultiBarrierPosition):
     '''Analyzes Multiple Barrier-Positions throughout the HZ. 

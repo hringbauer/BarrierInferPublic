@@ -1131,7 +1131,7 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
         
     
 
-def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5):
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -1182,9 +1182,10 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # Plot the Nbh Estiamtes:
     ax1.plot(barr_pos_plot, res_vec[res_numbers, 0], 'ko', label="Bootstrap Estimate", alpha=0.5)
     ax1.plot(barrier_pos, res_mean[:, 0], 'go', label="Mean Estimate")
-    ax1.set_ylim([0, 200])
+    ax1.set_ylim([0, 350])
     ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.hlines(4 * np.pi * 5, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    if plot_hlines:
+        ax1.hlines(4 * np.pi * 5, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
     # ax1.title.set_text("No Barrier")
     ax1.legend(loc="upper right")
     
@@ -1192,7 +1193,8 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     ax2.plot(barrier_pos, res_mean[:, 2], 'go', label="Mean Estimate")
     ax2.set_ylim([0, 1])
     ax2.set_ylabel("Barrier", fontsize=18)
-    ax2.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    if plot_hlines:
+        ax2.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
     
     # ax1.title.set_text("No Barrier")
     # ax2.legend(loc="upper right")
@@ -1223,7 +1225,7 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     for l in range(len(res_numbers)):
         i = res_numbers[l]
         print("\nRun: %i" % i)
-        for j in range(len(res_vec)):
+        for j in range(len(res_vec[0,:])):
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
@@ -1255,6 +1257,7 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     
     # Do the plotting:
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    ax1.set_title("Fit Barrier Only")
     ax1.plot(barr_pos_plot, res_vec[res_numbers, 0], 'ko', label="Bootstrap Estimate", alpha=0.5)
     ax1.plot(barrier_pos, res_mean[:, 0], 'go', label="Mean Estimate")
     ax1.set_ylim([0, 1])
@@ -1268,9 +1271,10 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     ax2.set_xlabel("x-Position", fontsize=18)
     ax2.set_ylabel("y-Position", fontsize=18)
     for x in barrier_pos:
-        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
+        ax2.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
     ax2.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier")
     ax2.legend()
+    
     plt.show()
     
 
@@ -1287,17 +1291,24 @@ if __name__ == "__main__":
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    # cluster_plot(cluster_folder, method=2)
+    ### cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
-    multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
+    # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
+    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500)
     
     
-    # ## Plots for Hybrid Zone Data
-    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
+    ### Plots for Hybrid Zone Data
+    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
+    
+    # For Dataset where Demes are not weighted; m.d.: 4200
+    # multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0,460), plot_hlines=0) 
+    
+    
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
-    # Bootstrap in HZ to produce IBD fig
+    
+    ### Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
@@ -1309,12 +1320,13 @@ if __name__ == "__main__":
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     
     
+    ### Give Stats of Results:
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="noind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")  # 25-2100 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
-    # give_result_stats(multi_pos_hz_folder, subfolder="range_res15/")   # 100x20bins; 1.0-42
-    # give_result_stats(multi_pos_hz_folder, subfolder="range_res11/")   # 100x20bins; 1.0-42 Same as above but with 1 ind per deme
+    give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
+    
 

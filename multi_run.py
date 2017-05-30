@@ -1355,17 +1355,17 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Barrier Position Data Set:
-    # MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
+    MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
     # MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
     #                       genotype_path="./Data/barrier_file_genotypes01.csv")
     # MultiRun.analyze_data_set(1, method=2)
-    MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-                         res_folder="test_k/", min_ind_nr=1)
+    #MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+    #                     res_folder="test_k/", min_ind_nr=1)
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=1)
-    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
+    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr0/", multi_processing=1)
+    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
     #                     genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv",
     #                     chromosome=0)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,

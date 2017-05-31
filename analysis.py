@@ -76,7 +76,7 @@ class Analysis(object):
         
         # Call the cleaning Method:
         genotypes = clean_hz_data(genotypes, loci_info,
-                                  geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2, 
+                                  geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2,
                                   min_p=min_p, plot=plot, chromosome=chromosome)
         
         return genotypes, self.position_list
@@ -436,7 +436,7 @@ def bootstrap_genotypes(genotype_mat):
     return gtps_sample
 
 
-def clean_hz_data(genotypes, loci_info, geo_r2=0.015, 
+def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
                   p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False):
     '''Method to clean HZ Data.
     Extracts loci with min. Geographic Correlation; min. p-Value for HW
@@ -447,8 +447,25 @@ def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
     
     inds_okay = (df['Geo_Score'] < geo_r2) & (df['HW p-Value'] > p_HW) & (df['LD_Score'] < ld_r2) & (df['Min All. Freq'] > min_p)
     
+    # Do some chromosome statistics:
+    def chr_statistics(df, inds_okay, chr_nr=10):
+        '''Some simple statistics on how many LGs;
+        and what has been filtered.'''
+        for i in range(1, chr_nr):
+            # Do the calculations
+            nr_total_markers = np.sum((df["LG"] == i))
+            nr_filtered_markers = np.sum((df["LG"] == i) & inds_okay)
+            
+            
+            print("Chromosome: %i " % i)
+            print("Nr. total markers:\t\t %i " % nr_total_markers)
+            print("Nr. of filtered markers:\t %i " % nr_filtered_markers)
+        
+    chr_statistics(df, inds_okay)
+    
+    
     # In case that also chromosomes should be filtered:
-    if chromosome>0:
+    if chromosome > 0:
         inds_okay = inds_okay & (df["LG"] == chromosome)
         
     inds = np.where(inds_okay)[0]  # Extract Numpy Array Indices
@@ -486,7 +503,7 @@ def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
         ax = plt.gca()
         [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
         plt.show()
-
+    
     return genotypes
 
 
@@ -507,10 +524,10 @@ def kinship_coeff(p1, p2, p):
 
 def calc_f_mat(genotypes, p=0.5):
     '''Calculates whole pairwise F-matrix for all Genotypes'''
-    nr_inds=np.shape(genotypes)[0]
-    f_mat=np.zeros((nr_inds, nr_inds))
+    nr_inds = np.shape(genotypes)[0]
+    f_mat = np.zeros((nr_inds, nr_inds))
     for i in xrange(nr_inds):
-        f_mat[i,:] = np.mean((genotypes[i,:]-0.5)*(genotypes-0.5)/(p*(1-p)), axis=1)
+        f_mat[i, :] = np.mean((genotypes[i, :] - 0.5) * (genotypes - 0.5) / (p * (1 - p)), axis=1)
     return f_mat
 
 

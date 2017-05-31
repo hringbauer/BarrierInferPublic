@@ -1298,15 +1298,15 @@ if __name__ == "__main__":
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
-    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only_10/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
+    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only_20/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
     
     
     # ## Plots for Hybrid Zone Data
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
-    multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
+    #multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    #multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data

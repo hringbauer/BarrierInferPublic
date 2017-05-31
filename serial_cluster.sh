@@ -11,6 +11,6 @@
 #$ -l h_rt=48:00:00
 #$ -cwd
 
-export OMP_NUM_THREADS=10
+export OMP_NUM_THREADS=1
 module load tensorflow/python-2.7/1.1.0
 python serial_script.py

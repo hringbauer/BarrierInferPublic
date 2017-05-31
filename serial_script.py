@@ -8,7 +8,7 @@ import pickle as pickle
 import numpy as np
 import sys
 
-mp = 1 # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 
 # data_set_nr = int(sys.argv[1])  # Which data-set to use
 
@@ -36,8 +36,8 @@ MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 
 
 ########### For creating and analyzing the data sets ###############
-#MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-#MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
+# MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+# MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
 
 
 ########### For analyzing the data set ##############
@@ -47,10 +47,11 @@ MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 # MultiRun.analyze_data_set(data_set_nr, method=1)
 
-for i in xrange(1,100):
-    print("Do Run Nr. %i" % i)
-    MultiRun.analyze_data_set(data_set_nr, method=0)
-    # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
+#for i in xrange(1, 99):
+data_set_nr=5
+print("Do Run Nr. %i" % data_set_nr)
+MultiRun.analyze_data_set(data_set_nr, method=0)
+# MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)
 

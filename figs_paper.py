@@ -75,7 +75,7 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
         print("97.5 Percent Quantile:\t %g" % upper[i])
         
     plt.figure()
-    plt.boxplot(res_vec[:,0])
+    plt.boxplot(res_vec[:, 0])
     plt.title("Nbh Size")
     plt.show()
     
@@ -91,7 +91,7 @@ def calc_bin_correlations(positions, genotypes, bins=25, p=0.5, correction=True)
     entry = 0
     
     f_mat = calc_f_mat(genotypes, p)  # Does the whole calculation a bit quicker
-    dist_mat = np.linalg.norm(positions[:, None] - positions, axis=2) # Calculate the whole Distance Matrix
+    dist_mat = np.linalg.norm(positions[:, None] - positions, axis=2)  # Calculate the whole Distance Matrix
     
     # Calculate everything:
     for (i, j) in itertools.combinations(range(len(genotypes[:, 0])), r=2):
@@ -1038,7 +1038,7 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     # print(dist_mat[0, :5])
      
     angles_rad = np.arctan(rel_pos[:, :, 1] / (rel_pos[:, :, 0] + 0.000000001))
-    angles_rad = angles_rad + np.pi * (rel_pos[:,:,0]<0)   # Add 180 degrees if x<0
+    angles_rad = angles_rad + np.pi * (rel_pos[:, :, 0] < 0)  # Add 180 degrees if x<0
     angles = np.degrees(angles_rad)  # Add something to denominator to make it numerically stable
     toc = time()
     print("Runtime calculating Angle Matrix: %.4f " % (toc - tic))
@@ -1053,7 +1053,7 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     # Define the Bins:
     angle_bins = np.linspace(-90, 270, 17)
     angle_bins_rad = np.deg2rad(angle_bins)  # Convert for printing to Rad
-    dist_bins = np.array([20, 100, 400, 2000]) / float(scale_factor) # Float so that Division works
+    dist_bins = np.array([20, 100, 400, 2000]) / float(scale_factor)  # Float so that Division works
      
     # Calculate their means:
     angle_means = (angle_bins[1:] + angle_bins[:-1]) / 2.0
@@ -1067,7 +1067,7 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
      
     f_means = -np.ones((len(angle_bins) - 1, len(dist_bins) - 1)) * 100  # Set to minus 100; so that errors are obvious
     nr_comps = -np.ones((len(angle_bins) - 1, len(dist_bins) - 1)) * 100  # How the Individuals are distributed)
-    f_mean =np.mean(f_mat) # Calculate the overall mean
+    f_mean = np.mean(f_mat)  # Calculate the overall mean
      
     for a in xrange(1, len(angle_bins)):
         for d in xrange(1, len(dist_bins)):
@@ -1078,7 +1078,7 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
             inds = np.where((angle_inds == a) & (geo_inds == d))  # Is 2D Array!!
             print("Nr. of individuals in bin: %i" % len(inds[0]))
             nr_comps[a - 1, d - 1] = len(inds[0])
-            f_means[a - 1, d - 1] = t= np.mean(f_mat[inds] - f_mean)  # Take the mean f of all pairwise comps in this category
+            f_means[a - 1, d - 1] = t = np.mean(f_mat[inds] - f_mean)  # Take the mean f of all pairwise comps in this category
             print(f_means[a - 1, d - 1])
      
      
@@ -1105,8 +1105,8 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     cax = ax.pcolor(theta, r, values)
     ax.set_yticklabels([])
     cbar = fig.colorbar(cax)  # ticks=[0, 0.5, 1]
-    tick_pos=zeniths
-    myticks = [str(i*scale_factor) + "m" for i in dist_bins]
+    tick_pos = zeniths
+    myticks = [str(i * scale_factor) + "m" for i in dist_bins]
     ax.set_yticks(tick_pos)
     ax.set_yticklabels(myticks)
     ax.set_rlabel_position(112.5)
@@ -1119,8 +1119,8 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     
     fig, ax = plt.subplots(subplot_kw=dict(projection='polar'))
     cax = ax.pcolor(theta, r, values)
-    tick_pos=zeniths
-    myticks = [str(i*scale_factor) + "m" for i in dist_bins]
+    tick_pos = zeniths
+    myticks = [str(i * scale_factor) + "m" for i in dist_bins]
     ax.set_yticks(tick_pos)
     ax.set_yticklabels(myticks)
     ax.set_rlabel_position(112.5)
@@ -1162,8 +1162,9 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
     
     ##############################################################
-    # Add upper bound here if lower number of results are available
-    barrier_pos = barrier_pos[:]  
+    # Add upper bound here if only lower number of results are available
+    b_max = np.max(res_numbers) / nr_bts
+    barrier_pos = barrier_pos[:b_max + 1]   
     ##############################################################
     
     print("Barrier Positions loaded: ")
@@ -1209,7 +1210,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     ax3.legend()
     plt.show()
     
-def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5):
+def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1):
     '''Plots multiple Barrier positions throughout the area. Plots k only.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -1225,7 +1226,7 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     for l in range(len(res_numbers)):
         i = res_numbers[l]
         print("\nRun: %i" % i)
-        for j in range(len(res_vec[0,:])):
+        for j in range(len(res_vec[0, :])):
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
@@ -1241,7 +1242,8 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     
     ##############################################################
     # Add upper bound here if lower number of results are available
-    barrier_pos = barrier_pos[:]  
+    b_max = np.max(res_numbers) / nr_bts
+    barrier_pos = barrier_pos[:b_max + 1]  
     ##############################################################
     
     print("Barrier Positions loaded: ")
@@ -1262,7 +1264,8 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     ax1.plot(barrier_pos, res_mean[:, 0], 'go', label="Mean Estimate")
     ax1.set_ylim([0, 1])
     ax1.set_ylabel("Barrier", fontsize=18)
-    ax1.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
+    if plot_hlines:
+        ax1.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color="y")
     
 
     
@@ -1291,24 +1294,25 @@ if __name__ == "__main__":
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    ### cluster_plot(cluster_folder, method=2)
+    # ## cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
-    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500)
+    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only_10/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
     
     
-    ### Plots for Hybrid Zone Data
+    # ## Plots for Hybrid Zone Data
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    # multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0,460), plot_hlines=0) 
+    multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     
-    ### Bootstrap in HZ to produce IBD fig
+    # ## Bootstrap in HZ to produce IBD fig
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
@@ -1320,13 +1324,13 @@ if __name__ == "__main__":
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     
     
-    ### Give Stats of Results:
+    # ## Give Stats of Results:
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="noind/")
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")  # 25-2100 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
-    give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
+    # give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
     
 

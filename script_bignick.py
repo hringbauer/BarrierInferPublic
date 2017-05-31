@@ -99,7 +99,7 @@ MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 
 
 MultiRun.analyze_data_set_k_only(data_set_nr, nbh=60.06, l=0.0078575, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-                         res_folder="k_only_10/", min_ind_nr=1, loci=range(10))
+                         res_folder="k_only_20/", min_ind_nr=1, loci=range(20))
 
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 

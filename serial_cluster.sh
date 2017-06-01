@@ -13,4 +13,6 @@
 
 export OMP_NUM_THREADS=1
 module load tensorflow/python-2.7/1.1.0
-python serial_script.py
+
+echo
+#python serial_script.py

@@ -19,7 +19,7 @@ from kernels import fac_kernel  # Factory Method which yields Kernel Object
 
 multi_nbh_folder = "./nbh_folder/"
 multi_nbh_gauss_folder = "./nbh_folder_gauss/"
-multi_barrier_folder = "./barrier_folder1/"
+multi_barrier_folder = "./barrier_folder2/"
 cluster_folder = "./cluster_folder/"
 hz_folder = "./hz_folder/"
 multi_ind_folder = "./multi_ind_nr/"
@@ -1290,15 +1290,15 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
     # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
-    # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
-    # ## cluster_plot(cluster_folder, method=2)
+    # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0,300))
-    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only_20/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
+    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
     
     
     # ## Plots for Hybrid Zone Data

@@ -463,7 +463,8 @@ class MultiNbhModel(MultiNbh):
 class MultiBarrier(MultiRun):
     '''
     Tests 100 Runs for different Barrier strengths.
-    Everything set so that 100 Data-Sets are run; with 4x25 Parameters.'''
+    Everything set so that 100 Data-Sets are run; with 4x25 Parameters.
+    UPDATE: 200 Dataset with 20x10 Barrier Strengths'''
     name = "barrier_file"
     
     def __init__(self, folder, nr_data_sets=100, nr_params=5, **kwds):
@@ -477,10 +478,12 @@ class MultiBarrier(MultiRun):
         # First set all the Parameter Values:
         # barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
         # barrier_strength = barrier_strength_list[data_set_nr]
-        barrier_strength = 0.05
+        # barrier_strength = 0.05
+        bs = [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
+        barrier_strength_list = [b for b in bs for  _ in range(20)]
+        barrier_strength = barrier_strength_list[data_set_nr]
         
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
-        
         
         # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
         position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
@@ -517,7 +520,7 @@ class MultiBarrier(MultiRun):
         # Now Pickle Some additional Information:
         p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
         ps = [nr_loci, t, p_mean, sigma, mu, ips, sd_p, position_list]
-        additional_info = ("1 Test Run for Grid object with high neighborhood size")
+        additional_info = ("10x20 Barriers. [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]")
         self.pickle_parameters(p_names, ps, additional_info)
             
     def analyze_data_set(self, data_set_nr, random_ind_nr=1000, res_folder=None,
@@ -528,7 +531,7 @@ class MultiBarrier(MultiRun):
         
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
-        barrier_strength_list = 100 * [0.5]
+        barrier_strength_list = 200 * [0.5]
         l = 0.006
         nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
         start_list = [[nbh_size, l, bs] for bs in barrier_strength_list]  # General Vector for Start-Lists
@@ -1308,15 +1311,11 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    # MultiRun = fac_method("multi_barrier", "./Data/", multi_processing=1)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
     # MultiRun.create_data_set(1)
-    # MultiRun.analyze_data_set(1, method=2, deme_x_nr=30, deme_y_nr=20)
-    
-    
-    # MultiRun.temp_visualize(method=2)
-    # MultiRun.visualize_barrier_strengths(res_numbers=range(0, 100))
+    MultiRun.analyze_data_set(2, method=2, deme_x_nr=30, deme_y_nr=20)
     
     ####################################################
     ####Create Multi Cluster Data Set:
@@ -1361,10 +1360,10 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr4/", multi_processing=1)
-    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
-                        genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv",
-                         chromosome=4)
+    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/chr4/", multi_processing=1)
+    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZall.csv",
+    #                    genotype_path="./Data/genotypesHZall.csv", loci_path="./Data/loci_info.csv",
+    #                    chromosome=4)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
     #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,
     #                          chromosome=5)

@@ -287,21 +287,21 @@ def main():
                 inp10 = int(input("\n(1) Load HZ Data \n(2) Save HZ Data \n(3) Clean HZ Data \n(4) Go back\n"))
             
                 if inp10 == 1:
-                    position_list = np.loadtxt('./Data/coordinatesHZall.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                    position_list = np.loadtxt('./Data/coordinatesHZALL.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                     scale_factor = float(input("Scale Factor?\n"))
                     position_list = position_list / scale_factor  # Normalize; for position_list and genotype Matrix of HZ data!
-                    genotype_matrix = np.loadtxt('./Data/genotypesHZall.csv', delimiter='$').astype('float64')
+                    genotype_matrix = np.loadtxt('./Data/genotypesHZALL.csv', delimiter='$').astype('float64')
                     
                     print("Successfully Loaded!")
                     print("Nr. of Loci: %i" % np.shape(genotype_matrix)[1])
                     print("Nr. of Individuals: %i" % np.shape(genotype_matrix)[0])
                     
                 elif inp10 == 2:
-                    np.savetxt("./Data/coordinatesHZall3.csv", position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("./Data/genotypesHZall3.csv", genotype_matrix, delimiter="$")  # Save the data 
+                    np.savetxt("./Data/coordinatesHZALL0.csv", position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("./Data/genotypesHZALL0.csv", genotype_matrix, delimiter="$")  # Save the data 
                     
                 elif inp10 == 3:
-                    loci_path = "./Data/loci_info.csv"
+                    loci_path = "./Data/loci_infoALL.csv"
                     analysis = Analysis(position_list, genotype_matrix, loci_path=loci_path)
                     genotype_matrix, position_list = analysis.clean_hz_data(plot=True)
                 

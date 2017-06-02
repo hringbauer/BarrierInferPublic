@@ -304,6 +304,86 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     plt.xlabel("Dataset")
     plt.show()
     
+def multi_barrier10(folder, method=2, res_numbers=range(200)):
+    '''Print the Estimates from 10x20 replicates of Barrier Strenght Estimation
+    with Method 2. Max Plot: Up to what to plot'''
+    bs = [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
+    nr_bts = 20
+    
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(4):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    # Put the Barrier Estimates >1 to 1:
+    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
+    
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    ax32 = ax3.twinx()  # Copy for different y-Scaling
+    
+    # Nbh Size Plot:
+    ax1.hlines(4 * np.pi * 5, res_numbers[0], res_numbers[-1], linewidth=2, color="g")
+    ax1.plot(res_numbers, res_vec[:, 0], "ko", label="Nbh",
+                 zorder=0)
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Method: %s" % str(method))
+
+    # L Plot:
+    ax2.plot(res_numbers, res_vec[:, 1], "ko", label="L",
+                 zorder=0)
+    ax2.hlines(0.006, res_numbers[0], res_numbers[-1], linewidth=2, color="g")
+    ax2.set_ylim([0, 0.03])
+    ax2.set_ylabel("L", fontsize=18)
+    # ax2.legend()
+    
+    # Barrier Plot Left Half:
+    for i in xrange(5):  # Iterate over different parts of the Graph
+        x0, x1 = i * nr_bts, (i + 1) * nr_bts
+        y = bs[i]
+        res_numbers_t = range(x0, x1)  # Where to Plot
+        # Alternate the color:
+        if i % 2 == 0:
+            c = "m"
+        else:
+            c = "b"
+        ax3.plot(res_numbers_t, res_vec[res_numbers_t, 2],
+                    c + "o", alpha=0.8, zorder=0)
+        ax3.hlines(y, x0, x1, linewidth=2, color="g", zorder=1)
+    # Barrier Plot Right Half:
+    for i in xrange(5, 10):
+        x0, x1 = i * nr_bts, (i + 1) * nr_bts
+        y = bs[i]
+        res_numbers_t = range(x0, x1)  # Where to Plot
+        # Alternate the color:
+        if i % 2 == 0:
+            c = "y"
+        else:
+            c = "r"
+        ax32.plot(res_numbers_t, res_vec[res_numbers_t, 2],
+                    c + "o", alpha=0.8, zorder=0)
+        ax32.hlines(y, x0, x1, linewidth=2, color="g", zorder=1)
+        
+        
+    ax3.set_ylabel("Barrier", fontsize=18)
+    ax3.set_ylim([0, 0.2])
+    ax3.tick_params('y', colors='b')
+    ax32.set_ylim([0, 1.1])
+    ax32.tick_params('y', colors='r')
+
+    # SS Plot:
+    ax4.plot(res_numbers, res_vec[:, 3], "ko", label="ss",
+                 zorder=0)
+    ax4.hlines(0.52, res_numbers[0], res_numbers[-1], linewidth=2, color="g")
+    ax4.set_ylabel("SS", fontsize=18)
+    plt.xlabel("Dataset")
+    plt.show()
+    
     
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
@@ -1025,6 +1105,7 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
 
 def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     '''Plots IBD across Hybridzone. Makes Color Plot with respect to direction'''
+    # Scale Factor is there to introduce it back to Plot.
     position_list = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
     
@@ -1277,7 +1358,6 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
         ax2.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
     ax2.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier")
     ax2.legend()
-    
     plt.show()
     
 
@@ -1290,7 +1370,8 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_gauss_folder, method=2)
     # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
-    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
@@ -1305,8 +1386,8 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    #multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
-    #multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
+    # multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
     # hz_barrier_bts(hz_folder, "barrier2/")  # Bootstrap over all Parameters for Barrier Data
@@ -1319,7 +1400,7 @@ if __name__ == "__main__":
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
-    # plot_IBD_anisotropy("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv")
+    plot_IBD_anisotropy("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv")
     
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     

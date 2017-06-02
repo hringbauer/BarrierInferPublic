@@ -15,7 +15,7 @@ from scipy.optimize.minpack import curve_fit
 from time import time
 
 
-parameters_fit = [84.96, 0.0814, 1.0, 0.0596]  # Parameters used in manual Kernel Plot. Old: 0.04194
+parameters_fit = [210.75, 0.00000073, 1.0, 0.0376]  # Parameters used in manual Kernel Plot. Old: 0.04194
 # 7.38282829e+01   9.44133108e-04   5.15210543e-01
 
 class Fit_class(object):

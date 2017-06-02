@@ -452,7 +452,6 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, fixed_params=[62, 
         shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
         inds = inds[:nr_inds]  # Only load first nr_inds
 
-
     # Group Inds:
     if nr_x_bins > 0 or nr_y_bins > 0:
         position_list, genotype_mat, nr_inds = group_inds(position_list, genotype_mat,
@@ -487,9 +486,13 @@ def analyze_normal(position_list, genotype_mat, nr_inds=1000, fixed_params=[62, 
 if __name__ == "__main__":
     # position_list = np.loadtxt('./nbh_folder_gauss/nbh_file_coords200.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./multi_barrier_hz/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./multi_barrier_hz/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    #ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  
+    # position_list = np.loadtxt('./multi_barrier_hz/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    # genotype_mat = np.loadtxt('./multi_barrier_hz/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt('./Data/coordinatesHZALL0.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./Data/genotypesHZALL0.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+  
+    
+    # ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  
     # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
     #analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
     

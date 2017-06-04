@@ -1045,7 +1045,7 @@ def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr
     toc = time()
     print("Runtime Dist_Mat: %.4f" % (toc - tic))
     nr_nearby_inds = [np.sum(nearby_inds) for nearby_inds in close_inds]  # Calculate the total Number of nearby Individuals
-    power = np.array(nr_nearby_inds) ** 2  # Number of Pairwise comparisons grows quadratically; so thus the weight factor
+    power = np.array(nr_nearby_inds)  # Number of comparisons to produce this
     
     
     def get_f_vec(position_list, genotype_mat, x_bins, bin_size=5):
@@ -1386,7 +1386,7 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    # multi_pos_plot("./multi_barrier_hz/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
@@ -1394,13 +1394,13 @@ if __name__ == "__main__":
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     
     # ## Bootstrap in HZ to produce IBD fig
-    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", hz_folder, "barrier2/", res_number=1, nr_bootstraps=50)    
+    # plot_IBD_bootstrap("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", hz_folder, "barrier2/", res_number=20, nr_bootstraps=20)    
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
-    # plot_IBD_across_Zone("./Data/coordinatesHZall0.csv", "./Data/genotypesHZall0.csv", bins=20, max_dist=4, nr_bootstraps=200)  # Usually the dist. factor is 50
-    plot_IBD_anisotropy("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv")
+    # plot_IBD_across_Zone("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv", bins=20, max_dist=4, nr_bootstraps=10)  # Usually the dist. factor is 50
+    # plot_IBD_anisotropy("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv")
     
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     

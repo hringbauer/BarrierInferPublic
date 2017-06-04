@@ -297,8 +297,9 @@ def main():
                     print("Nr. of Individuals: %i" % np.shape(genotype_matrix)[0])
                     
                 elif inp10 == 2:
-                    np.savetxt("./Data/coordinatesHZALL0.csv", position_list, delimiter="$")  # Save the coordinates
-                    np.savetxt("./Data/genotypesHZALL0.csv", genotype_matrix, delimiter="$")  # Save the data 
+                    np.savetxt("./Data/coordinatesHZALL2.csv", position_list, delimiter="$")  # Save the coordinates
+                    np.savetxt("./Data/genotypesHZALL2.csv", genotype_matrix, delimiter="$")  # Save the data 
+                    print("Successfully Saved!")
                     
                 elif inp10 == 3:
                     loci_path = "./Data/loci_infoALL.csv"

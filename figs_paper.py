@@ -133,7 +133,7 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
 def multi_nbh_single(folder, method):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    res_numbers = range(0, 100)
+    res_numbers = range(0, 50)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
     
@@ -1366,8 +1366,8 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    # multi_nbh_single(multi_nbh_folder, method=2)
-    # multi_nbh_single(multi_nbh_gauss_folder, method=2)
+    multi_nbh_single(multi_nbh_folder, method=0)
+    multi_nbh_single(multi_nbh_gauss_folder, method=0)
     # multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
@@ -1386,7 +1386,7 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     

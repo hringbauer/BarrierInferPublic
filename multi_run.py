@@ -154,7 +154,7 @@ class MultiRun(object):
                 
         if method == 0:
             MLE_obj = MLE_estimator("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-            start_params = start_params + [0.004, ]
+            start_params = start_params + [0.04, ]
         elif method == 1:
             MLE_obj = MLE_pairwise("DiffusionK0", position_list, genotype_mat, multi_processing=self.multi_processing)
             start_params = start_params + [0.01, ]
@@ -236,7 +236,7 @@ class MultiRun(object):
         # First Choose the right MLE-Object and set the right starting Parameters:
         if method == 0:
             MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
-            start_params = start_params + [0.004, ]
+            start_params = start_params + [0.04, ]
             fixed_params[-1] = 0.004
         elif method == 1:
             MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)

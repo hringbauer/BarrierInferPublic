@@ -15,7 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import cPickle as pickle
-    
+
+
+nr_cpus = 0  # How many CPUs to use later on!
+
 class MLE_estimator(GenericLikelihoodModel):
     '''
     Class for MLE estimation. Inherits from GenericLikelihoodModel.
@@ -29,6 +32,7 @@ class MLE_estimator(GenericLikelihoodModel):
     fixed_params = np.array([200, 0.001, 1.0, 0.04])  # Full array
     param_mask = np.array([0, 1, 3])  # Parameter Mask used to change specific Parameters
     nr_params = 0
+    mp = 0
     parameter_names = []
     mps = [] 
     
@@ -39,6 +43,8 @@ class MLE_estimator(GenericLikelihoodModel):
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
         exog = coords  # The exogenous Variables are the coordinates
         endog = genotypes  # The endogenous Variables are the Genotypes
+        
+        self.mp = multi_processing
         
         self.mps = np.array([np.pi / 2.0 for _ in range(np.shape(genotypes)[1])])  # Set everything corresponding to p=0.5 (in f_space for ArcSin Model)
         
@@ -232,7 +238,11 @@ class MLE_estimator(GenericLikelihoodModel):
             # margL = logL - 0.5 * logdet
             
             # Set up configuration
-            config = tf.ConfigProto()  
+            if self.mp==0:  # In case of no Multiprocessing: Restrict to one thread:
+                config = tf.ConfigProto(inter_op_parallelism_threads=1,
+                            intra_op_parallelism_threads=1) 
+            elif self.mp==1: # In case of Multiprocessing: Tensorflow uses all there is.
+                config=tf.ConfigProto()
             # config.gpu_options.per_process_gpu_memory_fraction = 0.01
             
             return((config, update, opt_op, logL, margL, F, K, mean_param))

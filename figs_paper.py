@@ -388,7 +388,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200)):
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    res_numbers = range(0, 100)
+    #res_numbers = range(0, 100)
     # res_numbers = range(3, 4)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
@@ -1366,9 +1366,10 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    multi_nbh_single(multi_nbh_folder, method=0)
-    multi_nbh_single(multi_nbh_gauss_folder, method=0)
-    # multi_ind_single(multi_ind_folder, method=2)
+    # multi_nbh_single(multi_nbh_folder, method=0)
+    #multi_nbh_single(multi_nbh_gauss_folder, method=0)
+    multi_ind_single(multi_ind_folder, method=0, res_numbers=range(1,10))
+    #multi_ind_single(multi_ind_folder, method=2)
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets

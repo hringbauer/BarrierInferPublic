@@ -12,7 +12,8 @@ mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 
 # data_set_nr = int(sys.argv[1])  # Which data-set to use
 
-folder = "./nbh_folder_gauss/"  # Where the results are saved to.
+folder = "./nbh_folder/"
+# folder = "./nbh_folder_gauss/"  # Where the results are saved to.
 # folder = "./cluster_folder/"
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
@@ -22,8 +23,8 @@ folder = "./nbh_folder_gauss/"  # Where the results are saved to.
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
 
-# MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
-MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
+MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
+# MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
 # MultiRun = fac_method("multi_cluster", folder, multi_processing=1)   
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)

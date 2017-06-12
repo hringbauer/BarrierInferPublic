@@ -8,7 +8,7 @@ import pickle as pickle
 import numpy as np
 import sys
 
-mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
 # data_set_nr = int(sys.argv[1])  # Which data-set to use
 
@@ -49,8 +49,8 @@ MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the rig
 # MultiRun.analyze_data_set(data_set_nr, method=1)
 
 #for i in xrange(1, 99):
-data_set_nr = int(sys.argv[1])  # Which data-set to use
-# data_set_nr = 5
+#data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 99
 print("Do Run Nr. %i" % data_set_nr)
 MultiRun.analyze_data_set(data_set_nr, method=0)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)

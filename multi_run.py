@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 import os
 import pickle as pickle
+from pandas.algos import group_mean_float32
 
 class MultiRun(object):
     '''
@@ -134,6 +135,28 @@ class MultiRun(object):
         (self.param_estimates, self.uncert_estimates) = pickle.load(open(path, "rb"))
         return self.param_estimates, self.uncert_estimates
     
+    def simulate_barrier(self, position_list, gridsize_x, gridsize_y, t,
+                         sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength):
+        '''Simulate Barrier Scenario. Return Genotype Matrix'''
+        assert(len(p_mean) == nr_loci)  # Sanity Check.
+        print("Parameters loaded: ")
+        print([ips, sigma, mu, barrier_strength])
+        genotype_matrix = -np.ones((len(position_list), nr_loci))  # Set Genotype Matrix to -1 to detect Errors.
+        
+        for i in range(nr_loci):
+            grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+            grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
+            print("Doing Locus Nr. \t %i" % (i))
+            grid.set_samples(position_list)
+            grid.set_barrier_parameters(barrier_pos, barrier_strength)  # Where to set the Barrier and its strength
+            grid.update_grid_t(t, p=p_mean[i], barrier=1)  # Uses p_mean[i] as mean allele Frequency.
+            genotype_matrix[:, i] = grid.genotypes
+            
+        assert(np.min(genotype_matrix) >= 0)  # Sanity Check that everything ran fine.
+        return genotype_matrix
+        
+        
+        
     def fit_IBD(self, start_params, data_set_nr, method=2,
                     res_folder=None, position_list=[], genotype_mat=[], random_ind_nr=None,
                     fit_params=[0, 1, 3], fixed_params=[50, 0.005, 1, 0]):
@@ -354,7 +377,7 @@ class MultiNbh(MultiRun):
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
         
         # Creates the "right" starting parameters:
-        ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [26.0]
+        ips_list = 25 * [2.0] + 25 * [10.0] + 25 * [18.0] + 25 * [2.0]
         ips_list = np.array(ips_list)
         nbh_sizes = ips_list / 2.0 * 4 * np.pi  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
         
@@ -715,6 +738,79 @@ class MultiBootsTrap(MultiBarrier):
         
         # self.pickle_parameters(p_names, ps, additional_info)      Dont't pickle additional Info; as it is not clear what it was
         
+class MultiBarrierBootstrap(MultiBarrier):
+    '''Class to produce bootstrap datasets of barrier estimates.
+    Generates four initial Data Sets of different strength. 
+    Then Bootstraps over them'''
+    
+    
+    def __init__(self, folder, nr_data_sets=200, nr_params=4, **kwds):
+        '''Initializes the BootsTrap class. Path_data_set is the path to the 
+        data set over which to bootstrap.'''
+        super(MultiBarrierBootstrap, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        self.name = "barrier_bt"
+        
+    def create_data_set(self, data_set_nr):
+        '''Creates Four Datasets of Different Barrier Strengths.'''
+        
+        # Set all the Parameters:
+        k_vec = [0, 0.1, 0.5, 1.0]  # The four data sets to simulate
+        k_vec_full = [j for j in k_vec for _ in range(5)]
+        assert(0 <= data_set_nr < len(k_vec_full))  # Sanity Check
+        barrier_strength = k_vec_full[data_set_nr]  # Extract the used Barrier Strength.
+        
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; spaced 1 sigma apart.
+        nr_loci = 200
+        t = 5000
+        gridsize_x, gridsize_y = 1000, 1000
+        barrier_pos = 500.5
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.1  # Standard Deviation Allele Frequency
+        p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_mean = p_mean + p_delta
+        
+        genotype_matrix = self.simulate_barrier(position_list, gridsize_x, gridsize_y, t,
+                              sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength)
+        
+        # Save the Data Set:
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)  
+    
+    
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=25,
+                         nr_data_sets=20, res_folder=None, position_barrier=500.5):
+        '''Bootstraps and analyzes Nr data_sets'''
+        nr_datasets = nr_bts * nr_data_sets
+        
+        if (data_set_nr < 0) & (data_set_nr >= nr_data_sets):
+            raise ValueError("Data Set Nr. outside of Range!")
+        
+        # Then pick the Starting Parameters:
+        nbh_size = 50
+        l = 0.005
+        bs = 0.5
+        start_params = [nbh_size, l, bs]       
+        
+        # Pick the right Dataset:
+        data_set_eff = data_set_nr % nr_bts  # Which data-set to use
+        batch_nr = int(np.floor(data_set_nr / nr_bts))  # Which batch to use
+
+        position_list, genotype_mat = self.load_data_set(batch_nr)  # Loads the Data 
+        
+        # Bootstrap if needed
+        if data_set_eff != 0:
+            gtps_sample = bootstrap_genotypes(genotype_mat)
+            print("Bootstrapping complete!")
+            
+        
+        self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat = genotype_mat,
+                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins)
+        
+        
+        
+        
 ##############################################################################################################################
 class MultiBT_HZ(MultiBarrier):
     '''
@@ -741,7 +837,7 @@ class MultiBT_HZ(MultiBarrier):
         '''In this case one actually does 
         the bootstrapping'''
         
-        if not 0 <= data_set_nr < self.nr_data_sets:  # Check whether everything alright
+        if not 0 <= data_set_nr < self.nr_data_sets:  # Check whether everything is alright
             raise ValueError("Data Set out of Range!")
         
         
@@ -1229,6 +1325,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_barrier":
         return MultiBarrier(folder, multi_processing=multi_processing)
     
+    elif method == "multi_barrier_bts":
+        return MultiBarrierBootstrap(folder, multi_processing=multi_processing)
+    
     elif method == "multi_nbh_gaussian":
         return MultiNbhModel(folder, multi_processing=multi_processing)
     
@@ -1360,14 +1459,20 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/chr0/", multi_processing=1)
-    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
-                        genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
-                        chromosome=0)
+    # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/chr0/", multi_processing=1)
+    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
+    #                    genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
+    #                    chromosome=0)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
     #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,
     #                          chromosome=5)
+    
+    
     #####################################################
+    # Multi Bootstrap Barrier Dataset:
+    MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_Bts/", multi_processing=1)
+    #MultiRun.create_data_set(0)
+    #MultiRun.analyze_data_set(24, method=2)
     
     
     

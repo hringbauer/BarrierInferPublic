@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-data_set_nr = int(sys.argv[1])  # Which data-set to use
-# data_set_nr = 1
+# data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 501
 print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 

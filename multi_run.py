@@ -775,6 +775,7 @@ class MultiBarrierBootstrap(MultiBarrier):
         genotype_matrix = self.simulate_barrier(position_list, gridsize_x, gridsize_y, t,
                               sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength)
         
+        
         # Save the Data Set:
         self.save_data_set(position_list, genotype_matrix, data_set_nr)  
     
@@ -805,7 +806,7 @@ class MultiBarrierBootstrap(MultiBarrier):
             print("Bootstrapping complete!")
             
         
-        self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat = genotype_mat,
+        self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat = gtps_sample,
                          method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr = data_set_nr)
         
         
@@ -1265,7 +1266,7 @@ class MultiLociNr(MultiNbh):
         '''Create a Data_Set. Override method of MultiNbh.'''
         print("Creating Dataset: %i" % data_set_nr)
         
-        # Create Vector of Numbers of Individuals:
+        # Create Vector of Numbers of Loci:
         nr_loci_vec = range(50, 350, 3)  # From 50 to 350 in steps of 3.
         assert(len(nr_loci_vec) == 100)  # Check whether the right length
 
@@ -1309,6 +1310,51 @@ class MultiLociNr(MultiNbh):
             
         else: 
             raise ValueError("Invalid Data-Set Nr.!")
+        
+class MultiLociBarrier(MultiBarrier):
+    '''Infers Barrier for different Number of Loci.
+    Infers Barrier Strength with fitting everything.
+    Also has method to infer barrier strength after other Parameters
+    have been estimated (k-only)'''
+    
+    def create_data_set(self, data_set_nr):
+        '''Creates Dataset'''
+
+        nr_loci_vec = range(5, 106, 10)  # From 1 to 200 in steps of 3.
+        nr_loci_vec = np.repeat(nr_loci_vec, 25)
+        
+        assert(0<=data_set_nr<len(nr_loci_vec))
+        nr_loci = nr_loci_vec[data_set_nr] # Extracts the Number of Loci
+        
+        barrier_strength = 0.1
+        barrier_pos = 500.5
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        
+        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
+        t = 5000
+        gridsize_x, gridsize_y = 1000, 1000
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.1  # Standard Deviation Allele Frequency
+        p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_mean = p_mean + p_delta
+        
+        # print("Observed Standard Deviation: %.4f" % np.std(p_delta))
+        # print("Observed Sqrt of Squared Deviation: %f" % np.sqrt(np.mean(p_delta ** 2)))
+        
+        genotype_matrix = self.simulate_barrier(position_list, gridsize_x, gridsize_y, t,
+                         sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength)
+        
+        # position_list_update = position_list[:, 0] - grid.barrier 
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)
+        
+            
+        # Now Pickle Some additional Information:
+        p_names = ["Barrier Strength", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
+        ps = [barrier_strength, t, p_mean, sigma, mu, ips, sd_p, position_list]
+        additional_info = ("10x25 Loci [5, 15, 25, ..., 105]")
+        self.pickle_parameters(p_names, ps, additional_info)
         
                
 ###############################################################################################################################
@@ -1355,6 +1401,8 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_hz_pos":
         return MultiHZPosition(folder, multi_processing=multi_processing)
     
+    elif method =="multi_loci_barrier":
+        return MultiLociBarrier(folder, multi_processing=multi_processing)
     
     else: raise ValueError("Wrong method entered!")
 
@@ -1470,9 +1518,14 @@ if __name__ == "__main__":
     
     #####################################################
     # Multi Bootstrap Barrier Dataset:
-    MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_Bts/", multi_processing=1)
-    #MultiRun.create_data_set(0)
-    MultiRun.analyze_data_set(499, method=2)
+    # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_Bts/", multi_processing=1)
+    # MultiRun.create_data_set(0)
+    # MultiRun.analyze_data_set(499, method=2)
+    
+    #####################################################
+    # Multi Loci Barrier Dataset
+    MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=1)
+    MultiRun.create_data_set(0)
     
     
     

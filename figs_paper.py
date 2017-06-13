@@ -123,7 +123,20 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
         bin_corr = bin_corr - corr_factor
     return bin_dist, bin_corr, stand_errors, corr_factor 
 
-
+def argsort_bts(x, nr_bts):
+    '''Arg Sorts a Vector within Bootstraps.'''
+    assert(len(x) % nr_bts == 0)  # Check whether Bootstraps 
+    
+    inds_sorted = np.zeros(len(x))
+    # Iterate over batches
+    for i in range(0, len(x), nr_bts):
+        inds = range(i, i + nr_bts)
+        
+        inds_batch = np.argsort(x[inds])
+        inds_sorted[inds] = inds_batch + i # Return the sorted indices shifted.
+        
+    return(inds_sorted)
+    
 ######################################################################################
 ######################################################################################
 ######################################################################################
@@ -133,7 +146,7 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
 def multi_nbh_single(folder, method, res_numbers=range(100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    #res_numbers = range(0, 50)
+    # res_numbers = range(0, 50)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
     
@@ -165,7 +178,7 @@ def multi_nbh_single(folder, method, res_numbers=range(100)):
     
     ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
     ax2.hlines(0.006, 0, 100, linewidth=2)
-    ax2.set_ylim([0,0.03])
+    ax2.set_ylim([0, 0.03])
     ax2.set_ylabel("L", fontsize=18)
     # ax2.legend()
     
@@ -385,11 +398,77 @@ def multi_barrier10(folder, method=2, res_numbers=range(200)):
     plt.xlabel("Dataset")
     plt.show()
     
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_reps=2):
+    '''Plots the Bootstraps over Barriers.'''
+    nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
+    nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS
+    res_numbers = range(nr_all_data)
     
+    # Load the data:
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    
+    for l in range(len(res_numbers)):
+        i = res_numbers[l]
+        print("\nRun: %i" % i)
+        for j in range(4):
+            print("Parameter: %i" % j)
+            print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+            
+    # Put the Barrier Estimates >1 to 1:
+    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
+    
+    k_vec_full = [j for j in k_vec for _ in range(nr_reps)]  # Gets the Default Values for the k-vecs
+    x_vec_full = np.repeat(range(nr_data_sets), nr_bts)
+    # x_vec_full = [j for j in range(nr_data_sets) for _ in range(nr_reps)] # Gets the x-Values for the Plots
+    
+    # Do some jitter for the x-Values:
+    x_jitter = np.linspace(0, 1, nr_bts + 1)  # Construct the offset
+    x_jitter = np.tile(x_jitter[:nr_bts], nr_data_sets)  
+    x_vec_full1 = x_vec_full + x_jitter  # Constructs the x-Values
+    
+    # Construct the color Values:
+    colors = ["r", "g"]
+    color_vec = np.repeat(colors, nr_bts)
+    color_vec = np.tile(color_vec, nr_data_sets)[:nr_all_data]  # Gets the color vector (double and extract what needed)
+
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    # ax32 = ax3.twinx()  # Copy for different y-Scaling
+    
+    # Nbh Size Plot:
+    ax1.hlines(4 * np.pi * 5, 0, nr_data_sets, linewidth=2, color="g")
+    ax1.scatter(x_vec_full1, res_vec[:, 0], c=color_vec, label="Nbh")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.title.set_text("Method: %s" % str(method))
+
+#     # L Plot:
+#     ax2.plot(x_vec_full, res_vec[:, 1], "ko", label="L",
+#                  zorder=0)
+#     ax2.hlines(0.006, 0, nr_data_sets, linewidth=2, color="g")
+#     ax2.set_ylim([0, 0.03])
+#     ax2.set_ylabel("L", fontsize=18)
+#     # ax2.legend()
+#         
+#     ax3.plot(x_vec_full, res_vec[:, 1], "ko", label="L")    
+#     ax3.set_ylabel("Barrier", fontsize=18)
+#     ax3.tick_params('y', colors='b')
+#     ax32.set_ylim([0, 1.1])
+#     ax32.tick_params('y', colors='r')
+# 
+#     # SS Plot:
+#     ax4.plot(x_vec_full, res_vec[:, 3], "ko", label="ss")
+#     ax4.hlines(0.52, 0, nr_data_sets, linewidth=2, color="g")
+#     ax4.set_ylabel("SS", fontsize=18)
+    plt.xlabel("Dataset")
+    plt.show()
+    
+
+
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    #res_numbers = range(0, 100)
+    # res_numbers = range(0, 100)
     # res_numbers = range(3, 4)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
@@ -420,7 +499,7 @@ def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     ax2.errorbar(x_vec, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
     ax2.hlines(0.006, 500, 4000, linewidth=2)
     ax2.set_ylabel("L", fontsize=18)
-    ax2.set_ylim([0,0.02])
+    ax2.set_ylim([0, 0.02])
     # ax2.legend()
     
     ax3.errorbar(x_vec, res_vec[:, 2], yerr=res_vec[:, 2] - unc_vec[:, 2, 0], fmt="ko", label="ss")
@@ -1375,6 +1454,8 @@ if __name__ == "__main__":
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
+    multi_bts_barrier("./multi_barrier_bts/")  # Plots the Bootstrap Estimates for various Barrier Strengths
+    
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
     
@@ -1386,7 +1467,7 @@ if __name__ == "__main__":
     
     
     # ## Plots for Hybrid Zone Data
-    #multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
+    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
     # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
@@ -1397,11 +1478,11 @@ if __name__ == "__main__":
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     
     # ## Bootstrap in HZ to produce IBD fig
-    #plot_IBD_bootstrap("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", hz_folder, "barrier2/", res_number=20, nr_bootstraps=20)    
+    # plot_IBD_bootstrap("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", hz_folder, "barrier2/", res_number=20, nr_bootstraps=20)    
     # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
-    #plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
+    # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
     # plot_IBD_across_Zone("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv", bins=20, max_dist=4, nr_bootstraps=10)  # Usually the dist. factor is 50
     # plot_IBD_anisotropy("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv")
     
@@ -1416,5 +1497,7 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
+    
+    
     
 

@@ -806,7 +806,7 @@ class MultiBarrierBootstrap(MultiBarrier):
             
         
         self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat = genotype_mat,
-                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins)
+                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr = data_set_nr)
         
         
         
@@ -1472,7 +1472,7 @@ if __name__ == "__main__":
     # Multi Bootstrap Barrier Dataset:
     MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_Bts/", multi_processing=1)
     #MultiRun.create_data_set(0)
-    #MultiRun.analyze_data_set(24, method=2)
+    MultiRun.analyze_data_set(499, method=2)
     
     
     

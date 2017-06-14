@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-# data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 317
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+# data_set_nr = 500
 print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -73,11 +73,12 @@ data_set_nr = data_set_nr - 1
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
-MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
+# MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
+MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
 
 
 ########### For creating and analyzing the data sets ###############
-# MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
 # MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
 
 

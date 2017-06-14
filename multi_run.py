@@ -1325,7 +1325,7 @@ class MultiLociBarrier(MultiBarrier):
     def create_data_set(self, data_set_nr):
         '''Creates Dataset'''
 
-        nr_loci_vec = range(5, 106, 5)  # From 1 to 200 in steps of 3.
+        nr_loci_vec = range(5, 101, 5)  # From 1 to 200 in steps of 3.
         nr_loci_vec = np.repeat(nr_loci_vec, 25)
         
         assert(0 <= data_set_nr < len(nr_loci_vec))
@@ -1369,42 +1369,26 @@ class MultiLociBarrier(MultiBarrier):
         
     def analyze_data_set_k_only(self, data_set_nr, res_folder="k_only/", method=2, position_barrier=500.5):
         '''Estimate Barrier Strength; taking the other estimates as constant - but estimating k'''
-#  
-#         if res_folder == None:  # In case SubFolder was passed on:
-#             subfolder_meth = "method2/"  # Sets subfolder on which Method to use.
-#         else:
-#             subfolder_meth = res_folder
-#         
-#         path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
-#         
-#         # Checks whether estimates are there:
-#         if not os.path.exists(path):
-#             raise RuntimeError("Data Set %i not Existing!!" % data_set_nr)
-#             
-#         # Loads Results:
-#         res = pickle.load(open(path, "rb"))  # Loads the Data
-#         params = res[0]
-#         nbh, l, bs = params[:3]  # Load the relevant Parameters
 
         # Fit with "known" Parameters for demography
-        nbh = 4*np.pi*5
+        nbh = 4*np.pi*5.0
         l = 0.006
-        bs=0.5 # For sake of completeness
+        bs = 0.5 # For sake of completeness
         
         # Do the Fitting for k only:
         fixed_params = [nbh, l, bs, 1, 0]
         fit_params = [2, 4]  # Fit Barrier Strength and Variation in allele Frequency.
         
-        start_params = [bs, ]  # Ss will get added below
+        start_params = [bs, ]  # Ss will get added later
         
         # Fit the Barrier:
         self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, res_folder = res_folder,
                          deme_x_nr=30, deme_y_nr=20)
         
         # Save the Parameters for nbh and l which have been used:
-        path = "fix_params" + str(data_set_nr).zfill(2) + ".csv"
-        params_used = np.array([nbh, l])
-        self.save_mat(params_used, filename=path, method=method)
+        # path = "fix_params" + str(data_set_nr).zfill(2) + ".csv"
+        # params_used = np.array([nbh, l])
+        # self.save_mat(params_used, filename=path, method=method)
         
         
                

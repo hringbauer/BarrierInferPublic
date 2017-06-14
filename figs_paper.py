@@ -425,8 +425,8 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     # Put the Barrier Estimates >1 to 1:
     res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
     
-    k_vec_full = np.repeat(k_vec, nr_reps)      # Gets the Default Values for the k-vecs
-    #k_vec_full = [j for j in k_vec for _ in range(nr_reps)]  # Gets the Default Values for the k-vecs
+    k_vec_full = np.repeat(k_vec, nr_reps)  # Gets the Default Values for the k-vecs
+    # k_vec_full = [j for j in k_vec for _ in range(nr_reps)]  # Gets the Default Values for the k-vecs
     x_vec_full = np.repeat(range(nr_data_sets), nr_bts)
     # x_vec_full = [j for j in range(nr_data_sets) for _ in range(nr_reps)] # Gets the x-Values for the Plots
     
@@ -439,7 +439,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     x_true = range(0, nr_all_data, nr_bts)
     
     # Construct the color Values:
-    colors = ["r", "b"]
+    colors = ["coral", "crimson"]
     color_vec = np.repeat(colors, nr_bts)
     color_vec = np.tile(color_vec, nr_data_sets)[:nr_all_data]  # Gets the color vector (double and extract what needed)
 
@@ -471,7 +471,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6)
     ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6)
     for i in range(nr_data_sets):
-        ax3.hlines(k_vec_full[i] ,i, i + 1, linewidth=4, color="g", zorder=0)
+        ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=4, color="g", zorder=0)
     ax3.set_ylim([0, 1])
     ax3.set_ylabel("L", fontsize=18)
  
@@ -484,7 +484,63 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     plt.xlabel("Dataset")
     plt.show()
     
+def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(5, 106, 10), nr_reps=25, k_true=0.05):
+    '''Plots the Estimates from multiple Loci and replicates.
+    Plots both all estimates; and k_only estimates'''
+    
+    nr_data_sets = len(loci_nr) * nr_reps  # Nr of Independent DS
+    res_numbers = range(nr_data_sets)
+    
+    # Load the data:
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers]) # Full Data Set
+    res_vec_k = np.array([load_pickle_data(folder, i, 0, method, subfolder=k_only_folder) for i in res_numbers]) # K Only Datasets
+    
+    # First Get all the colors
+    colors = ["coral", "crimson"]
+    color_vec = np.repeat(colors, nr_reps)
+    color_vec = np.tile(color_vec, len(loci_nr))[:nr_all_data]  # Gets the color vector (double and extract what needed)
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    
+    
+    # ax32 = ax3.twinx()  # Copy for different y-Scaling
+    
+    # Nbh Size Plot:
+    ax1.hlines(4 * np.pi * 5, 0, nr_data_sets, linewidth=2, color="g")
 
+    ax1.scatter(x_vec_full1, res_vec, c=color_vec, label = "Full Estimates")
+    ax1.scatter(x_vev_full1, res_vec_k, c=color_vec, label = "K-Only Estimates")
+    ax1.set_ylim([0, 200])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.legend(loc="upper right")
+    ax1.title.set_text("Method: %s" % str(method))
+
+#     # L Plot:
+#     inds_sorted, true_inds = argsort_bts(res_vec[:, 1], nr_bts)
+#     ax2.scatter(x_vec_full1, res_vec[inds_sorted, 1], c=color_vec)
+#     ax2.plot(x_vec_full1[true_inds], res_vec[x_true, 1], "ko", markersize=6, label="True Values")
+#     ax2.hlines(0.006, 0, nr_data_sets, linewidth=2, color="g")
+#     ax2.set_ylim([0, 0.03])
+#     ax2.set_ylabel("L", fontsize=18)
+#     # ax2.legend()
+#     
+#     # Plot Barrier:   
+#     inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
+#     ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6)
+#     ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6)
+#     for i in range(nr_data_sets):
+#         ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=4, color="g", zorder=0)
+#     ax3.set_ylim([0, 1])
+#     ax3.set_ylabel("L", fontsize=18)
+#  
+# #     # SS Plot:
+#     inds_sorted, true_inds = argsort_bts(res_vec[:, 3], nr_bts)
+#     ax4.scatter(x_vec_full1, res_vec[inds_sorted, 3], c=color_vec)
+#     ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="True Values")
+#     ax4.hlines(0.52, 0, nr_data_sets, linewidth=2, color="g")
+#     ax4.set_ylabel("SS", fontsize=18)
+#     plt.xlabel("Dataset")
+#     plt.show()
+    
 
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
@@ -1475,7 +1531,8 @@ if __name__ == "__main__":
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
-    multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
+    # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
+    multi_barrier_loci("./multi_barrier_bts/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)

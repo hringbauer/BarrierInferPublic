@@ -9,6 +9,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import itertools
+import os
 from time import time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from analysis import kinship_coeff, calc_f_mat  # Import functions from Analysis
@@ -41,19 +42,30 @@ def mean_kinship_coeff(genotype_mat, p_mean=0.5):
         f = np.mean(f_vec)  # Calculate the overall mean f
         return f
 
+def check_if_data(folder, i, method=2, subfolder=None):
+    '''Check if Data-Set is there. Return 1 if yes. Return 0 if no.'''
+    if subfolder == None:
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+    else: subfolder_meth = subfolder
+    
+    path = folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+    
+    exist = os.path.exists(path)
+    return exist
+
 def load_pickle_data(folder, i, arg_nr, method=2, subfolder=None):
-            '''Function To load pickled Data.
-            Also visualizes it.'''
-            
-            # Coordinates for more :
-            if subfolder == None:
-                subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
-            else: subfolder_meth = subfolder
-            path = folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
-            
-            
-            res = pickle.load(open(path, "rb"))  # Loads the Data
-            return res[arg_nr]
+        '''Function To load pickled Data.
+        Also visualizes it.'''
+        
+        # Coordinates for more :
+        if subfolder == None:
+            subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
+        else: subfolder_meth = subfolder
+        path = folder + subfolder_meth + "result" + str(i).zfill(2) + ".p"
+        
+        
+        res = pickle.load(open(path, "rb"))  # Loads the Data
+        return res[arg_nr]
         
 def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     '''Helper Function that gives stats of results'''
@@ -405,7 +417,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200)):
     plt.xlabel("Dataset")
     plt.show()
     
-def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_reps=5):
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999], nr_reps=5):
     '''Plots the Bootstraps over Barriers.'''
     nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
     nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS
@@ -439,7 +451,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     x_true = range(0, nr_all_data, nr_bts)
     
     # Construct the color Values:
-    colors = ["coral", "crimson"]
+    colors = ["coral", "cyan"]
     color_vec = np.repeat(colors, nr_bts)
     color_vec = np.tile(color_vec, nr_data_sets)[:nr_all_data]  # Gets the color vector (double and extract what needed)
 
@@ -468,10 +480,10 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_
     
     # Plot Barrier:   
     inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
-    ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6)
-    ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6)
+    ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6, zorder=0)
+    ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6, zorder=2)
     for i in range(nr_data_sets):
-        ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=4, color="g", zorder=0)
+        ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=2, color="g", zorder=1)
     ax3.set_ylim([0, 1])
     ax3.set_ylabel("L", fontsize=18)
  
@@ -492,8 +504,8 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     res_numbers = range(nr_data_sets)
     
     # Load the data:
-    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers]) # Full Data Set
-    res_vec_k = np.array([load_pickle_data(folder, i, 0, method, subfolder=k_only_folder) for i in res_numbers]) # K Only Datasets
+    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])  # Full Data Set
+    res_vec_k = np.array([load_pickle_data(folder, i, 0, method, subfolder=k_only_folder) for i in res_numbers])  # K Only Datasets
     
     # First Get all the colors
     colors = ["coral", "crimson"]
@@ -507,8 +519,8 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     # Nbh Size Plot:
     ax1.hlines(4 * np.pi * 5, 0, nr_data_sets, linewidth=2, color="g")
 
-    ax1.scatter(x_vec_full1, res_vec, c=color_vec, label = "Full Estimates")
-    ax1.scatter(x_vev_full1, res_vec_k, c=color_vec, label = "K-Only Estimates")
+    ax1.scatter(x_vec_full1, res_vec, c=color_vec, label="Full Estimates")
+    ax1.scatter(x_vev_full1, res_vec_k, c=color_vec, label="K-Only Estimates")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.legend(loc="upper right")
@@ -549,6 +561,11 @@ def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     # res_numbers = range(3, 4)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
+    
+    # Extract Res-Numbers that actually exist
+    res_numbers = np.array(res_numbers)
+    data_there = np.array([check_if_data(folder, i, method) for i in res_numbers])
+    res_numbers = res_numbers[data_there]
     
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
@@ -1527,12 +1544,12 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
     # multi_ind_single(multi_ind_folder, method=0, res_numbers=range(1,23))
-    # multi_ind_single(multi_ind_folder, method=2)
+    # multi_ind_single(multi_ind_folder, method=0)
     # multi_loci_single(multi_loci_folder, method=2)
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
-    # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
-    multi_barrier_loci("./multi_barrier_bts/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
+    multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
+    # multi_barrier_loci("./multi_barrier_bts/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)

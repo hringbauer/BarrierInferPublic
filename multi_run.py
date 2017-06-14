@@ -1361,19 +1361,26 @@ class MultiLociBarrier(MultiBarrier):
         additional_info = ("20x25 Loci Data Sets [5, 10, 15, 20, 25, ..., 105]")
         self.pickle_parameters(p_names, ps, additional_info)
         
-    def analyze_data_set(self, data_set_nr, res_folder=None, position_barrier=500.5, method=2):
+    def analyze_data_set(self, data_set_nr, res_folder=None, position_barrier=500.5, method=2, deme_x_nr=30, deme_y_nr=20):
         '''Estimate all Parameters. Call fitting Method of MultiBarrier for this.'''
-        super(MultiLociBarrier, self).analyze_data_set(data_set_nr, res_folder=res_folder, position_barrier=position_barrier,
-                               deme_x_nr=30, deme_y_nr=20, method=method)
+        l = 0.006
+        nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
+        bs = 0.5
+        
+        # Then pick the Starting Parameters:
+        start_params = [nbh_size, l, bs]        
+    
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
+                         deme_x_nr=deme_x_nr, deme_y_nr=deme_y_nr)
         
         
     def analyze_data_set_k_only(self, data_set_nr, res_folder="k_only/", method=2, position_barrier=500.5):
         '''Estimate Barrier Strength; taking the other estimates as constant - but estimating k'''
 
         # Fit with "known" Parameters for demography
-        nbh = 4*np.pi*5.0
+        nbh = 4 * np.pi * 5.0
         l = 0.006
-        bs = 0.5 # For sake of completeness
+        bs = 0.5  # For sake of completeness
         
         # Do the Fitting for k only:
         fixed_params = [nbh, l, bs, 1, 0]
@@ -1382,7 +1389,7 @@ class MultiLociBarrier(MultiBarrier):
         start_params = [bs, ]  # Ss will get added later
         
         # Fit the Barrier:
-        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, res_folder = res_folder,
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, res_folder=res_folder,
                          deme_x_nr=30, deme_y_nr=20)
         
         # Save the Parameters for nbh and l which have been used:
@@ -1561,8 +1568,8 @@ if __name__ == "__main__":
     # Multi Loci Barrier Dataset
     MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=1)
     # MultiRun.create_data_set(0)
-    # MultiRun.analyze_data_set(0, method=2)
-    MultiRun.analyze_data_set_k_only(0, method=2)
+    MultiRun.analyze_data_set(0, method=2)
+    # MultiRun.analyze_data_set_k_only(0, method=2)
     
     
     

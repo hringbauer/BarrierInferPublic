@@ -46,7 +46,7 @@ def analyze_barrier_strengths_ll():
 
 
 data_set_nr = int(sys.argv[1])  # Which data-set to use
-# data_set_nr = 500
+#data_set_nr = 500
 print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -78,7 +78,7 @@ MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_proce
 
 
 ########### For creating and analyzing the data sets ###############
-MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
+# MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
 # MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
 
 

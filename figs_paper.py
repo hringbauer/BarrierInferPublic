@@ -405,7 +405,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200)):
     plt.xlabel("Dataset")
     plt.show()
     
-def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_reps=2):
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0, 0.1, 0.5, 1.0], nr_reps=5):
     '''Plots the Bootstraps over Barriers.'''
     nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
     nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS

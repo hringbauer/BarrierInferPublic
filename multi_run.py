@@ -804,10 +804,13 @@ class MultiBarrierBootstrap(MultiBarrier):
         if data_set_eff != 0:
             gtps_sample = bootstrap_genotypes(genotype_mat)
             print("Bootstrapping complete!")
+        
+        else: 
+            gtps_sample = genotype_mat  # Set the sample to Genotype Matrix.
             
         
-        self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat = gtps_sample,
-                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr = data_set_nr)
+        self.fit_barrier(position_barrier, start_params, position_list=position_list, genotype_mat=gtps_sample,
+                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr=data_set_nr)
         
         
         
@@ -1313,20 +1316,22 @@ class MultiLociNr(MultiNbh):
         
 class MultiLociBarrier(MultiBarrier):
     '''Infers Barrier for different Number of Loci.
-    Infers Barrier Strength with fitting everything.
+    Infers Barrier Strength when fitting everything.
     Also has method to infer barrier strength after other Parameters
     have been estimated (k-only)'''
+    
+    name = "multilocibarrier"
     
     def create_data_set(self, data_set_nr):
         '''Creates Dataset'''
 
-        nr_loci_vec = range(5, 106, 10)  # From 1 to 200 in steps of 3.
+        nr_loci_vec = range(5, 106, 5)  # From 1 to 200 in steps of 3.
         nr_loci_vec = np.repeat(nr_loci_vec, 25)
         
-        assert(0<=data_set_nr<len(nr_loci_vec))
-        nr_loci = nr_loci_vec[data_set_nr] # Extracts the Number of Loci
+        assert(0 <= data_set_nr < len(nr_loci_vec))
+        nr_loci = nr_loci_vec[data_set_nr]  # Extracts the Number of Loci
         
-        barrier_strength = 0.1
+        barrier_strength = 0.05
         barrier_pos = 500.5
         ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
         
@@ -1353,8 +1358,54 @@ class MultiLociBarrier(MultiBarrier):
         # Now Pickle Some additional Information:
         p_names = ["Barrier Strength", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
         ps = [barrier_strength, t, p_mean, sigma, mu, ips, sd_p, position_list]
-        additional_info = ("10x25 Loci [5, 15, 25, ..., 105]")
+        additional_info = ("20x25 Loci Data Sets [5, 10, 15, 20, 25, ..., 105]")
         self.pickle_parameters(p_names, ps, additional_info)
+        
+    def analyze_data_set(self, data_set_nr, res_folder=None, position_barrier=500.5, method=2):
+        '''Estimate all Parameters. Call fitting Method of MultiBarrier for this.'''
+        super(MultiLociBarrier, self).analyze_data_set(data_set_nr, res_folder=res_folder, position_barrier=position_barrier,
+                               deme_x_nr=30, deme_y_nr=20, method=method)
+        
+        
+    def analyze_data_set_k_only(self, data_set_nr, res_folder="k_only/", method=2, position_barrier=500.5):
+        '''Estimate Barrier Strength; taking the other estimates as constant - but estimating k'''
+#  
+#         if res_folder == None:  # In case SubFolder was passed on:
+#             subfolder_meth = "method2/"  # Sets subfolder on which Method to use.
+#         else:
+#             subfolder_meth = res_folder
+#         
+#         path = self.data_folder + subfolder_meth + "result" + str(data_set_nr).zfill(2) + ".p"
+#         
+#         # Checks whether estimates are there:
+#         if not os.path.exists(path):
+#             raise RuntimeError("Data Set %i not Existing!!" % data_set_nr)
+#             
+#         # Loads Results:
+#         res = pickle.load(open(path, "rb"))  # Loads the Data
+#         params = res[0]
+#         nbh, l, bs = params[:3]  # Load the relevant Parameters
+
+        # Fit with "known" Parameters for demography
+        nbh = 4*np.pi*5
+        l = 0.006
+        bs=0.5 # For sake of completeness
+        
+        # Do the Fitting for k only:
+        fixed_params = [nbh, l, bs, 1, 0]
+        fit_params = [2, 4]  # Fit Barrier Strength and Variation in allele Frequency.
+        
+        start_params = [bs, ]  # Ss will get added below
+        
+        # Fit the Barrier:
+        self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, res_folder = res_folder,
+                         deme_x_nr=30, deme_y_nr=20)
+        
+        # Save the Parameters for nbh and l which have been used:
+        path = "fix_params" + str(data_set_nr).zfill(2) + ".csv"
+        params_used = np.array([nbh, l])
+        self.save_mat(params_used, filename=path, method=method)
+        
         
                
 ###############################################################################################################################
@@ -1401,7 +1452,7 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_hz_pos":
         return MultiHZPosition(folder, multi_processing=multi_processing)
     
-    elif method =="multi_loci_barrier":
+    elif method == "multi_loci_barrier":
         return MultiLociBarrier(folder, multi_processing=multi_processing)
     
     else: raise ValueError("Wrong method entered!")
@@ -1525,7 +1576,9 @@ if __name__ == "__main__":
     #####################################################
     # Multi Loci Barrier Dataset
     MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=1)
-    MultiRun.create_data_set(0)
+    # MultiRun.create_data_set(0)
+    # MultiRun.analyze_data_set(0, method=2)
+    MultiRun.analyze_data_set_k_only(0, method=2)
     
     
     

@@ -1368,7 +1368,7 @@ class MultiLociBarrier(MultiBarrier):
         bs = 0.5
         
         # Then pick the Starting Parameters:
-        start_params = [nbh_size, l, bs]        
+        start_params = [nbh_size, l, bs]  # SS gets added later on.       
     
         self.fit_barrier(position_barrier, start_params, data_set_nr, method=method,
                          deme_x_nr=deme_x_nr, deme_y_nr=deme_y_nr)
@@ -1390,7 +1390,7 @@ class MultiLociBarrier(MultiBarrier):
         
         # Fit the Barrier:
         self.fit_barrier(position_barrier, start_params, data_set_nr, method=method, res_folder=res_folder,
-                         deme_x_nr=30, deme_y_nr=20)
+                         deme_x_nr=30, deme_y_nr=20, fit_params=fit_params, fixed_params=fixed_params)
         
         # Save the Parameters for nbh and l which have been used:
         # path = "fix_params" + str(data_set_nr).zfill(2) + ".csv"

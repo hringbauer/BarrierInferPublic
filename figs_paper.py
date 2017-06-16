@@ -510,6 +510,9 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     # Load the data:
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])  # Full Data Set
     unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    res_vec_k = np.array([load_pickle_data(folder, i, 0, method, subfolder=k_only_folder) for i in res_numbers])  # K Only Datasets
+    
+    print(res_vec[:4])
     
     for l in range(len(res_numbers)):
         i = res_numbers[l]
@@ -518,15 +521,17 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
             print("Parameter: %i" % j)
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
     
-    print(np.where(res_vec[:,2]>0.3)[0])
     
     
-    #res_vec_k = np.array([load_pickle_data(folder, i, 0, method, subfolder=k_only_folder) for i in res_numbers])  # K Only Datasets
     
     # First Get all the colors
     colors = ["coral", "crimson"]
     color_vec = np.repeat(colors, nr_reps)
     color_vec = np.tile(color_vec, len(loci_nr))[:nr_data_sets]  # Gets the color vector (double and extract what needed)
+    
+    colors = ["cyan", "blue"]
+    color_vec_k = np.repeat(colors, nr_reps)
+    color_vec_k = np.tile(color_vec_k, len(loci_nr))[:nr_data_sets]
     
     x_vec_full1 = res_numbers
     x_ticks = nr_reps/2.0 + np.arange(0,nr_data_sets-1, nr_reps)
@@ -552,6 +557,7 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
 #     
 #     # Plot Barrier:   
     ax3.scatter(x_vec_full1, res_vec[:, 2], c=color_vec, zorder=0)
+    #ax3.scatter(x_vec_full1, res_vec_k[:,0], c= color_vec_k, zorder=0.5)
     ax3.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
     ax3.set_ylim([0, 1])
     ax3.set_ylabel("k", fontsize=18)
@@ -566,6 +572,25 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     plt.xticks(x_ticks, loci_nr)
     plt.xlim([x_vec_full1[0],x_vec_full1[-1]])
     plt.show()
+    
+    f, ((ax1, ax2)) = plt.subplots(2, 1, sharex=True)
+    # Plot Comparison k and k_only:
+    ax1.scatter(x_vec_full1, res_vec[:, 2], c=color_vec, zorder=0)
+    ax1.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
+    ax1.set_ylim([0, 1])
+    ax1.set_ylabel("k", fontsize=18)
+    
+    ax2.scatter(x_vec_full1, res_vec_k[:,0], c= color_vec_k, zorder=0.5)
+    ax2.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
+    ax2.set_ylim([0, 1])
+    ax2.set_ylabel("k_only", fontsize=18)
+    plt.xlabel("Loci Nr")
+    plt.xticks(x_ticks, loci_nr)
+    plt.xlim([x_vec_full1[0],x_vec_full1[-1]])
+    plt.show()
+    
+    print("Correlation k and k only: %.4g" % np.corrcoef(res_vec[250:,2],res_vec_k[250:,0])[0,1])
+    
     
 
 def multi_ind_single(folder, method, res_numbers=range(0, 100)):
@@ -1558,12 +1583,12 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    # multi_ind_single(multi_ind_folder, method=0)
+    multi_ind_single(multi_ind_folder, method=1)
     # multi_loci_single(multi_loci_folder, method=2)
-    #multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
-    multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
+    # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)

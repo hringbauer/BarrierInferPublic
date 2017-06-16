@@ -88,15 +88,13 @@ class MLE_pairwise(GenericLikelihoodModel):
         coords = self.exog
         print("Maximum Memory usage before Kernel calculation: %.4f MB" % memory_usage_resource())
         self.kernel.set_parameters(params)
+        print("Parameters sent to Kernel:")
+        print(self.kernel.give_parameters())
         kernel_mat = self.kernel.calc_kernel_mat(coords) 
         
-        var = params[-1]  # Assumes that the last parameter of the param-vector gives the all. freq. Variance.
         # Calculate Log Likelihood
-        
-        
+        var = params[-1]  # Assumes that the last parameter of the param-vector gives the all. freq. Variance.
         ll = self.likelihood_function(kernel_mat, var)
-        
-
     
         toc = time()
         print("Maximum Memory usage: %.4f MB" % memory_usage_resource())
@@ -121,6 +119,7 @@ class MLE_pairwise(GenericLikelihoodModel):
         print("Mean Allele Freq: %.4f" % p_mean)
         print("Variance in Allele Freq: %.4f" % p_var)
         
+        print("Calculating Likelihood...")
         # Set Mean and Variance of the opposing genotypes.
         q_mean, q_var = 1 - p_mean, p_var
         

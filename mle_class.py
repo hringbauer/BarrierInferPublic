@@ -37,7 +37,7 @@ class MLE_estimator(GenericLikelihoodModel):
     mps = [] 
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                 param_mask=None, multi_processing=0, **kwds):
+                 param_mask=None, fixed_params=None, multi_processing=0, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
@@ -57,8 +57,9 @@ class MLE_estimator(GenericLikelihoodModel):
         if start_params != None:
             self.start_params = start_params 
         if param_mask != None:
-            self.param_mask = param_mask
-
+            self.param_mask = np.array(param_mask)
+        if fixed_params != None:
+            self.fixed_params = np.array(fixed_params)
         
         
         # Some Output that everything loaded successfully:
@@ -72,10 +73,12 @@ class MLE_estimator(GenericLikelihoodModel):
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype Matrix given Coordinate Matrix.'''
         # First some out-put what the current Parameters are:
+        print("Calculating Likelihood...")
+        print("Current variable Parameters: ")
+        print(params)
         params = self.expand_params(params)  # Expands Parameters to full array COMMENT THIS IN AGAIN
-        print("Calculating Likelihood:")
-        for i in xrange(self.nr_params):
-            print(self.parameter_names[i] + ":\t %.4f" % params[i])
+        #for i in xrange(self.nr_params):
+        #    print(self.parameter_names[i] + ":\t %.4f" % params[i])
         
         if np.min(params) <= 0:  # If any Parameters non-positive - return infinite negative ll
             ll = -np.inf
@@ -89,6 +92,8 @@ class MLE_estimator(GenericLikelihoodModel):
     
         coords = self.exog
         self.kernel.set_parameters(params)
+        print("Parameters sent to Kernel:")
+        print(self.kernel.give_parameters())
         kernel_mat = self.kernel.calc_kernel_mat(coords) 
         
         toc = time()
@@ -101,7 +106,7 @@ class MLE_estimator(GenericLikelihoodModel):
             # Optimize the F 4x (Very fast; quadratic convergence)
             for i in range(5):
                 _, lgl, = sess.run([opt_op, logL, ], {K: kernel_mat, mean_param: self.mps})  
-                #print(lgl)     # For Debugging!
+                # print(lgl)     # For Debugging!
             ll, lgl, = sess.run([margL, logL ], {K: kernel_mat, mean_param: self.mps})  # Now calculate the Marginal Likelihood
         
         toc = time()
@@ -238,11 +243,11 @@ class MLE_estimator(GenericLikelihoodModel):
             # margL = logL - 0.5 * logdet
             
             # Set up configuration
-            if self.mp==0:  # In case of no Multiprocessing: Restrict to one thread:
+            if self.mp == 0:  # In case of no Multiprocessing: Restrict to one thread:
                 config = tf.ConfigProto(inter_op_parallelism_threads=1,
                             intra_op_parallelism_threads=1) 
-            elif self.mp==1: # In case of Multiprocessing: Tensorflow uses all there is.
-                config=tf.ConfigProto()
+            elif self.mp == 1:  # In case of Multiprocessing: Tensorflow uses all there is.
+                config = tf.ConfigProto()
             # config.gpu_options.per_process_gpu_memory_fraction = 0.01
             
             return((config, update, opt_op, logL, margL, F, K, mean_param))

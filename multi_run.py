@@ -229,7 +229,7 @@ class MultiRun(object):
         max_dist: Maximum Distance
         fixed_params: Base for fitting
         fit_params: Which Parameters to fit; i.e. overwrite from fixed params
-        start_params: Where to start from
+        start_params: Where to start fit from
         Loci: Vector. Describes which Loci to actually fit.'''
         # Load Data Sets in case not given:
         if len(position_list) == 0 or len(genotype_mat) == 0:  
@@ -258,13 +258,15 @@ class MultiRun(object):
             
         # First Choose the right MLE-Object and set the right starting Parameters:
         if method == 0:
-            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing) 
+            MLE_obj = MLE_estimator("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing,
+                                    param_mask=fit_params, fixed_params=fixed_params) 
             start_params = start_params + [0.04, ]
             fixed_params[-1] = 0.004
         elif method == 1:
-            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing)
+            fixed_params[-1] = 0.01
+            MLE_obj = MLE_pairwise("DiffusionBarrierK0", position_list, genotype_mat, multi_processing=self.multi_processing,
+                        param_mask=fit_params, fixed_params=fixed_params)
             start_params = start_params + [0.01, ]
-            fixec_params[-1] = 0.01
         elif method == 2:
             MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_inds=nr_inds,
                                 min_dist=min_dist, max_dist=max_dist, multi_processing=self.multi_processing,

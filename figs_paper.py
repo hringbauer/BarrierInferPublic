@@ -341,14 +341,14 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     plt.xlabel("Dataset")
     plt.show()
     
-def multi_barrier10(folder, method=2, res_numbers=range(200)):
+def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     '''Print the Estimates from 10x20 replicates of Barrier Strenght Estimation
     with Method 2. Max Plot: Up to what to plot'''
     bs = [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
     nr_bts = 20
     
-    res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
-    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
+    res_vec = np.array([load_pickle_data(folder, i, 0, method, subfolder=res_folder) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method, subfolder=res_folder) for i in res_numbers])
     
     for l in range(len(res_numbers)):
         i = res_numbers[l]
@@ -1583,9 +1583,9 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    multi_ind_single(multi_ind_folder, method=1)
+    # multi_ind_single(multi_ind_folder, method=1)
     # multi_loci_single(multi_loci_folder, method=2)
-    # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)

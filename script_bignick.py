@@ -8,7 +8,7 @@ import pickle as pickle
 import numpy as np
 import sys
 
-mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
         
 ###########Methods for creating Barrier Likelihood Profiles:
@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-data_set_nr = int(sys.argv[1])  # Which data-set to use
-# data_set_nr = 44
+# data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 44
 print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
@@ -54,7 +54,8 @@ data_set_nr = data_set_nr - 1
 # folder = "./cluster_folder/"
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
-folder = "./multi_ind_nr/"
+# folder = "./multi_ind_nr/"
+folder = "./barrier_folder2/"
 # folder ="./multi_loci_nr/"
 # folder = "./multi_2nd/"
 # folder = "./multi_2nd_b/"
@@ -66,12 +67,13 @@ folder = "./multi_ind_nr/"
 # MultiRun = fac_method("multi_cluster", folder, multi_processing=1)   
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
-MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
+MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
 # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
@@ -86,7 +88,7 @@ MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, res_folder="barrier3/" ,method=2)  # Position Barrier is there for the HZ Data.
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=-20.0, res_folder="barrier20m/" ,method=2)
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=18.0, res_folder="barrier18m/" ,method=2)
-MultiRun.analyze_data_set(data_set_nr, method=1)  # Analyzes the results and pickles them.
+MultiRun.analyze_data_set(data_set_nr, method=0)  # Analyzes the results and pickles them.
 # MultiRun.analyze_data_set_k_only(data_set_nr, method=2)
 # MultiRun.analyze_data_set(data_set_nr, method=2, deme_x_nr=30, deme_y_nr=20)
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="all/")
@@ -106,6 +108,3 @@ MultiRun.analyze_data_set(data_set_nr, method=1)  # Analyzes the results and pic
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)
 
 print("Run %i completed. Good job!" % data_set_nr)
-
-
-

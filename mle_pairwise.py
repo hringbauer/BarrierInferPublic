@@ -33,14 +33,14 @@ class MLE_pairwise(GenericLikelihoodModel):
     estimates = []  # Array for the fitted estimates
     start_params = []  # The starting Parameters for the Fit
     kernel = 0  # Class that can calculate the Kernel
-    fixed_params = np.array([200, 0.001, 1.0, 0.])  # Full array nbh, L , t0 , ss
+    fixed_params = np.array([200, 0.001, 1.0, 0.])  # Full array nbh, L , t0 , ss. Default Value.
     param_mask = np.array([0, 1, 3])  # Parameter Mask used to change specific Parameters
     nr_params = 0
     parameter_names = []
     mps = [] 
     
     def __init__(self, kernel_class, coords, genotypes, start_params=None,
-                 param_mask=None, multi_processing=0, **kwds):
+                 param_mask=None, multi_processing=0, fixed_params=None, **kwds):
         '''Initializes the Class.'''
         self.kernel = fac_kernel(kernel_class)  # Loads the kernel object. Use factory funciton to branch
         self.kernel.multi_processing = multi_processing  # Whether to do multi-processing: 1 yes / 0 no
@@ -58,6 +58,8 @@ class MLE_pairwise(GenericLikelihoodModel):
             self.start_params = start_params 
         if param_mask != None:
             self.param_mask = param_mask
+        if fixed_params !=None:
+            self.fixed_params = np.array(fixed_params)
 
         
         
@@ -72,8 +74,10 @@ class MLE_pairwise(GenericLikelihoodModel):
     def loglike(self, params):
         '''Return Log Likelihood of the Genotype-Matrix given Coordinate-Matrix.'''
         # First some out-put what the current Parameters are:
+        print("Calculating Likelihood...")
+        print("Fitting Params:")
+        print(params)
         params = self.expand_params(params)  # Expands Parameters to full array
-        print("Calculating Likelihood:")
         for i in xrange(self.nr_params):
             print(self.parameter_names[i] + ":\t %.4f" % params[i])
         

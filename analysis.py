@@ -1,6 +1,7 @@
 '''
 Created on Oct 13, 2016
 Class that analyses the data produced by the grid object.
+Also contains various other useful Objects
 @author: hringbauer
 '''
 import numpy as np
@@ -344,6 +345,7 @@ class Analysis(object):
         position_list_new, genotypes_new, inds_per_deme = group_inds(position_list, genotypes, demes_x=demes_x, demes_y=demes_y, min_ind_nr=min_ind_nr)
         self.position_list, self.genotypes, self.inds_per_deme = position_list_new, genotypes_new, inds_per_deme
         return position_list_new, genotypes_new, inds_per_deme
+    
                 
 #####################################################################################################################
 # Some Helper Functions for other classes to import from:

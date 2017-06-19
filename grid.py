@@ -402,7 +402,7 @@ class Grid(object):
         p = arc_sin_lin(data)  # Do an arc-sin transform
         genotypes = np.random.binomial(1, p)  # Draw genotypes
         return genotypes  # Returns the geographic list + Data
- 
+
  ###################################################################################################################   
     
 class Secondary_Grid(Grid):

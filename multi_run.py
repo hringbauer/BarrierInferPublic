@@ -285,7 +285,7 @@ class MultiRun(object):
         try:
             conf_ind = fit.conf_int()
         except:  # In case Covariances failed (i.e. Inverting Hessian failed...)
-            conf_ind = np.array([param, param] for param in params)  # Set CI to 0
+            conf_ind = np.array([[param, param] for param in params])  # Set CI to 0
             
         
         # Pickle Parameter Estimates:

@@ -8,7 +8,7 @@ import pickle as pickle
 import numpy as np
 import sys
 
-mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 
         
 ###########Methods for creating Barrier Likelihood Profiles:
@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-# data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 44
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+# data_set_nr = 44
 print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 

@@ -51,8 +51,8 @@ MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, method=1)
 
 #for i in xrange(1, 99):
-data_set_nr = int(sys.argv[1])  # Which data-set to use
-# data_set_nr = 50
+#data_set_nr = int(sys.argv[1])  # Which data-set to use
+data_set_nr = 10
 print("Do Run Nr. %i" % data_set_nr)
 MultiRun.analyze_data_set(data_set_nr, method=0)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)

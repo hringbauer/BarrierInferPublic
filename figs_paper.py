@@ -1585,8 +1585,8 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
     # multi_ind_single(multi_ind_folder, method=1)
     # multi_loci_single(multi_loci_folder, method=2)
-    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
-    # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
+    # multi_barrier_single(multi_barrier_folder, method=1)  # Mingle with the above for different Barrier Strengths.
+    multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     

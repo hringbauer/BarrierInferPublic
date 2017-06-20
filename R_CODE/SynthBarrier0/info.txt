@@ -1,0 +1,6 @@
+Data taken from run 32 of barrier10 Data set.
+
+nbh_size: 4pi*5
+l: 0.006
+k: 0.05
+sd_p: 0.1

@@ -1,0 +1,72 @@
+
+R version 3.1.1 (2014-07-10) -- "Sock it to Me"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> # TODO: This is an R Script to install Geneland on 
+> # the cluster.
+> # Author: hringbauer
+> # Date: June 20th 2017
+> ###############################################################################
+> 
+> ## Create the personal library if it doesn't exist. Ignore a warning if the directory already exists.
+> dir.create(Sys.getenv("R_LIBS_USER"), showWarnings = FALSE, recursive = TRUE)
+> 
+> 
+> ## Install one package.
+> ## install.packages("timeDate", Sys.getenv("R_LIBS_USER"), repos = "http://cran.case.edu" )
+> ## Install a package that you have copied to the remote system.
+> install.packages("Geneland_4.0.8.tar.gz", Sys.getenv("R_LIBS_USER"), repos=NULL)
+* installing *source* package ‘Geneland’ ...
+** libs
+gfortran   -fpic  -g -O2 -fstack-protector-strong  -c alarousset.f -o alarousset.o
+gfortran   -fpic  -g -O2 -fstack-protector-strong  -c ggfstat.f -o ggfstat.o
+gfortran   -fpic  -g -O2 -fstack-protector-strong  -c hz.f -o hz.o
+gfortran   -fpic  -g -O2 -fstack-protector-strong  -c main.f -o main.o
+gcc -std=gnu99 -I/usr/share/R/include -DNDEBUG      -fpic  -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -D_FORTIFY_SOURCE=2 -g  -c wrapper.c -o wrapper.o
+gcc -std=gnu99 -shared -Wl,-z,relro -o Geneland.so alarousset.o ggfstat.o hz.o main.o wrapper.o -lgfortran -lm -lquadmath -L/usr/lib/R/lib -lR
+installing to /nfs/scistore03/bartogrp/hringbauer/R/x86_64-pc-linux-gnu-library/3.1/Geneland/libs
+** R
+** data
+** inst
+** preparing package for lazy loading
+Warning in fun(libname, pkgname) :
+  no DISPLAY variable so Tk is not available
+** help
+*** installing help indices
+** building package indices
+** testing if installed package can be loaded
+Warning in fun(libname, pkgname) :
+  no DISPLAY variable so Tk is not available
+* DONE (Geneland)
+> 
+> 
+> ## Install multiple packages.
+> ## install.packages(c("timeDate","robustbase"), Sys.getenv("R_LIBS_USER"), repos = "http://cran.case.edu" )
+> 
+> 
+> #################################################################################
+> # Instructions:
+> # 1) Submit Command is: R CMD BATCH install-packages.R
+> 
+> # 2) Confirm installation by listing the contents of ~/R
+> 
+> # 3) Retrieve any error messages from install-packages.Rout, which is generated as a result of running install-packages.R.
+> 
+> proc.time()
+   user  system elapsed 
+  9.824   5.104  12.653 

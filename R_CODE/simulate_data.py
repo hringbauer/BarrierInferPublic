@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 def simulate_panmictic_barrier(folder, save=False, plot=False):
     '''Method to simulate Data for both sides of a barrier. Both sides are panmictic.'''
     position_list = np.array([(500 + i, 500 + j) 
-                              for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # Space 1: 2400 Individuals. -29,31 -19,21
+                              for i in range(-24, 26, 1) for j in range(-9, 11, 1)])  # Space 1: 2400 Individuals. -29,31 -19,21
     nr_loci = 200
     std_overall = 0.1  # Standard Deviation of Loci on the left side.
     std_pr = 0.02  # Standard Deviation of Loci on the right side - what is the deviation.
@@ -113,7 +113,7 @@ def data_to_geneland_folder(coords_path, genotype_path, save_folder, delimiter="
     print("Done.")
     
 # Run the code
-simulate_panmictic_barrier(folder ="./2Deme2400i200l/", save=True, plot=True)
+simulate_panmictic_barrier(folder ="./2Deme1000i200l/", save=True, plot=True)
 #data_to_geneland_folder("./ExternalFiles/barrier_file_coords32.csv","./ExternalFiles/barrier_file_genotypes32.csv", "./SynthBarrier0/")
 # data_to_geneland_folder("./ExternalFiles/coordinatesHZALL0.csv","./ExternalFiles/genotypesHZALL0.csv", "./HZData/", p=True)
 

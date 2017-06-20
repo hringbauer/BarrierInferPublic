@@ -21,7 +21,7 @@ getwd()  # Assumes R-Script is run from the R_CODE folder!!
 data_set_nr = args[1]  # Dont forget: Not Python Indexing!!
 
 data_set_nr = 1
-folder = "./2Deme2400i200l/"
+folder = "./2Deme1000i200l/"
 input_file_g = "genotypes.csv"
 input_file_c = "coords.csv"
 output_folder = "output" # End is appended later on

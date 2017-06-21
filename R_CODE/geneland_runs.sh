@@ -3,12 +3,12 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "i1000l200"
+#$ -N "i400l200"
 #$ -m ea
-#$ -l mf=2G
-#$ -l mem_free=2G
-#$ -l h_vmem=2G
-#$ -l h_rt=100:00:00
+#$ -l mf=4G
+#$ -l mem_free=4G
+#$ -l h_vmem=4G
+#$ -l h_rt=20:00:00
 #$ -cwd
 #$ -t 1-10:1
 

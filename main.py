@@ -269,11 +269,11 @@ def main():
                 # './cluster_folder/barrier_file_coords01.csv'
                 # ./cluster_folder/barrier_file_coords01.csv
                 # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
+                # ./Data/coordinates400i200l.csv ./Data/genotypes400i200l.csv
                 
-                
-                position_list = np.loadtxt('./Data/coordinates400i200l.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = np.loadtxt('barrier_folder2/barrier_file_coords60.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./Data/genotypes400i200l.csv', delimiter='$').astype('float64')
+                genotype_matrix = np.loadtxt('barrier_folder2/barrier_file_genotypes60.csv', delimiter='$').astype('float64')
                 #genotype_matrix = genotype_matrix / 2.0  # In case of Diploids
                 
                 

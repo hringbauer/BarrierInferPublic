@@ -21,7 +21,7 @@ getwd()  # Assumes R-Script is run from the R_CODE folder!!
 data_set_nr = args[1]  # Dont forget: Not Python Indexing!!
 
 #data_set_nr = 1
-folder = "./SynthFull/"
+folder = "./SynthKVar/"
 input_file_g = "genotypes.csv"
 input_file_c = "coords.csv"
 output_folder = "output" # End is appended later on
@@ -52,12 +52,12 @@ ncol(geno)
 start <- Sys.time ()  # Tic
 MCMC(coordinates=coord,
 		geno.dip.codom=geno,
-		varnpop=FALSE,     # If K is variable
+		varnpop=TRUE,     # If K is variable. Originally FALSE
 		npopmin=2,
-		npopmax=2,
+		npopmax=10,
 		spatial=TRUE,
 		freq.model="Uncorrelated",
-		nit=100000,        # Number of Iterations
+		nit=500000,        # Number of Iterations
 		thinning=100,
 		path.mcmc=output_folder)
 print("MCMC Run Done!")

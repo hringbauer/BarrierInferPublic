@@ -1,1 +1,3 @@
 From barrierfolder2; dataset 60. I.e. Barrier Strength: 0.1
+
+Plots are from Output 3

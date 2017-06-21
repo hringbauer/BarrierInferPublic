@@ -67,12 +67,16 @@ plot_output <- function(folder, data_set_nr=1, post_process=FALSE, save=FALSE){
 	invisible(readline(prompt="Press [enter] to leave"))
 	dev.off()
 	dev.new()
+	graphics.off()
 	
 }
 
 
+
 library(Geneland)
-#plot_output("./2Deme1000i200l/", data_set_nr=9, post_process=TRUE)
-plot_output("./2Deme400i200l/", data_set_nr=1, post_process=FALSE, save=FALSE)
+# plot_output("./2Deme1000i200l/", data_set_nr=9, post_process=TRUE)
+# plot_output("./2Deme400i200l/", data_set_nr=1, post_process=FALSE, save=FALSE) 
+plot_output("./SynthWeak/", data_set_nr=6, post_process=FALSE, save=TRUE)  # 6
+# plot_output("./SynthFull/", data_set_nr=9, post_process=FALSE, save=TRUE) # 9. 3 is interesting
 
 

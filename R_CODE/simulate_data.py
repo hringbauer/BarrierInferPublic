@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def simulate_panmictic_barrier(folder, save=False, plot=False):
+def simulate_panmictic_barrier(folder, save=False, plot=False, save_old=False):
     '''Method to simulate Data for both sides of a barrier. Both sides are panmictic.'''
     position_list = np.array([(500 + i, 500 + j) 
                               for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Space 1: 2400 Individuals. -29,31 -19,21
@@ -50,8 +50,15 @@ def simulate_panmictic_barrier(folder, save=False, plot=False):
         output_coords_path = folder + "coords.csv"  # Output Name for Coordinates
         output_genotype_path = folder + "genotypes.csv"       # Output Name for Genotypes
         
+        
         transform_to_geneland(genotypes, output_genotype_path) # Transform and save Genotypes
         np.savetxt(output_coords_path, position_list, fmt='%i')  # Saves Coordinates
+    # Saves Data so that it is compatible with old Framework.
+    if save_old == True:
+        output_genotype_path = folder + "genotypes_of.csv"       # Output Name for Genotypes
+        output_coords_path = folder + "coordinates_of.csv"  # Output Name for Coordinates
+        np.savetxt(output_coords_path, position_list, fmt='%i', delimiter="$")  # Saves Coordinates
+        np.savetxt(output_genotype_path, genotypes, fmt='%i', delimiter="$")
         
     print("\nSimulated Genotypes:\n Nr Inds: % i \n Nr. Loci: % i" % np.shape(genotypes))
     return position_list, genotypes
@@ -110,11 +117,11 @@ def data_to_geneland_folder(coords_path, genotype_path, save_folder, delimiter="
     
     # Save Coordinates.
     np.savetxt(coords_path_out, coords, fmt='%i')  # Save the coordinates
-    print("Done.")
+    print("Done. Success!")
     
 # Run the code
-simulate_panmictic_barrier(folder ="./2Deme400i200l/", save=True, plot=True)
-#data_to_geneland_folder("./ExternalFiles/barrier_file_coords32.csv","./ExternalFiles/barrier_file_genotypes32.csv", "./SynthBarrier0/")
+simulate_panmictic_barrier(folder ="./2Deme400i200l/", save=True, plot=True, save_old=True)
+#data_to_geneland_folder("./ExternalFiles/barrier_file_coords60.csv","./ExternalFiles/barrier_file_genotypes60.csv", "./SynthWeak/")
 # data_to_geneland_folder("./ExternalFiles/coordinatesHZALL0.csv","./ExternalFiles/genotypesHZALL0.csv", "./HZData/", p=True)
 
 

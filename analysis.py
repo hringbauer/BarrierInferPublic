@@ -16,7 +16,7 @@ from scipy.optimize.minpack import curve_fit
 from time import time
 
 
-parameters_fit = [210.75, 0.00000073, 1.0, 0.0376]  # Parameters used in manual Kernel Plot. Old: 0.04194
+parameters_fit = [100.75, 0.002, 1.0, 0.0376]  # Parameters used in manual Kernel Plot. Old: 0.04194
 # 7.38282829e+01   9.44133108e-04   5.15210543e-01
 
 class Fit_class(object):
@@ -148,7 +148,7 @@ class Analysis(object):
             entry += 1     
         self.vis_correlation(distance, correlation, bins=bins)  # Visualize the correlation
     
-    def vis_correlation(self, distance, correlation, bins=50, cut_off_frac=0.75):
+    def vis_correlation(self, distance, correlation, bins=50, cut_off_frac=0.75, fit=True):
         '''Take pairwise correlation and distances as inputs and visualizes them.
         Cut_Off_Frac: At which fraction to do the cut-off'''
         bin_corr, bin_edges, _ = binned_statistic(distance, correlation, bins=bins, statistic='mean')  # Calculate Bin Values
@@ -162,23 +162,24 @@ class Analysis(object):
         Nb_std = (-std_k / k) * Nb_est
         
         
+        x_plot = np.linspace(min(bin_dist), max(bin_dist) * cut_off_frac, 100)
         # Fit Diffusion/RBF Kernel; Comment out depending on what is need:
-        params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins / 2], bin_dist[:bins / 2], stand_errors[:bins / 2])
+        if fit==True:
+            params, cov_matrix = fit_diffusion_kernel(bin_corr[:bins / 2], bin_dist[:bins / 2], stand_errors[:bins / 2])
+            y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
+            std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
+            print(params)
+            print(std_params)
         # params, cov_matrix = fit_rbf_kernel(bin_corr[:bins/2], bin_dist[:bins/2], stand_errors[:bins/2])
         
-        std_params = np.sqrt(np.diag(cov_matrix))  # Get the standard deviation of the results
         
         # print("Fitted Parameters + Errors from least square fit: ")
-        print(params)
-        print(std_params)
         
         print("Log Fit: ")
         print(Nb_est)
         print(Nb_std)
         
         
-        x_plot = np.linspace(min(bin_dist), max(bin_dist) * cut_off_frac, 100)
-        y_fit = diffusion_kernel(x_plot, *params)  # Calculate the best fits (diffusion Kernel is vector)
         # y_fit = rbf_kernel(x_plot, *params)  # Calculate the best fits (RBF Kernel is vector)
         
         KC = fac_kernel("DiffusionK0")
@@ -193,8 +194,8 @@ class Analysis(object):
         
         plt.errorbar(bin_dist[:int(bins * cut_off_frac)], bin_corr[:int(bins * cut_off_frac)], stand_errors[:int(bins * cut_off_frac)], fmt='ro', label="Binwise estimated Correlation")
         plt.plot(x_plot, C + k * np.log(x_plot), 'g', label="Fitted Log Decay")
-        
-        plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")
+        if fit==True:
+            plt.plot(x_plot, y_fit, 'yo', label="Least square fit.")
         plt.plot(x_plot, kernel[0, 1:], 'bo', label="From Kernel; known parameters")
         plt.axhline(np.mean(bin_corr), label="Mean Value", color='k', linewidth=2)
         plt.annotate(r'$\bar{N_b}=%.4G \pm %.2G$' % (Nb_est, Nb_std) , xy=(0.6, 0.7), xycoords='axes fraction', fontsize=15)

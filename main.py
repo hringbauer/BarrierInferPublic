@@ -216,7 +216,7 @@ def main():
                 if inp1 == 7:
                     # Plot the data
                     row = int(input("What genotype raw? \n"))
-                    analysis.plot_positions(row) # inds_per_deme
+                    analysis.plot_positions(row)  # inds_per_deme
 
                 if inp1 == 8:
                     analysis.plot_all_freqs()
@@ -271,10 +271,10 @@ def main():
                 # ./hz_folder/hz_file_coords04.csv  ./hz_folder/hz_file_genotypes04.csv
                 
                 
-                position_list = np.loadtxt('./multi_barrier_hz/chr0/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                position_list = np.loadtxt('./Data/coordinates400i200l.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                 # position_list = position_list / 50.0  # Normalize; for position_list and genotype Matrix of HZ data!
-                genotype_matrix = np.loadtxt('./multi_barrier_hz/chr0/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')
-                
+                genotype_matrix = np.loadtxt('./Data/genotypes400i200l.csv', delimiter='$').astype('float64')
+                #genotype_matrix = genotype_matrix / 2.0  # In case of Diploids
                 
                 
                 # genotype_matrix = np.reshape(genotype_matrix, (len(genotype_matrix), 1))

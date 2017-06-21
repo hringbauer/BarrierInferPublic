@@ -36,26 +36,43 @@ plot_output <- function(folder, data_set_nr=1, post_process=FALSE, save=FALSE){
 		print(Sys.time () - start) # Toc
 	}
 	
+	# Plot Number of Tile (Convergence Criterium)
+	dev.new()
+	Plotntile(path.mcmc=output_folder,
+			burnin=200,
+			printit=save,
+			file="nr_tiles.pdf")
 	
+	
+	invisible(readline(prompt="Press [enter] to continue"))
+	dev.off()
+	dev.new()
 	# Plot PosteriorMode:
 	PosteriorMode(coordinates=coord,
 			path.mcmc=output_folder,
-			file="map.pdf",
+			file="posterior.pdf",
 			printit=save,
 			format="pdf")
 	
+	
+	invisible(readline(prompt="Press [enter] to continue"))
+	dev.off()
+	dev.new()
 	# Plot Tesselation:
 	PlotTessellation(coordinates=coord, 
 			path.mcmc=output_folder,
 			path=folder,
 			printit=save)
 	print("Plotting Complete!")
+	invisible(readline(prompt="Press [enter] to leave"))
+	dev.off()
+	dev.new()
 	
 }
 
 
 library(Geneland)
 #plot_output("./2Deme1000i200l/", data_set_nr=9, post_process=TRUE)
-plot_output("./2Deme/i400l200/", data_set_nr=1, post_process=FALSE)
+plot_output("./2Deme400i200l/", data_set_nr=1, post_process=FALSE, save=FALSE)
 
 

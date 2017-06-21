@@ -3,7 +3,7 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "i400l200"
+#$ -N "SynthFull"
 #$ -m ea
 #$ -l mf=4G
 #$ -l mem_free=4G

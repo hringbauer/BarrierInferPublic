@@ -1,0 +1,2 @@
+For BarrierFolder2. Dataset 00.
+I.e. Barrier strength: 0.0

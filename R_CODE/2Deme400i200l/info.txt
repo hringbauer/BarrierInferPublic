@@ -1,0 +1,5 @@
+200 to the left; 200 to the right.
+491 to 510 on both axis:
+
+p_l : 0.5 + st_p(0.1)
+p_r : 0.5 + st_p(0.1) + st_p_r(0.1)

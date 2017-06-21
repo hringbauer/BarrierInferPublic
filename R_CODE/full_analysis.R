@@ -26,6 +26,8 @@ install.packages(geneland_path, repos=NULL)
 ####################################################
 # Load packages
 library(Geneland)
+
+
 # Geneland.GUI()
 # Script for Processing the Data
 # Set Working Directory:
@@ -34,16 +36,17 @@ setwd(wd)
 #getwd()
 
 
-folder = "./2Deme/"
-input_file_g = "i300l100_genotypes.csv"
-input_file_c = "i300l100_coords.csv"
-output_folder = "output/"
+#folder = "./2Deme/i600l200/"
+folder = "./2Deme1000i200l/"
+input_file_g = "genotypes.csv"
+input_file_c = "coords.csv"
+output_folder = "output3/"
 
 geno_path = paste(folder, input_file_g,  sep = "")
 coord_path = paste(folder, input_file_c,  sep = "")
 
 output_folder = paste(folder, output_folder, sep = "")
-print(output_file)
+print(output_folder)
 		
 # Read the Data:
 coord <- read.table(coord_path)
@@ -76,20 +79,34 @@ Sys.time () - start # Toc
 
 #####################################################
 ### Post Processing
-
+start <- Sys.time ()  # Tic
 PostProcessChain(coordinates=coord,
-		geno.dip.codom=geno,
-		path.mcmc=folder,
+		path.mcmc=output_folder,
 		nxdom=100,
 		nydom=100,
 		burnin=200)
+Sys.time () - start # Toc
 
-Plotnpop(path.mcmc=folder,
+Plotnpop(path.mcmc=output_folder,
 		burnin=200)
 
 PosteriorMode(coordinates=coord,
-		path.mcmc="./",
+		path.mcmc=output_folder,
 		file="map.pdf")
+
+PosteriorMode(coordinates=coord,
+		path.mcmc=output_folder,
+		file="map.pdf",
+		printit=TRUE,
+		format="pdf")
+
+PlotTessellation(coordinates=coord, 
+		path.mcmc=output_folder,
+		path=folder,
+		printit=FALSE)
+
+
+
 
 
 

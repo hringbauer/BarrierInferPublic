@@ -58,7 +58,7 @@ MCMC(coordinates=coord,
 		spatial=TRUE,
 		freq.model="Uncorrelated",
 		nit=500000,        # Number of Iterations
-		thinning=100,
+		thinning=500,
 		path.mcmc=output_folder)
 print("MCMC Run Done!")
 Sys.time () - start # Toc

@@ -10,9 +10,10 @@ import pickle
 import matplotlib.pyplot as plt
 import itertools
 import os
+from scipy.special import kv as kv  # Import Bessel Function
 from time import time
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from analysis import kinship_coeff, calc_f_mat  # Import functions from Analysis
+from analysis import kinship_coeff, calc_f_mat, calc_h_mat, group_inds  # Import functions from Analysis
 from scipy.stats import binned_statistic
 from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
@@ -96,7 +97,38 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     plt.show()
     
     
-
+def calc_bin_homos(positions, genotypes, bins=25, max_dist=0):
+    '''Calculate the average Number of Homozygotes in Distance Bins'''
+    distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
+    correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
+    entry = 0
+    
+    h_mat = calc_h_mat(genotypes)  # Does the whole calculation a bit quicker
+    dist_mat = np.linalg.norm(positions[:, None] - positions, axis=2)  # Calculate the whole Distance Matrix
+    
+    # print("positions: ")
+    # print(positions)
+    # print("Max Dist.: %.4f" % max_dist)
+    # Extract the upper triangular Matrix of the Estimates:
+    nr_inds = np.shape(genotypes)[0]
+    xi, yi = np.tril_indices(nr_inds, -1)  # Gives the corresponding indices to array in matrix of thr. sharing
+    
+    
+    pw_h = h_mat[xi, yi]
+    pw_dist = dist_mat[xi, yi]
+    
+    
+    if max_dist > 0:
+        inds_dist = np.where(pw_dist < max_dist)[0]
+        assert(len(inds_dist) > 0)
+        pw_h = pw_h[inds_dist]
+        pw_dist = pw_dist[inds_dist]
+        
+    bin_dist, bin_corr, stand_errors, _ = bin_correlations(pw_dist, pw_h, bins=bins)
+    print(bin_dist)
+    print(bin_corr)
+    return bin_dist, bin_corr, stand_errors
+    
 def calc_bin_correlations(positions, genotypes, bins=25, p=0.5, correction=True):
     '''Helper function Calculates Correlations and bins them'''
     # Load the data:
@@ -141,8 +173,10 @@ def bin_correlations(distance, correlation, bins=50, statistic='mean', correctio
 
 def argsort_bts(x, nr_bts):
     '''Arg Sorts a Vector within Bootstraps.
-    Returns sorted indices; and indices of true value'''
-    assert(len(x) % nr_bts == 0)  # Check whether Bootstraps 
+    Return: 
+    Sorted indices
+    Indices of true value'''
+    assert(len(x) % nr_bts == 0)  # Check whether Bootstraps diveds nr of given array
     
     inds_sorted = np.zeros(len(x)).astype("int")
     true_inds = []
@@ -220,7 +254,8 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         # res_numbers = range(0,86)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
-        
+        lw=3
+        ul_nb=350 # Upper Limit Neighborhood Size
         # Load the Data for all three methods
         res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers])
         unc_vec0 = np.array([load_pickle_data(folder, i, 1, method=0) for i in res_numbers])
@@ -231,63 +266,66 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
         unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers])
         
+        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(11,11))
         
-        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True)
-        
-        ax1.hlines(4 * np.pi, 0, 25, linewidth=3, color=c_lines)
-        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=3, color=c_lines)
-        ax1.hlines(4 * np.pi * 9, 50, 75, color=c_lines)
-        ax1.hlines(4 * np.pi * 13, 75, 100, color=c_lines)
-        ax1.errorbar(res_numbers, res_vec0[:, 0], yerr=res_vec0[:, 0] - unc_vec0[:, 0, 0], fmt="o", label="Nbh", color=c_dots)
-        ax1.set_ylim((0, 180))
+        ax1.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+        ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+        ax1.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+        ax1.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+        ax1.plot(res_numbers, res_vec0[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+        ax1.set_ylim((0, ul_nb))
         ax1.set_ylabel("Nbh", fontsize=18)
+        ax1.set_title("Method 1", fontsize=18)
 
-        ax2.errorbar(res_numbers, res_vec0[:, 1], yerr=res_vec0[:, 1] - unc_vec0[:, 1, 0], fmt="o", label="L", color=c_dots)
-        ax2.hlines(0.006, 0, 100, linewidth=2, color=c_lines)
+        ax2.plot(res_numbers, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
+        ax2.hlines(0.006, 0, 100, linewidth=lw, color=c_lines)
         ax2.set_ylabel("L", fontsize=18)
         ax2.set_ylim((0, 0.02))
         
-        ax3.errorbar(res_numbers, res_vec0[:, 2], yerr=res_vec0[:, 2] - unc_vec0[:, 2, 0], fmt="o", label="ss", color=c_dots)
-        ax3.hlines(0.04, 0, 100, linewidth=2, color=c_lines)
-        ax3.set_ylabel("SS", fontsize=18)
+        ax3.plot(res_numbers, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+        ax3.hlines(0.04, 0, 100, linewidth=lw, color=c_lines)
+        ax3.set_ylabel("Var. Par.", fontsize=18)
         
-        ax4.hlines(4 * np.pi, 0, 25, linewidth=2, color=c_lines)
-        ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color=c_lines)
-        ax4.hlines(4 * np.pi * 9, 50, 75, color=c_lines)
-        ax4.hlines(4 * np.pi * 13, 75, 100, color=c_lines)
-        ax4.errorbar(res_numbers, res_vec1[:, 0], yerr=res_vec1[:, 0] - unc_vec1[:, 0, 0], fmt="o", label="Nbh", color=c_dots, zorder=0)
-        ax4.set_ylim((0, 180))
+        ax4.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+        ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+        ax4.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+        ax4.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+        ax4.plot(res_numbers, res_vec1[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+        ax4.set_ylim((0, ul_nb))
+        ax4.set_title("Method 2", fontsize=18)
         ax4.set_yticks([])
         
-        ax5.errorbar(res_numbers, res_vec1[:, 1], yerr=res_vec1[:, 1] - unc_vec1[:, 1, 0], fmt="o", label="L", color=c_dots, zorder=0)
-        ax5.hlines(0.006, 0, 100, linewidth=2, color=c_lines, zorder=1)
+        ax5.plot(res_numbers, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
+        ax5.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
         ax5.set_ylim((0, 0.02))
         ax5.set_yticks([])
         
-        ax6.errorbar(res_numbers, res_vec1[:, 2], yerr=res_vec1[:, 2] - unc_vec1[:, 2, 0], fmt="o", label="ss", color=c_dots, zorder=0)
-        ax6.hlines(0.01, 0, 100, linewidth=2, color=c_lines, zorder=1)
+        ax6.plot(res_numbers, res_vec1[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
+        ax6.hlines(0.01, 0, 100, linewidth=lw, color=c_lines, zorder=1)
         ax6.set_yticks([])
         
-        ax7.hlines(4 * np.pi, 0, 25, linewidth=2, color=c_lines)
-        ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=2, color=c_lines)
-        ax7.hlines(4 * np.pi * 9, 50, 75, color=c_lines)
-        ax7.hlines(4 * np.pi * 13, 75, 100, color=c_lines)
-        ax7.errorbar(res_numbers, res_vec2[:, 0], yerr=res_vec2[:, 0] - unc_vec2[:, 0, 0], fmt="o", label="Nbh", color=c_dots, zorder=0)
-        ax7.set_ylim((0, 180))
+        ax7.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+        ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+        ax7.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+        ax7.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+        ax7.plot(res_numbers, res_vec2[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+        ax7.set_ylim((0, ul_nb))
+        ax7.set_title("Method 3", fontsize=18)
         ax7.set_yticks([])
         # ax1.legend()
         
-        ax8.errorbar(res_numbers, res_vec2[:, 1], yerr=res_vec2[:, 1] - unc_vec2[:, 1, 0], fmt="o", label="L", color=c_dots, zorder=0)
-        ax8.hlines(0.006, 0, 100, linewidth=2, color=c_lines, zorder=1)
+        ax8.plot(res_numbers, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
+        ax8.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
         ax8.set_ylim((0, 0.02))
         ax8.set_yticks([])
         
-        ax9.errorbar(res_numbers, res_vec2[:, 2], yerr=res_vec2[:, 2] - unc_vec2[:, 2, 0], fmt="o", label="ss", color=c_dots, zorder=0)
-        ax9.hlines(0.52, 0, 100, linewidth=2, color=c_lines, zorder=1)
+        ax9.plot(res_numbers, res_vec2[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
+        ax9.hlines(0.52, 0, 100, linewidth=lw, color=c_lines, zorder=1)
         ax9.set_yticks([])
-        
-        # ax3.legend()
+        plt.gcf().text(0.5,0.04,"Data Set Nr.", ha="center", fontsize=18) # Set the x-Label
         plt.show()
+        # ax3.legend()
+        
     
     
 def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15]):
@@ -368,15 +406,15 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     ax1.plot(res_numbers, res_vec[:, 0], "ko", label="Nbh", alpha=0.8,
                  zorder=0, color="grey")
     ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.title.set_text("Method: %s" % str(method))
+    ax1.set_ylabel("Nbh", fontsize=18, rotation=0, labelpad=18)
+    # ax1.title.set_text("Method: %s" % str(method))
 
     # L Plot:
     ax2.plot(res_numbers, res_vec[:, 1], "o", color="grey", label="L", alpha=0.8,
                  zorder=0)
     ax2.hlines(0.006, res_numbers[0], res_numbers[-1], linewidth=3, color="g")
     ax2.set_ylim([0, 0.03])
-    ax2.set_ylabel("L", fontsize=18)
+    ax2.set_ylabel("m", fontsize=18, rotation=0, labelpad=10)
     # ax2.legend()
     
     # Barrier Plot Left Half:
@@ -407,7 +445,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
         ax32.hlines(y, x0, x1, linewidth=3, color="g", zorder=1)
         
         
-    ax3.set_ylabel("Barrier", fontsize=18)
+    ax3.set_ylabel("$\gamma$", fontsize=18, rotation=0, labelpad=10)
     ax3.set_ylim([0, 0.2])
     ax3.tick_params('y', colors='blue')
     ax32.set_ylim([0, 1.1])
@@ -417,8 +455,9 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     ax4.plot(res_numbers, res_vec[:, 3], "o", color="grey", label="ss", alpha=0.8,
                  zorder=0)
     ax4.hlines(0.52, res_numbers[0], res_numbers[-1], linewidth=3, color="g")
-    ax4.set_ylabel("SS", fontsize=18)
-    ax4.set_xlabel("Dataset")
+    ax4.set_ylabel("s", fontsize=18, rotation=0, labelpad=10)
+    ax4.set_xlabel("Dataset", fontsize=18)
+    plt.xlim([0, 200])
     plt.show()
     
 def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999], nr_reps=5):
@@ -469,9 +508,9 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999
     ax1.scatter(x_vec_full1, res_vec[inds_sorted, 0], c=color_vec, label="Bootstrap Estimates")
     ax1.plot(x_vec_full1[true_inds], res_vec[x_true, 0], "ko", markersize=6, label="True Values")
     ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.legend(loc="upper right")
-    ax1.title.set_text("Method: %s" % str(method))
+    ax1.set_ylabel("Nbh", fontsize=18, rotation=0, labelpad=16)
+    # ax1.legend(loc="upper right")
+    # ax1.title.set_text("Method: %s" % str(method))
 
     # L Plot:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 1], nr_bts)
@@ -479,25 +518,28 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999
     ax2.plot(x_vec_full1[true_inds], res_vec[x_true, 1], "ko", markersize=6, label="True Values")
     ax2.hlines(0.006, 0, nr_data_sets, linewidth=2, color="g")
     ax2.set_ylim([0, 0.03])
-    ax2.set_ylabel("L", fontsize=18)
+    ax2.set_ylabel("m", fontsize=18, rotation=0, labelpad=10)
     # ax2.legend()
     
     # Plot Barrier:   
     inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
-    ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6, zorder=0)
+    ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6, zorder=0, label="Bootstrap Estimates")
     ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6, zorder=2)
     for i in range(nr_data_sets):
         ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=2, color="g", zorder=1)
     ax3.set_ylim([0, 1])
-    ax3.set_ylabel("L", fontsize=18)
+    ax3.legend(loc="upper left")
+    ax3.set_ylabel("$\gamma$", fontsize=18, rotation=0, labelpad=10)
  
 #     # SS Plot:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 3], nr_bts)
     ax4.scatter(x_vec_full1, res_vec[inds_sorted, 3], c=color_vec)
     ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="True Values")
     ax4.hlines(0.52, 0, nr_data_sets, linewidth=2, color="g")
-    ax4.set_ylabel("SS", fontsize=18)
-    plt.xlabel("Dataset")
+    ax4.set_ylabel("s", fontsize=18, rotation=0)
+    plt.xlabel("Dataset", fontsize=18)
+    plt.xlim([0, 20])
+    plt.xticks(np.linspace(0, 20, (nr_all_data + 1) / 100), map(int, np.linspace(0, nr_all_data, (nr_all_data + 1) / 100)), fontsize=10)
     plt.show()
     
 def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(5, 101, 5), nr_reps=25, k_true=0.05):
@@ -534,22 +576,22 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     color_vec_k = np.tile(color_vec_k, len(loci_nr))[:nr_data_sets]
     
     x_vec_full1 = res_numbers
-    x_ticks = nr_reps/2.0 + np.arange(0,nr_data_sets-1, nr_reps)
+    x_ticks = nr_reps / 2.0 + np.arange(0, nr_data_sets - 1, nr_reps)
     # ax32 = ax3.twinx()  # Copy for different y-Scaling
     
     f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
     # Nbh Size Plot:
     ax1.hlines(4 * np.pi * 5, 0, nr_data_sets, linewidth=2, color=c_lines)
     
-    ax1.scatter(x_vec_full1, res_vec[:,0], c=color_vec, label="Full Estimates")
-    #ax1.scatter(x_vev_full1, res_vec_k, c=color_vec, label="K-Only Estimates")
+    ax1.scatter(x_vec_full1, res_vec[:, 0], c=color_vec, label="Full Estimates")
+    # ax1.scatter(x_vev_full1, res_vec_k, c=color_vec, label="K-Only Estimates")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.legend(loc="upper right")
     ax1.title.set_text("Method: %s" % str(method))
 
     # L Plot:
-    #inds_sorted, true_inds = argsort_bts(res_vec[:, 1], nr_bts)
+    # inds_sorted, true_inds = argsort_bts(res_vec[:, 1], nr_bts)
     ax2.scatter(x_vec_full1, res_vec[:, 1], label="True Values", c=color_vec)
     ax2.hlines(0.006, 0, nr_data_sets, linewidth=2, color=c_lines)
     ax2.set_ylim([0, 0.03])
@@ -557,20 +599,20 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
 #     
 #     # Plot Barrier:   
     ax3.scatter(x_vec_full1, res_vec[:, 2], c=color_vec, zorder=0)
-    #ax3.scatter(x_vec_full1, res_vec_k[:,0], c= color_vec_k, zorder=0.5)
+    # ax3.scatter(x_vec_full1, res_vec_k[:,0], c= color_vec_k, zorder=0.5)
     ax3.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
     ax3.set_ylim([0, 1])
     ax3.set_ylabel("k", fontsize=18)
 #  
 # #     # SS Plot:
     ax4.scatter(x_vec_full1, res_vec[:, 3], c=color_vec)
-    #ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="True Values")
+    # ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="True Values")
     ax4.hlines(0.52, 0, nr_data_sets, linewidth=2, color=c_lines)
     ax4.set_ylabel("SS", fontsize=18)
     
     plt.xlabel("Loci Nr")
     plt.xticks(x_ticks, loci_nr)
-    plt.xlim([x_vec_full1[0],x_vec_full1[-1]])
+    plt.xlim([x_vec_full1[0], x_vec_full1[-1]])
     plt.show()
     
     f, ((ax1, ax2)) = plt.subplots(2, 1, sharex=True)
@@ -580,16 +622,16 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     ax1.set_ylim([0, 1])
     ax1.set_ylabel("k", fontsize=18)
     
-    ax2.scatter(x_vec_full1, res_vec_k[:,0], c= color_vec_k, zorder=0.5)
+    ax2.scatter(x_vec_full1, res_vec_k[:, 0], c=color_vec_k, zorder=0.5)
     ax2.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
     ax2.set_ylim([0, 1])
     ax2.set_ylabel("k_only", fontsize=18)
     plt.xlabel("Loci Nr")
     plt.xticks(x_ticks, loci_nr)
-    plt.xlim([x_vec_full1[0],x_vec_full1[-1]])
+    plt.xlim([x_vec_full1[0], x_vec_full1[-1]])
     plt.show()
     
-    print("Correlation k and k only: %.4g" % np.corrcoef(res_vec[250:,2],res_vec_k[250:,0])[0,1])
+    print("Correlation k and k only: %.4g" % np.corrcoef(res_vec[250:, 2], res_vec_k[250:, 0])[0, 1])
     
     
 
@@ -767,65 +809,139 @@ def multi_secondary_contact_all(folder, folder_b, method=2):
     
     subfolder_meth = "method" + str(method) + "/"  # Sets subfolder on which Method to use.
     
-    loci_nr_vec = [np.loadtxt(folder + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
-                   for i in res_numbers]
-    loci_nr_vec_b = [np.loadtxt(folder_b + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
-                   for i in res_numbers]
+    loci_nr_vec = np.array([np.loadtxt(folder + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
+                   for i in res_numbers])
+    loci_nr_vec_b = np.array([np.loadtxt(folder_b + subfolder_meth + "nr_good_loci" + str(i).zfill(2) + ".csv")[1] 
+                   for i in res_numbers])
     
     
     # plt.figure()
     f, ((ax1, ax4), (ax2, ax5), (ax3, ax6)) = plt.subplots(3, 2, sharex=True)
     
-    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
+    ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=3, color=c_lines)
     
-    ax1.errorbar(res_numbers0, res_vec[res_numbers0, 0], yerr=res_vec[res_numbers0, 0] - unc_vec[res_numbers0, 0, 0], fmt="yo", label="R2=1")
-    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="ro", label="R2=0.02")
-    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="go", label="R2=0.01")
-    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="bo", label="R2=0.005")
-    ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.title.set_text("No Barrier")
-    ax1.legend(loc="upper right")
+    ax1.plot(res_numbers0, res_vec[res_numbers0, 0], "ro", label=r"$R^2=1$")
+    ax1.plot(res_numbers1, res_vec[res_numbers1, 0], "yo", label=r"$R^2=0.02$")
+    ax1.plot(res_numbers2, res_vec[res_numbers2, 0], "bo", label=r"$R^2=0.01$")
+    ax1.plot(res_numbers3, res_vec[res_numbers3, 0], "mo", label=r"$R^2=0.005$")
+    ax1.set_ylim([0, 300])
+    ax1.set_ylabel("Nbh", fontsize=18, rotation=0, labelpad=18)
+    ax1.set_title(r"No Barrier", fontsize=18)
+    ax1.legend(loc="upper right", fontsize=12)
     
-    ax4.errorbar(res_numbers0, res_vec_b[res_numbers0, 0], yerr=res_vec_b[res_numbers0, 0] - unc_vec_b[res_numbers0, 0, 0], fmt="yo", label="R2=1")
-    ax4.errorbar(res_numbers1, res_vec_b[res_numbers1, 0], yerr=res_vec_b[res_numbers1, 0] - unc_vec_b[res_numbers1, 0, 0], fmt="ro", label="R2=0.02")
-    ax4.errorbar(res_numbers2, res_vec_b[res_numbers2, 0], yerr=res_vec_b[res_numbers2, 0] - unc_vec_b[res_numbers2, 0, 0], fmt="go", label="R2=0.01")
-    ax4.errorbar(res_numbers3, res_vec_b[res_numbers3, 0], yerr=res_vec_b[res_numbers3, 0] - unc_vec_b[res_numbers3, 0, 0], fmt="bo", label="R2=0.005")
-    ax4.set_ylim([0, 200])
-    ax4.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color="k")
-    ax4.title.set_text("Barrier: 0.05")
+    ax4.plot(res_numbers0, res_vec_b[res_numbers0, 0], "ro", label=r"$R^2=1$")
+    ax4.plot(res_numbers1, res_vec_b[res_numbers1, 0], "yo", label=r"$R^2=0.02$")
+    ax4.plot(res_numbers2, res_vec_b[res_numbers2, 0], "bo", label=r"$R^2=0.01$")
+    ax4.plot(res_numbers3, res_vec_b[res_numbers3, 0], "mo", label=r"$R^2=0.005$")
+    ax4.set_ylim([0, 300])
+    ax4.hlines(4 * np.pi * 5, 0, 100, linewidth=3, color=c_lines)
+    ax4.set_title(r"Barrier: $\gamma=0.05$", fontsize=18)
     ax4.yaxis.tick_right()
     # ax4.legend(loc="upper right")
     
 
     
-    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="yo")
-    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="ro")
-    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="go")
-    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="bo")
-    ax2.hlines(1, 0, 100, linewidth=2)
+    ax2.plot(res_numbers0, res_vec[res_numbers0, 2], "ro")
+    ax2.plot(res_numbers1, res_vec[res_numbers1, 2], "yo")
+    ax2.plot(res_numbers2, res_vec[res_numbers2, 2], "bo")
+    ax2.plot(res_numbers3, res_vec[res_numbers3, 2], "mo")
+    ax2.hlines(0.99, 0, 100, linewidth=3, color=c_lines)
     ax2.set_ylim([0, 1])
-    ax2.set_ylabel("Barrier", fontsize=18)
+    ax2.set_ylabel(r"$\gamma$", fontsize=18, rotation=0, labelpad=18)
     
-    ax5.errorbar(res_numbers0, res_vec_b[res_numbers0, 2], yerr=res_vec_b[res_numbers0, 2] - unc_vec_b[res_numbers0, 2, 0], fmt="yo")
-    ax5.errorbar(res_numbers1, res_vec_b[res_numbers1, 2], yerr=res_vec_b[res_numbers1, 2] - unc_vec_b[res_numbers1, 2, 0], fmt="ro")
-    ax5.errorbar(res_numbers2, res_vec_b[res_numbers2, 2], yerr=res_vec_b[res_numbers2, 2] - unc_vec_b[res_numbers2, 2, 0], fmt="go")
-    ax5.errorbar(res_numbers3, res_vec_b[res_numbers3, 2], yerr=res_vec_b[res_numbers3, 2] - unc_vec_b[res_numbers3, 2, 0], fmt="bo")
-    ax5.hlines(0.05, 0, 100, linewidth=2)
-    ax5.set_ylim([0, 0.1])
+    ax5.plot(res_numbers0, res_vec_b[res_numbers0, 2], "ro")
+    ax5.plot(res_numbers1, res_vec_b[res_numbers1, 2], "yo")
+    ax5.plot(res_numbers2, res_vec_b[res_numbers2, 2], "bo")
+    ax5.plot(res_numbers3, res_vec_b[res_numbers3, 2], "mo")
+    ax5.hlines(0.05, 0, 100, linewidth=3, color=c_lines)
+    ax5.set_ylim([0, 1.0])
     ax5.yaxis.tick_right()
     
-    ax3.plot(res_numbers, loci_nr_vec, 'ro')
-    ax3.hlines(200, 0, 100, linewidth=2)
+    ax3.plot(res_numbers0, loci_nr_vec[res_numbers0], 'ro')
+    ax3.plot(res_numbers1, loci_nr_vec[res_numbers1], 'yo')
+    ax3.plot(res_numbers2, loci_nr_vec[res_numbers2], 'bo')
+    ax3.plot(res_numbers3, loci_nr_vec[res_numbers3], 'mo')
+    ax3.hlines(200, 0, 100, linewidth=3, color=c_lines)
     ax3.set_ylabel("Nr. of Loci", fontsize=18)
     
-    
-    ax6.plot(res_numbers, loci_nr_vec_b, 'ro')
-    ax6.hlines(200, 0, 100, linewidth=2)
+    ax6.plot(res_numbers0, loci_nr_vec_b[res_numbers0], 'ro')
+    ax6.plot(res_numbers1, loci_nr_vec_b[res_numbers1], 'yo')
+    ax6.plot(res_numbers2, loci_nr_vec_b[res_numbers2], 'bo')
+    ax6.plot(res_numbers3, loci_nr_vec_b[res_numbers3], 'mo')
+    ax6.hlines(200, 0, 100, linewidth=3, color=c_lines)
     ax6.yaxis.tick_right()
-    
-    plt.xlabel("Dataset")
+    f.text(0.5, 0.025, "Dataset", ha='center', fontsize=18)
     plt.show()
+    
+def plot_theory_f():
+    '''Method to test the Kernel'''
+    kc = fac_kernel("DiffusionBarrierK0")
+    # Density: 5, mu=0.003, t0=1, Diff=1, k=0.5
+    # kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens; In old ordering
+    k = 0.1
+    kc.set_parameters([4 * np.pi * 5, 0.006, k, 1.0, 0.0])  # Nbh, L, k, t0, ss
+    
+    k0 = fac_kernel("DiffusionK0")
+    # k0.set_parameters([1.0, 1.0, 0.001, 5.0, 0.0])  # Diffusion; t0; mutation; density; ss 
+    k0.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.0])
+    
+    print("Parameters Barrier: ")
+    print(kc.give_parameter_names())
+    print(kc.give_parameters())
+    
+    print("Parameters No Barrier: ")
+    print(k0.give_parameter_names())
+    print(k0.give_parameters())
+    mu = 0.003  # Set Mutation Rate
+    # dens = k0.give_parameters
+    
+    # x_vec = np.logspace(-2, 2.0, 100) + 2.0
+    x_vec = np.linspace(1.0, 30, 100) + 0.0001
+    y_vec = [kc.num_integral_barrier(0, -1, -1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
+    y_vec2 = [kc.num_integral_barrier(0, 1, 1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
+     
+    y_vec01 = np.array([k0.num_integral(r) for r in x_vec])  # Numerical Integral no barrier
+    # y_vec1=np.array([num_integral(x, t0=1, sigma=sigma, mu=mu) for x in x_vec])
+    # y_vec20=np.array([num_integral(x, t0=2, sigma=sigma, mu=mu) for x in x_vec])
+    y_bessel = 1 / (4 * np.pi * 5) * kv(0, np.sqrt(2 * mu) * x_vec)  # The numerical Result from Mathematica
+    
+
+    
+    # Plot the IBD
+    plt.figure(figsize=(6, 6))
+    plt.plot(x_vec, y_bessel, alpha=0.8, color="black", label="Analytical Solution", linewidth=6)
+    plt.plot(x_vec, y_vec01, alpha=0.8, label="No Barrier", color="blue", linewidth=6)
+    plt.plot(x_vec, y_vec, alpha=0.9, color="red", label="Different Side of Barrier", linewidth=6)
+    plt.plot(x_vec, y_vec2, alpha=0.9, color="green", label="Same Side of Barrier", linewidth=6)
+    plt.xlim([0, max(x_vec)])
+    plt.ylim([0, 0.05])
+    plt.xlabel("Pairwise Distance", fontsize=18)
+    plt.ylabel("Pairwise F", fontsize=18)
+    
+    # plt.xscale("log")
+    plt.legend(fontsize=14)
+    plt.show()
+    
+    ###############################################################
+    # Plot the positions
+    pos = np.array([[i, j] for i in range(10) for j in range(6)])
+    pos1 = np.array([[i, 3] for i in range(5)])
+    pos2 = np.array([[1 + i, 2] for i in range(5)])
+    
+    
+    plt.figure()
+    plt.scatter(pos[:, 0], pos[:, 1], marker='o', s=400, color='grey', alpha=0.5)
+    plt.scatter(pos1[:, 0], pos1[:, 1], marker='o', s=400, color="green", label="Same Side")
+    plt.scatter(pos2[:, 0], pos2[:, 1], marker='o', s=400, color="red", label="Different Side")
+    plt.scatter(4, 3, marker='o', s=70, color="white")  # Right End Point
+    plt.scatter(5, 2, marker='o', s=70, color="white")  # Right End Point
+    # plt.text(3.9, 2.9,"R",color="white",fontsize=18)
+    # plt.text(4.9, 1.9,"R",color="white",fontsize=18)
+    plt.tick_params(axis='both', which='both', bottom='off', top='off', labelbottom='off', right='off', left='off', labelleft='off')
+    plt.vlines(4.5, -0.5, 5.5, linewidth=6)
+    # plt.legend(loc="upper right", borderpad=2)
+    plt.show()
+    
     
 def multi_barrier(folder):
     '''Prints Inference of multiple Barrier strenghts'''
@@ -1120,13 +1236,9 @@ def barrier_var_pos(folder, subfolder0, subfolder1, subfolder2, method=2):
     plt.xlabel("Dataset")
     plt.show()
     
-def plot_multi_barrier_pos(position_path, result_folder, subfolder):
-    '''Loads and plots the multiple Bootstrap per Position Estimates.'''
-    print("ToDo")  
-    
 def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
                        bins=50, p=0.5, nr_bootstraps=10, res_number=1, scale_factor=50,
-                       max_frac=0.75):
+                       max_frac=0.5, plot_bootstraps=True):
     '''Plot IBD of real data and bootstrapped real data (over loci).
     Load from Result Folder and plot binned IBD from HZ
     res_number: How many results to plot.
@@ -1208,8 +1320,9 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     # First Bootstrap:
     plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, f_estimates[0, :int(bins * max_frac)], 'r-', alpha=0.5, label="Bootstrap over GTPs")
     # All Bootstraps over Genotypes:
-    for i in xrange(1, nr_bootstraps):
-        plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, f_estimates[i, :int(bins * max_frac)], 'r-', alpha=0.5)
+    if plot_bootstraps == True:
+        for i in xrange(1, nr_bootstraps):
+            plt.plot(bin_dist[:int(bins * max_frac)] * scale_factor, f_estimates[i, :int(bins * max_frac)], 'r-', alpha=0.5)
     plt.errorbar(bin_dist[:int(bins * max_frac)] * scale_factor, bin_corr0[:int(bins * max_frac)], stand_errors[:int(bins * max_frac)], fmt='go', label="Mean Correlation")
         
         
@@ -1229,6 +1342,143 @@ def plot_IBD_bootstrap(position_path, genotype_path, result_folder, subfolder,
     plt.xlabel("Distance [m]")
     plt.title("IBD in HZ")
     plt.show()
+    
+def plot_homos(position_path, genotype_path, bins=50, max_dist=0, best_fit_params=[200, 0.02, 0.52],
+                         bootstrap=False, nr_bootstraps=50, scale_factor=50, demes_x=30, demes_y=20,
+                         deme_bin=False, title="Enter Title"):
+    '''Function that plots fraction of Homozygotes, and best fits against pairwise Distance.
+    Best Fit Params: Neighborhood Size, m, and s.'''
+    
+    positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
+    
+    print("Dataset loaded.")
+    print("Nr. of individuals: %i \nNr. of markers: %i" % np.shape(genotypes))
+    
+    if deme_bin == True:
+        positions, genotypes, _ = group_inds(positions, genotypes,
+                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=1) 
+    nr_inds, nr_loci = np.shape(genotypes)
+    
+    # Calculate the mean sharing in Bins
+    print("Calculating Homo Matrix....")
+    bin_dist, bin_h, stand_errors = calc_bin_homos(positions, genotypes, bins=bins, max_dist=max_dist / float(scale_factor))
+    print("Finished Calculating.")
+    
+    # Extract everything according to max distance:
+    # inds = np.where(bin_dist < max_dist / scale_factor)[0]
+    # assert(len(inds) > 0)
+    
+    # bin_dist = bin_dist[inds]
+    # bin_h = bin_h[inds]
+    # stand_errors = stand_errors[inds]
+    
+    x_vec = np.linspace(min(bin_dist), max(bin_dist), 100)
+    
+
+    # Calculate the best fits
+    KC = fac_kernel("DiffusionK0")
+    KC.set_parameters([best_fit_params[0], best_fit_params[1], 1.0, 0.0])  # [4*np.pi*6, 0.02, 1.0, 0.04]
+    f_vec = KC.calc_f_vec(x_vec)
+    ss = best_fit_params[-1]
+    homo_vec_fit = f_vec + (1 - f_vec) * ss
+    # print(f_vec)
+    
+    # Rescale:
+    bin_dist = bin_dist * scale_factor
+    x_plot = x_vec * scale_factor
+    
+    # Do the Plotting:
+    plt.figure()
+    plt.plot(bin_dist, bin_h, "ro", label="Observed")
+    plt.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
+    plt.ylabel("Pairwise h", fontsize=18)
+    plt.xlabel("Pairwise Distance [m]", fontsize=18)
+    plt.legend(fontsize=18, loc="upper right")
+    plt.title(title, fontsize=18)
+    ax = plt.gca()
+    # plt.text(0.5, 0.5, "Nbh: %.3g\n m: %.4g" % (best_fit_params[0], best_fit_params[1]), fontsize=20, transform = ax.transAxes)
+    plt.show()
+    
+def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, bins=50, max_dist=0, max_dist1=0,
+                 best_fit_params=[200, 0.02, 0.52], best_fit_params1=[200, 0.02, 0.52],
+                 scale_factor=50, scale_factor1=100, demes_x=30, demes_y=20, demes_x1=30, demes_y1=20,
+                deme_bin=False):
+    
+    positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
+    
+    positions1 = np.loadtxt(position_path1, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+    genotypes1 = np.loadtxt(genotype_path1, delimiter='$').astype('float64')
+    
+    print("Datasets loaded.")
+    print("Nr. of individuals: %i \nNr. of markers: %i" % np.shape(genotypes))
+    print("Nr. of individuals DS1: %i \nNr. of markers: %i" % np.shape(genotypes1))
+    
+    # Do the binning
+    if np.min([demes_x, demes_y]) > 0:
+        positions, genotypes, _ = group_inds(positions, genotypes,
+                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=1) 
+        
+    if np.min([demes_x1, demes_y1]) > 0:
+        positions1, genotypes1, _ = group_inds(positions1, genotypes1,
+                                                    demes_x=demes_x1, demes_y=demes_y1, min_ind_nr=1)
+    
+    # Calculate the mean sharing in Bins
+    print("Calculating Homo Matrix....")
+    bin_dist, bin_h, stand_errors = calc_bin_homos(positions, genotypes, bins=bins, max_dist=max_dist / float(scale_factor))
+    bin_dist1, bin_h1, stand_errors1 = calc_bin_homos(positions1, genotypes1, bins=bins, max_dist=max_dist1 / float(scale_factor1))
+    print("Finished Calculating.")
+    
+
+    
+    x_vec = np.linspace(min(bin_dist), max(bin_dist), 100)
+    x_vec1 = np.linspace(min(bin_dist1), max(bin_dist1), 100)
+    
+
+    # Calculate the best fits
+    KC = fac_kernel("DiffusionK0")
+    KC.set_parameters([best_fit_params[0], best_fit_params[1], 1.0, 0.0])  # [4*np.pi*6, 0.02, 1.0, 0.04]
+    f_vec = KC.calc_f_vec(x_vec)
+    ss = best_fit_params[-1]
+    homo_vec_fit = f_vec + (1 - f_vec) * ss
+    # print(f_vec)
+    
+    # Rescale:
+    bin_dist = bin_dist * scale_factor
+    x_plot = x_vec * scale_factor
+    
+    # Same for the other Kernel:
+    KC = fac_kernel("DiffusionK0")
+    KC.set_parameters([best_fit_params1[0], best_fit_params1[1], 1.0, 0.0])  # [4*np.pi*6, 0.02, 1.0, 0.04]
+    f_vec1 = KC.calc_f_vec(x_vec1)
+    ss1 = best_fit_params1[-1]
+    homo_vec_fit1 = f_vec1 + (1 - f_vec1) * ss1
+    
+    # Rescale:
+    bin_dist1 = bin_dist1 * scale_factor1
+    x_plot1 = x_vec1 * scale_factor1
+    
+    # Do the Plotting:sub
+    f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    
+    ax1.plot(bin_dist, bin_h, "ro", label="Observed")
+    ax1.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
+    ax1.set_ylabel("Pairwise h", fontsize=18)
+    ax1.set_xlabel("[m]", fontsize=18)
+    # ax1.legend(fontsize=18, loc="upper right")
+    ax1.set_title("Hybrid Zone Data", fontsize=18)
+    # plt.text(0.5, 0.5, "Nbh: %.3g\n m: %.4g" % (best_fit_params[0], best_fit_params[1]), fontsize=20, transform = ax.transAxes)
+    
+    ax2.plot(bin_dist1, bin_h1, "ro", label="Observed")
+    ax2.plot(x_plot1, homo_vec_fit1, label="Best Fit", color="green", linewidth=2)
+    # ax2.set_ylabel("Pairwise h", fontsize=18)
+    ax2.set_xlabel(r"[$\sigma$]", fontsize=18)
+    ax2.legend(fontsize=18, loc="upper right")
+    ax2.set_title("Simulated Data", fontsize=18)
+    plt.show()
+        
+    
     
 def plot_IBD_across_Zone(position_path, genotype_path, bins=30, max_dist=4.0, nr_bootstraps=100):
     '''Plot IBD in bins across hybrid zones.
@@ -1426,12 +1676,13 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
         
     
 
-def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1):
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1,
+                   color_path="", scale_factor=1, real_barrier=True):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
     Demes/Individuals'''
-    
+        
     # Load the Results
     res_vec = np.array([load_pickle_data(folder, i, 0, subfolder=method_folder) for i in res_numbers])
     unc_vec = np.array([load_pickle_data(folder, i, 1, subfolder=method_folder) for i in res_numbers])
@@ -1449,12 +1700,15 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # Mean Estimates:
     mean_inds = range(0, np.max(res_numbers), nr_bts)
     res_mean = res_vec[mean_inds, :]  
-    print(res_mean)   
+    # print(res_mean)  
+    # print(res_mean[13])
             
     # Load the Barrier Positions:
     barrier_fn = "barrier_pos.csv"
     path = folder + method_folder + barrier_fn
-    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')
+    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')*scale_factor
+    # print(barrier_pos[13]) 
+    
     
     ##############################################################
     # Add upper bound here if only lower number of results are available
@@ -1462,22 +1716,45 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     barrier_pos = barrier_pos[:b_max + 1]   
     ##############################################################
     
-    print("Barrier Positions loaded: ")
+    nr_barriers = len(barrier_pos)
+    print("%i Barrier Positions loaded:" % nr_barriers)
     print(barrier_pos)
-    barr_pos_plot = [val for val in barrier_pos for _ in xrange(nr_bts)]
+    
+    # Do some jitter for the x-Values:
+    barrier_spacing = (barrier_pos[1] - barrier_pos[0])
+    x_jitter = np.linspace(-1 / 3.0 * barrier_spacing, 1 / 3.0 * barrier_spacing, nr_bts)
+    x_jitter = np.tile(x_jitter, len(barrier_pos))
+    mid_barriers = np.repeat(barrier_pos, nr_bts)
+    barr_pos_plot = mid_barriers + x_jitter
+    
+    # Define the colors for the plot:
+    colors = ["coral", "cyan"]
+    color_vec = np.repeat(colors, nr_bts)
+    color_vec = np.tile(color_vec, nr_barriers)[:len(barr_pos_plot)]  # Gets the color vector (double and extract what needed)
+    
+    # Calculate the offset Vector:
+    # offset_tot=barrier_pos[1]-barrier_pos[2]
+    # barr_pos_plot = [val for val in barrier_pos for _ in xrange(nr_bts)]
     # print(barr_pos_plot)
     
     # Load the Position File:
     path_pos = folder + "mb_pos_coords00.csv"
-    position_list = np.loadtxt(path_pos, delimiter='$').astype('float64')
+    position_list = np.loadtxt(path_pos, delimiter='$').astype('float64') * scale_factor
     print("Position List loaded: %i Entries" % len(position_list))
     
+        # Replace Color Vector if necessary:
+    if len(color_path) == 0:
+        color = ["k" for _ in position_list]
+    else:
+        color_path_full = folder + color_path
+        color = np.loadtxt(color_path_full, delimiter='$', dtype='str').astype('str')
     
     # Do the plotting:
     f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
     # Plot the Nbh Estiamtes:
-    ax1.plot(barr_pos_plot, res_vec[res_numbers, 0], 'o', label="Bootstrap Estimate", alpha=0.8, color="grey", zorder=1)
-    ax1.plot(barrier_pos, res_mean[:, 0], 'o', label="Mean Estimate", color="crimson")
+    inds_sorted, true_inds = argsort_bts(res_vec[res_numbers, 0], nr_bts)
+    ax1.scatter(barr_pos_plot, res_vec[inds_sorted, 0], c=color_vec, label="Bootstrap Estimate", alpha=0.8, zorder=1)
+    ax1.plot(barr_pos_plot[true_inds], res_mean[:, 0], 'o', label="Estimate", color="k")
     ax1.set_ylim([0, 350])
     ax1.set_ylabel("Nbh", fontsize=18)
     if plot_hlines:
@@ -1485,24 +1762,26 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # ax1.title.set_text("No Barrier")
     ax1.legend(loc="upper right")
     
-    ax2.plot(barr_pos_plot, res_vec[res_numbers, 2], 'o', label="Bootstrap Estimate", alpha=0.8, color="grey", zorder=1)
-    ax2.plot(barrier_pos, res_mean[:, 2], 'o', label="Mean Estimate", color="crimson")
+    inds_sorted, true_inds = argsort_bts(res_vec[res_numbers, 2], nr_bts)
+    ax2.scatter(barr_pos_plot, res_vec[inds_sorted, 2], label="Bootstrap Estimates", alpha=0.8, c=color_vec, zorder=1)
+    ax2.plot(barr_pos_plot[true_inds], res_mean[:, 2], 'o', label="Estimate", color="k")
     ax2.set_ylim([0, 1])
-    ax2.set_ylabel("Barrier", fontsize=18)
-    if plot_hlines:
-        ax2.hlines(0.05, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color=c_lines)
-    
+    ax2.set_ylabel(r"$\gamma$", fontsize=18)
     # ax1.title.set_text("No Barrier")
-    # ax2.legend(loc="upper right")
+    # ax2.legend(loc="lower right")
     
     # Plot the Positions:
-    ax3.scatter(position_list[:, 0], position_list[:, 1], c="b", s=5)  # c = nr_nearby_inds
-    ax3.set_xlabel("x-Position", fontsize=18)
-    ax3.set_ylabel("y-Position", fontsize=18)
-    for x in barrier_pos:
-        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3)
-    ax3.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier")
-    ax3.legend()
+    ax3.scatter(position_list[:, 0] , position_list[:, 1], c=color, s=5, zorder=1)  # c = nr_nearby_inds
+    ax3.set_xlabel("x-Position [m]", fontsize=18)
+    ax3.set_ylabel("y-Position [m]", fontsize=18)
+    
+    # Plot first Barrier Position (for labelling)
+    ax3.vlines(barrier_pos[0], min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3, label="Putative Barrier") 
+    for x in barrier_pos[1:]:  # Plot rest
+        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3, zorder=0)
+    if real_barrier:
+        ax3.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier", zorder=0)
+    ax3.legend(loc="upper right")
     plt.show()
     
 def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1):
@@ -1583,12 +1862,17 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    # multi_ind_single(multi_ind_folder, method=2)
-    # multi_loci_single(multi_loci_folder, method=2)
-    multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
+    # multi_ind_single(multi_ind_folder, method=0)
+    # multi_ind_all() # 3x3 Plot of all Methods
+    multi_loci_single(multi_loci_folder, method=1)
+    # multi_loci_all() # 3x3 Plot of all Methods
+    
+    # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
+    
+    # plot_theory_f() # Plots the theoretical F; from Kernel calculations
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
@@ -1604,7 +1888,8 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0) 
+    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    #               scale_factor=50, real_barrier=False) 
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
@@ -1612,8 +1897,10 @@ if __name__ == "__main__":
     # barrier_var_pos(hz_folder, "barrier18p/", "barrier2/", "barrier20m/", method=2) # Bootstrap over 3 Barrier pos
     
     # ## Bootstrap in HZ to produce IBD fig
-    # plot_IBD_bootstrap("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", hz_folder, "barrier2/", res_number=20, nr_bootstraps=20)    
-    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=5)
+    # plot_IBD_bootstrap("./Data/coordinatesHZALL0.csv", "./Data/genotypesHZALL0.csv", hz_folder, "barrier2/", res_number=20, nr_bootstraps=100,
+    #                   plot_bootstraps=False)    
+    # plot_IBD_bootstrap("./Data/coordinatesHZall2.csv", "./Data/genotypesHZall2.csv", multi_pos_hz_folder, "range_res/", res_number=100, nr_bootstraps=100,
+    #                   plot_bootstraps=False)
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
@@ -1622,6 +1909,21 @@ if __name__ == "__main__":
     
     # give_result_stats(hz_folder, subfolder="barrier20m/")
     
+    ##### Plot pairwise homozgyosity against distance:
+    # plot_homos("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", bins=15, max_dist=3000, best_fit_params=[218.57, 0.000038, 0.52371],
+    #                     bootstrap=False, nr_bootstraps=50, scale_factor=50, title="Hybrid Zone Data")  # Plot for Hybrid Zone Data
+    
+    # For Data from Barrier10 Dataset. Take Dataset Nr. 199
+    # plot_homos("./barrier_folder10/barrier_file_coords199.csv", "./barrier_folder10/barrier_file_genotypes199.csv",
+    #           bins=15, max_dist=20, best_fit_params=[67.74, 0.0107, 0.52343], bootstrap=False, nr_bootstraps=50,
+    #           scale_factor=1, deme_bin=True, title="Simulated Data Set")  
+    
+    # plot_homos_2(position_path="./Data/coordinatesHZALL2.csv", genotype_path="./Data/genotypesHZALL2.csv", 
+    #             position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #             bins=15, max_dist=3000, max_dist1=20, 
+    #             best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #             scale_factor=50, scale_factor1=1, demes_x=0, demes_y=0, demes_x1=30, demes_y1=20,
+    #            deme_bin=False)
     
     # ## Give Stats of Results:
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")

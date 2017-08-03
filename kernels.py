@@ -23,7 +23,6 @@ import time
 import objgraph
 # get_ipython().magic(u'matplotlib notebook')
 
-# In[49]:
 
 class Kernel(object):
     '''The Class for the Kernels.
@@ -564,6 +563,7 @@ class DiffusionK0(Kernel):
         '''Simple Function to calculate IBD (f) at r_vec'''
         argument_vec = [[self.t0, np.inf, self.nbh, self.L, r] for r in r_vec]  # Create vector with all arguments
         pool_outputs = map(numerical_integration_mr, argument_vec)
+        pool_outputs = np.array(pool_outputs)  # Make it Numpy Vector for better Handling
         results = pool_outputs + self.ss  # Add the constant term
         return results
         
@@ -706,7 +706,7 @@ def kernel_test():
     kc = fac_kernel("DiffusionBarrierK0")
     # Density: 5, mu=0.003, t0=1, Diff=1, k=0.5
     # kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens; In old ordering
-    k = 0.5
+    k = 0.1
     kc.set_parameters([4 * np.pi * 5, 0.006, k, 1.0, 0.0])  # Nbh, L, k, t0, ss
     
     k0 = fac_kernel("DiffusionK0")
@@ -735,16 +735,18 @@ def kernel_test():
     y_bessel = 1 / (4 * np.pi * 5) * kv(0, np.sqrt(2 * mu) * x_vec)  # The numerical Result from Mathematica
     
     
-    plt.figure(figsize=(8, 8))
-    plt.plot(x_vec, y_vec01, label="Numerical Integral no barrier", linewidth=4)
-    plt.plot(x_vec, y_bessel, alpha=0.8, label="Bessel Decay K0", linewidth=4)
-    plt.plot(x_vec, y_vec, alpha=0.8, label="Num. Integral DS", linewidth=4)
-    plt.plot(x_vec, y_vec2, alpha=0.8, label="Num. Integral SS", linewidth=4)
-    plt.xlabel("x1 (x0=1/-1), dy=0")
-    plt.ylabel("F")
+    plt.figure(figsize=(6, 6))
+    plt.plot(x_vec, y_vec01, label="No Barrier", linewidth=6)
+    plt.plot(x_vec, y_bessel, alpha=0.9, label="Analytical Solution", linewidth=6)
+    plt.plot(x_vec, y_vec, alpha=0.9, label="Different Side of Barrier", linewidth=6)
+    plt.plot(x_vec, y_vec2, alpha=0.9, label="Same Side of Barrier", linewidth=6)
+    plt.xlim([0, max(x_vec)])
+    plt.ylim([0, 0.05])
+    plt.xlabel("Pairwise Distance", fontsize=18)
+    plt.ylabel("Pairwise F", fontsize=18)
     
     # plt.xscale("log")
-    plt.legend()
+    plt.legend(fontsize=14)
     plt.show()
     
 def test_diffusion_barrier():

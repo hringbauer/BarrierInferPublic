@@ -1,0 +1,2 @@
+Same Files as in SynthWeak:
+Dataset 60 from BarrierFolder2. i.e. barrier strength: 0.1

@@ -107,6 +107,7 @@ class MultiRun(object):
         np.savetxt(data_set_name_coords, coords, delimiter="$")  # Save the coordinates
         np.savetxt(data_set_name_genotypes, genotype_matrix, delimiter="$")  # Save the data 
         
+        
     def load_data_set(self, data_set_nr):
         '''Loads the data set'''
         data_set_name_coords = self.data_folder + self.name + "_coords" + str(data_set_nr).zfill(2) + ".csv"

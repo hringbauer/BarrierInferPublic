@@ -446,7 +446,7 @@ def analyze_barrier(position_list, genotype_mat, ind_deme_nr,
     toc = time()
     print("Total Running Time of Fitting: %.4f" % (toc - tic))
     
-def analyze_normal(position_list, genotype_mat, nr_inds=1000, fixed_params=[62, 0.006, 1 ,0.5], fit_params=[0,1,3], limit_inds=0,
+def analyze_normal(position_list, genotype_mat, nr_inds=10000, fixed_params=[62, 0.006, 1 ,0.5], fit_params=[0,1,3], limit_inds=0,
                    nr_x_bins=0, nr_y_bins=0, min_ind_nr=1):
     '''Method that analyzes data without a barrier. Use Method 2.'''
     # Load only certain Number of Individuals
@@ -491,16 +491,16 @@ if __name__ == "__main__":
     # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     # position_list = np.loadtxt('./multi_barrier_hz/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./multi_barrier_hz/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./Data/coordinatesHZALL0.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/genotypesHZALL0.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-  
+    position_list = np.loadtxt('./Data/coordinatesHZALL2.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./Data/genotypesHZALL2.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    #print(np.shape(genotype_mat))
     
     # ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  
     # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
     #analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
     
-    analyze_normal(position_list, genotype_mat, nr_x_bins=50, nr_y_bins=10)
-    
+    #analyze_normal(position_list, genotype_mat, nr_x_bins=50, nr_y_bins=10)
+    analyze_normal(position_list, genotype_mat)
 #########################################
 
 

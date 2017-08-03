@@ -233,12 +233,18 @@ class Analysis(object):
         ax1.bar(range(len(p_mean)), p_mean, width=1.0)
         ax1.set_ylabel("Mean")
         ax1.axhline(y=0.5, c="r", linewidth=2)
+        ax1.set_xlabel("Marker")
+        ax1.set_ylabel("Mean Allele Frequency")
         
         ax2 = fig.add_subplot(122)
         ax2.hist(p_mean)
         ax2.axvline(x=0.5, c="r")
         ax2.set_xlim([0, 1])
-        plt.title("Distribution of mean all. freqs")
+        ax2.set_xlabel("Allele Frequency")
+        ax2.set_ylabel("Count")
+        ax2.yaxis.tick_right()
+        ax2.yaxis.set_label_position("right")
+        #plt.title("Histogram of mean all. freqs")
         plt.show()
         
     def geo_comparison(self, mean_all_freq=0.5, barrier=None):
@@ -482,26 +488,26 @@ def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
     
     if plot == True:
         f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
-        ax1.plot(df['Geo_Score'], 'bo', label="Geo_Score")
-        ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="r")
+        ax1.plot(df['Geo_Score'], 'ko', label=r"Geogr. $R^2$")
+        ax1.hlines(geo_r2, 0, nr_loci, linewidth=2, color="g")
         ax1.legend(loc="upper right")
         
-        ax2.plot(df['LD_Score'], 'bo', label="LD R2")
-        ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="r")
+        ax2.plot(df['LD_Score'], 'ko', label=r"LD $R^2$")
+        ax2.hlines(ld_r2, 0, nr_loci, linewidth=2, color="g")
         ax2.legend(loc="upper right")
         
-        ax3.plot(df['Min All. Freq'], 'bo', label="MAF")
-        ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="r")
+        ax3.plot(df['Min All. Freq'], 'ko', label="Minor Allele Frequency")
+        ax3.hlines(min_p, 0, nr_loci, linewidth=2, color="g")
         ax3.legend(loc="upper right")
         
-        ax4.plot(df['HW p-Value'], 'bo', label="HW p-Value")
-        ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="r")
+        ax4.plot(df['HW p-Value'], 'ko', label="HW p-Value")
+        ax4.hlines(p_HW, 0, nr_loci, linewidth=2, color="g")
         ax4.legend(loc="upper right")
         
-        plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical')
+        plt.xticks(np.arange(nr_loci + 0.5), df["Name"], rotation='vertical', fontsize=6)
         
         colors = np.array(["red", ] * nr_loci)
-        colors[inds_okay] = "b"  # Sets the good SNPs to Blue!
+        colors[inds_okay] = "k"  # Sets the good SNPs to Blue!
         
         ax = plt.gca()
         [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
@@ -533,6 +539,20 @@ def calc_f_mat(genotypes, p=0.5):
         f_mat[i, :] = np.mean((genotypes[i, :] - 0.5) * (genotypes - 0.5) / (p * (1 - p)), axis=1)
     return f_mat
 
+def calc_h_mat(genotypes):
+    '''Calculate the matrix for h-Values.
+    Genotypes is nxl Matrix. Assumes Genotypes are between 0 and 1!'''
+    nr_inds = np.shape(genotypes)[0]
+    h_mat = np.zeros((nr_inds, nr_inds))
+    
+    genotypes11 = genotypes[:, None] * genotypes[None, :]  # Where both genotypes are 1.
+    genotypes00 = (1 - genotypes[:, None]) * (1 - genotypes[None, :])  # Where both genotypes are 0.
+        
+    
+    # Whats the right fract
+    h_mat = np.mean(genotypes11 + genotypes00, axis=2)  # Calculate Fraction shared
+
+    return h_mat
 
 
 

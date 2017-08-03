@@ -55,8 +55,8 @@ data_set_nr = data_set_nr - 1
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
 # folder = "./multi_ind_nr/"
-folder = "./barrier_folder2/"
-# folder ="./multi_loci_nr/"
+# folder = "./barrier_folder2/"
+folder ="./multi_loci_nr/"
 # folder = "./multi_2nd/"
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
@@ -68,12 +68,12 @@ folder = "./barrier_folder2/"
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
-# MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
+MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/chr0/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
-MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
 # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
@@ -95,7 +95,8 @@ MultiRun.analyze_data_set(data_set_nr, method=1)  # Analyzes the results and pic
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
 
-#MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
+# For HZ Analysis:
+#MultiRun.analyze_data_set(data_set_nr, method=1, res_folder="result/", barrier_pos=[], use_ind_nr=0,
 #                          min_dist=1.0, max_dist=42, nr_bts=20, nr_x_bins=50, nr_y_bins=10, min_ind_nr=5)
 
 #MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,

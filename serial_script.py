@@ -18,8 +18,8 @@ mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
 # folder = "./multi_ind_nr/"
-folder = "./barrier_folder2/"
-# folder ="./multi_loci_nr/"
+# folder = "./barrier_folder2/"
+folder ="./multi_loci_nr/"
 # folder = "./multi_2nd/"
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
@@ -30,11 +30,11 @@ folder = "./barrier_folder2/"
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
 #MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
-MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
+#MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 
-# MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
+MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 
 
 
@@ -51,8 +51,8 @@ MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, method=1)
 
 #for i in xrange(1, 99):
-#data_set_nr = int(sys.argv[1])  # Which data-set to use
-data_set_nr = 10
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+#data_set_nr = 10
 print("Do Run Nr. %i" % data_set_nr)
 MultiRun.analyze_data_set(data_set_nr, method=0)
 # MultiRun.analyze_data_set_cleaning(data_set_nr, method=2)

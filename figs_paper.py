@@ -1862,10 +1862,10 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    # multi_ind_single(multi_ind_folder, method=0)
-    # multi_ind_all() # 3x3 Plot of all Methods
+    # multi_ind_single(multi_ind_folder, method=0) 
+    # multi_ind_all() # 3x3 Plot of all Methods    # To implement
     multi_loci_single(multi_loci_folder, method=1)
-    # multi_loci_all() # 3x3 Plot of all Methods
+    # multi_loci_all() # 3x3 Plot of all Methods   # To implement
     
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets

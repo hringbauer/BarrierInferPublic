@@ -1187,11 +1187,12 @@ class MultiHZPosition(MultiBarrierPosition):
 
 ###############################################################################################################################
 
-class MultiIndNr(MultiNbhModel):
+class MultiIndNr_Old(MultiNbhModel):
     '''Generate Data-Sets under the Model. A big one at 0 with 4000
     individuals; and then 99 smaller ones with decreasing number 
     of individuals (randomly subchosen)
-    Inherits from MultiNbhModel to analyze the Data'''
+    Inherits from MultiNbhModel to analyze the Data
+    THIS WAS USED BUT IS NOT ANYMORE - it is replaced with Multi_IndNr'''
     
     def create_data_set(self, data_set_nr):
         '''Create a Data_Set. Override method of MultiNbh.'''
@@ -1261,6 +1262,61 @@ class MultiIndNr(MultiNbhModel):
         else: 
             raise ValueError("Invalid Data-Set Nr.!")
         
+class MultiIndNr(MultiNbhModel):
+    '''Generate Data-Sets from Population Genetics Model.
+    Does this from 0 to 2000 individuals; on a set of 200 loci
+    Inherits from MultiNbhModel to analyze the Data'''
+    
+    def create_data_set(self, data_set_nr):
+        '''Create a Data_Set. Override method of MultiNbh.'''
+        print("Creating Dataset: %i" % data_set_nr)
+        
+        # Create Vector of Numbers of Individuals:
+        ind_nr_vec = range(200, 2200, 20)  # Length 100: From 200 to 2200.
+        ind_nr = ind_nr_vec[data_set_nr] # Extract the right Data Set
+        
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2
+        position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 1) for j in range(-49, 51, 1)])# The overall Position List to draw from.
+        
+        # Do the Random Picking from the Position List.
+        inds = range(len(position_list))
+        shuffle(inds)  # Random permutation of the indices. If not random draw - comment out
+        inds = inds[:ind_nr]  # Only load first nr_inds
+        position_list = position_list[inds,:]  # Extract the right individuals
+        
+        gridsize_x, gridsize_y = 1000, 1000
+        nr_loci = 200  # 1 for testing reasons.
+        t = 5000
+        sigma = 0.965  # 0.965 # 1.98
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p.
+        #ss = 0.04  # The std of fluctuations in f-space.
+        t0 = 1.0  # When do start the integration.
+        p_mean = 0.5  # Sets the mean allele frequency.
+        sd_p = 0.1
+        p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_mean = p_mean + p_delta
+        
+        genotype_matrix = np.zeros((len(position_list), nr_loci))  # Set Genotype Matrix to 0
+            
+        for i in range(nr_loci):
+            grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+            grid.set_parameters(gridsize_x, gridsize_y, sigma, ips, mu)
+            print("Doing data set: %i, Simulation: %i " % (data_set_nr, i))
+            grid.set_samples(position_list)
+            grid.update_grid_t(t, p=p_mean[i])  # Uses p_mean[i] as mean allele Frequency.
+            genotype_matrix[:, i] = grid.genotypes
+            
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)
+                
+        # Now Pickle Some additional Information:
+        p_names = ["Nr Loci", "t0", "p_mean", "sigma", "sd_p", "mu", "ips", "Position List", "ind_nr_vec"]
+        ps = [nr_loci, t0, p_mean, sigma, sd_p, mu, ips, position_list, ind_nr_vec]
+        additional_info = ("Data generated under a PopGen Model")
+        self.pickle_parameters(p_names, ps, additional_info)  
+    
+    
+  
 ###############################################################################################################################
 
 class MultiLociNr(MultiNbh):
@@ -1311,7 +1367,7 @@ class MultiLociNr(MultiNbh):
             # Now Pickle Some additional Information:
             p_names = ["Nr Loci", "t0", "p_mean", "sigma", "ss", "mu", "ips", "Position List", "Loci Nr Vec"]
             ps = [nr_loci, t0, p_mean, sigma, ss, mu, ips, position_list, nr_loci_vec]
-            additional_info = ("Data generated under a Gaussian Model")
+            additional_info = ("Data generated under PopGen Model")
             self.pickle_parameters(p_names, ps, additional_info)  
             
         else: 
@@ -1524,10 +1580,10 @@ if __name__ == "__main__":
     # MultiRun.create_data_set(i)
         
     ####################################################
-    # MultiRun = fac_method("multi_inds", "./multi_ind_nr/", multi_processing=1)
-    # MultiRun.create_data_set(0)
+    MultiRun = fac_method("multi_inds", "./multi_ind_nr1/", multi_processing=1)
+    MultiRun.create_data_set(25)
     # MultiRun.create_data_set(25)
-    # MultiRun.analyze_data_set(1, method=2)
+    MultiRun.analyze_data_set(25, method=2)
     
     ######################################################
     # MultiRun = fac_method("multi_loci", "./multi_loci/", multi_processing=1)
@@ -1569,9 +1625,9 @@ if __name__ == "__main__":
     
     #####################################################
     # Multi Loci Barrier Dataset
-    MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=1)
+    # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=1)
     # MultiRun.create_data_set(0)
-    MultiRun.analyze_data_set(0, method=2)
+    # MultiRun.analyze_data_set(0, method=2)
     # MultiRun.analyze_data_set_k_only(0, method=2)
     
     

@@ -325,8 +325,6 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         plt.gcf().text(0.5,0.04,"Data Set Nr.", ha="center", fontsize=18) # Set the x-Label
         plt.show()
         # ax3.legend()
-        
-    
     
 def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15]):
     '''Print Estimates from several Barrier strength from Folder.'''
@@ -682,6 +680,85 @@ def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     # ax3.set_ylabel("SS", fontsize=18)
     # ax3.legend()
     plt.xlabel("Nr. of Individuals")
+    plt.show()
+    
+def multi_ind_all(folder, res_numbers=range(10100)):
+    '''Plots the Estimates from multiple Individuals'''
+    lw=3
+    ul_nb=350 # Upper Limit Neighborhood Size
+    # Load the Data for all three methods
+    
+    # Extract Res-Numbers that actually exist for Data-Set 0
+    res_numbers = np.array(res_numbers)
+    data_there = np.array([check_if_data(folder, i, 0) for i in res_numbers])
+    res_numbers0 = res_numbers[data_there]
+    
+    res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers0])
+    unc_vec0 = np.array([load_pickle_data(folder, i, 1, method=0) for i in res_numbers0])
+    
+    res_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers])
+    unc_vec1 = np.array([load_pickle_data(folder, i, 1, method=1) for i in res_numbers])
+    
+    res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
+    unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers])
+    
+    f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(11,11))
+    
+    ax1.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+    ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+    ax1.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+    ax1.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+    ax1.plot(res_numbers0, res_vec0[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax1.set_ylim((0, ul_nb))
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.set_title("Method 1", fontsize=18)
+
+    ax2.plot(res_numbers0, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax2.hlines(0.006, 0, 100, linewidth=lw, color=c_lines)
+    ax2.set_ylabel("m", fontsize=18)
+    ax2.set_ylim((0, 0.02))
+    
+    ax3.plot(res_numbers0, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax3.hlines(0.04, 0, 100, linewidth=lw, color=c_lines)
+    ax3.set_ylabel("Var. Par.", fontsize=18)
+    
+    ax4.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+    ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+    ax4.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+    ax4.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+    ax4.plot(res_numbers, res_vec1[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax4.set_ylim((0, ul_nb))
+    ax4.set_title("Method 2", fontsize=18)
+    ax4.set_yticks([])
+    
+    ax5.plot(res_numbers, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax5.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
+    ax5.set_ylim((0, 0.02))
+    ax5.set_yticks([])
+    
+    ax6.plot(res_numbers, res_vec1[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
+    ax6.hlines(0.01, 0, 100, linewidth=lw, color=c_lines, zorder=1)
+    ax6.set_yticks([])
+    
+    ax7.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
+    ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
+    ax7.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
+    ax7.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
+    ax7.plot(res_numbers, res_vec2[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax7.set_ylim((0, ul_nb))
+    ax7.set_title("Method 3", fontsize=18)
+    ax7.set_yticks([])
+    # ax1.legend()
+    
+    ax8.plot(res_numbers, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax8.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
+    ax8.set_ylim((0, 0.02))
+    ax8.set_yticks([])
+    
+    ax9.plot(res_numbers, res_vec2[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
+    ax9.hlines(0.52, 0, 100, linewidth=lw, color=c_lines, zorder=1)
+    ax9.set_yticks([])
+    plt.gcf().text(0.5,0.04,"Data Set Nr.", ha="center", fontsize=18) # Set the x-Label
     plt.show()
     
     
@@ -1862,9 +1939,9 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    # multi_ind_single(multi_ind_folder, method=0) 
-    # multi_ind_all() # 3x3 Plot of all Methods    # To implement
-    multi_loci_single(multi_loci_folder, method=1)
+    multi_ind_single(multi_ind_folder, method=2) 
+    #multi_ind_all(multi_ind_folder, range(1,50)) # 3x3 Plot of all Methods    # All three methods for Multi Ind
+    # multi_loci_single(multi_loci_folder, method=1)
     # multi_loci_all() # 3x3 Plot of all Methods   # To implement
     
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.

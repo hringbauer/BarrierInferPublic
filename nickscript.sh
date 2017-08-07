@@ -5,12 +5,12 @@
 #$ -M hringbauer@ist.ac.at
 #$ -N "MultiIndM2"
 #$ -m ea
-#$ -l mf=20G
-#$ -l mem_free=20G
-#$ -l h_vmem=20G
+#$ -l mf=30G
+#$ -l mem_free=30G
+#$ -l h_vmem=30G
 #$ -l h_rt=24:00:00
 #$ -cwd
-#$ -t 1-100:1
+#$ -t 80-100:1
 
 export OMP_NUM_THREADS=1
 python script_bignick.py $SGE_TASK_ID

@@ -88,7 +88,7 @@ MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=2.0, res_folder="barrier3/" ,method=2)  # Position Barrier is there for the HZ Data.
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=-20.0, res_folder="barrier20m/" ,method=2)
 # MultiRun.analyze_data_set(data_set_nr, position_barrier=18.0, res_folder="barrier18m/" ,method=2)
-MultiRun.analyze_data_set(data_set_nr, method=1)  # Analyzes the results and pickles them.
+MultiRun.analyze_data_set(data_set_nr, method=2)  # Analyzes the results and pickles them.
 # MultiRun.analyze_data_set_k_only(data_set_nr, method=2)
 # MultiRun.analyze_data_set(data_set_nr, method=2, deme_x_nr=30, deme_y_nr=20)
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="all/")

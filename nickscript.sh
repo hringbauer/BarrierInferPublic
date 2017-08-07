@@ -3,11 +3,11 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "MultiLoci1"
+#$ -N "MultiIndM2"
 #$ -m ea
-#$ -l mf=8G
-#$ -l mem_free=8G
-#$ -l h_vmem=8G
+#$ -l mf=20G
+#$ -l mem_free=20G
+#$ -l h_vmem=20G
 #$ -l h_rt=24:00:00
 #$ -cwd
 #$ -t 1-100:1

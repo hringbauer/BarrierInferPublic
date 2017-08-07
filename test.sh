@@ -8,7 +8,7 @@ do
 for j in `seq 0 20`;
    do
     echo "run" $i "Sub Run" $j ":" $(($i * 20 + $j)) &
-    python serial_script.py $(($i * 20 + $j)) > "output_mg5.txt" 2> "error_mg5.txt" & # Run Process in Background
+    python serial_script.py $(($i * 20 + $j)) > "output_mg6.txt" 2> "error_mg6.txt" & # Run Process in Background
    done
    wait  # Waits for everything to finish!
    #python serial_script.py $i > "output"$i".txt" 2> "error2"$i".txt" & # Run Process in Background

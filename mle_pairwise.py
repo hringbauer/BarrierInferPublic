@@ -491,8 +491,11 @@ if __name__ == "__main__":
     # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     # position_list = np.loadtxt('./multi_barrier_hz/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./multi_barrier_hz/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt('./Data/coordinatesHZALL2.csv', delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt('./Data/genotypesHZALL2.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    position_list = np.loadtxt("./barrier_folder2/barrier_file_coords60.csv", delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt("./barrier_folder2/barrier_file_genotypes60.csv", delimiter='$').astype('float64')  # Load the complete Y-Data
+
+    
+    
     #print(np.shape(genotype_mat))
     
     # ind_deme_nr = np.loadtxt('./Data/inds_per_deme_HZall2.csv', delimiter='$')  

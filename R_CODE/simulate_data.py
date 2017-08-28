@@ -96,7 +96,7 @@ def transform_to_geneland(genotype_matrix, save_path):
     
 def data_to_geneland_folder(coords_path, genotype_path, save_folder, delimiter="$", p=False): 
     '''Takes data that have been generated elsewhere, 
-    and transforms it to the right format and saves it to the righ folder
+    and transforms it to the right format and saves it to the right folder
     in R_CODE. Delimiter: What delimiter was used in input files.
     p: whether data is 0,0.5,1'''
     

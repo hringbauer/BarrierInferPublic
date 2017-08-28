@@ -25,6 +25,7 @@ multi_barrier_folder = "./barrier_folder2/"
 cluster_folder = "./cluster_folder/"
 hz_folder = "./hz_folder/"
 multi_ind_folder = "./multi_ind_nr/"
+multi_ind_folder1 = "./multi_ind_nr1/"
 multi_loci_folder = "./multi_loci_nr/"
 secondary_contact_folder = "./multi_2nd/"
 secondary_contact_folder_b = "./multi_2nd_b/"  # With a 0.05 Barrier
@@ -36,6 +37,8 @@ met2_folder = "method2/"
 # Some Default Colors:
 c_dots = "crimson"
 c_lines = "g"
+
+c0, c1, c2, c3 = "yellow", "orange", "crimson", "purple"
 ######################################################################################
 #### First some helper functions
 
@@ -254,8 +257,8 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         # res_numbers = range(0,86)
         # res_numbers = range(10, 13) + range(30, 33) + range(60, 61)  # + range(80, 83)
         # res_numbers = range(30,31)# To analyze Dataset 30
-        lw=3
-        ul_nb=350 # Upper Limit Neighborhood Size
+        lw = 3
+        ul_nb = 350  # Upper Limit Neighborhood Size
         # Load the Data for all three methods
         res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers])
         unc_vec0 = np.array([load_pickle_data(folder, i, 1, method=0) for i in res_numbers])
@@ -266,7 +269,7 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
         unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers])
         
-        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(11,11))
+        f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(11, 11))
         
         ax1.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
         ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
@@ -280,10 +283,11 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         ax2.plot(res_numbers, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
         ax2.hlines(0.006, 0, 100, linewidth=lw, color=c_lines)
         ax2.set_ylabel("L", fontsize=18)
-        ax2.set_ylim((0, 0.02))
+        ax2.set_ylim((0, 0.03))
         
         ax3.plot(res_numbers, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
         ax3.hlines(0.04, 0, 100, linewidth=lw, color=c_lines)
+        ax3.set_ylim((0.01, 0.08))
         ax3.set_ylabel("Var. Par.", fontsize=18)
         
         ax4.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
@@ -297,12 +301,16 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         
         ax5.plot(res_numbers, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
         ax5.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-        ax5.set_ylim((0, 0.02))
+        ax5.set_ylim((0, 0.03))
         ax5.set_yticks([])
         
         ax6.plot(res_numbers, res_vec1[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
         ax6.hlines(0.01, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-        ax6.set_yticks([])
+        ax6.set_ylim((0.001, 0.015))
+        # ax6.tick_params(direction='out', pad=-30)
+        ax6.get_yaxis().set_tick_params(which='both', direction='out', pad=-35)
+        # ax6.yaxis.set_ticklabels(longlabs,position=(0.06,0))
+        # ax6.set_yticks([])
         
         ax7.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
         ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
@@ -316,13 +324,15 @@ def multi_nbh_all(folder, res_numbers=range(100)):
         
         ax8.plot(res_numbers, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
         ax8.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-        ax8.set_ylim((0, 0.02))
+        ax8.set_ylim((0, 0.03))
         ax8.set_yticks([])
         
         ax9.plot(res_numbers, res_vec2[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
         ax9.hlines(0.52, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-        ax9.set_yticks([])
-        plt.gcf().text(0.5,0.04,"Data Set Nr.", ha="center", fontsize=18) # Set the x-Label
+        ax9.set_ylim((0.45, 0.55))
+        ax9.yaxis.tick_right()
+        # ax9.set_yticks([])
+        plt.gcf().text(0.5, 0.04, "Data Set Nr.", ha="center", fontsize=18)  # Set the x-Label
         plt.show()
         # ax3.legend()
     
@@ -335,6 +345,7 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     res_numbers3 = range(75, 100)
     res_numbers = res_numbers0 + res_numbers1 + res_numbers2 + res_numbers3
     
+    lw=3
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
     unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
@@ -349,32 +360,32 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     
     
     # plt.figure()
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
-    ax1.hlines(4 * np.pi * 5, res_numbers[0], res_numbers[-1], linewidth=2, color="r")
-    ax1.errorbar(res_numbers, res_vec[:, 0], yerr=res_vec[:, 0] - unc_vec[:, 0, 0], fmt="bo", label="Nbh")
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6,6))
+    ax1.hlines(4 * np.pi * 5, res_numbers[0], res_numbers[-1], linewidth=lw, color=c_lines)
+    ax1.plot(res_numbers, res_vec[:, 0], "bo", color=c_dots,label="Nbh")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18)
-    ax1.title.set_text("Method: %s" % str(method))
+    #ax1.title.set_text("Method: %s" % str(method))
     # ax1.legend()
     
-    ax2.errorbar(res_numbers, res_vec[:, 1], yerr=res_vec[:, 1] - unc_vec[:, 1, 0], fmt="go", label="L")
-    ax2.hlines(0.006, 0, 100, linewidth=2)
-    ax2.set_ylabel("L", fontsize=18)
+    ax2.plot(res_numbers, res_vec[:, 1], "go", color=c_dots, label="m")
+    ax2.hlines(0.006, 0, 100, linewidth=lw, color=c_lines)
+    ax2.set_ylabel("m", fontsize=18)
     # ax2.legend()
     
-    ax3.errorbar(res_numbers, res_vec[res_numbers, 2], yerr=res_vec[res_numbers, 2] - unc_vec[res_numbers, 2, 0], fmt="yo")
-    ax3.hlines(barrier_strengths[0], res_numbers0[0], res_numbers0[-1], linewidth=2, color="r")
-    ax3.hlines(barrier_strengths[1], res_numbers1[0], res_numbers1[-1], linewidth=2, color="r")
-    ax3.hlines(barrier_strengths[2], res_numbers2[0], res_numbers2[-1], linewidth=2, color="r")
-    ax3.hlines(barrier_strengths[3], res_numbers3[0], res_numbers3[-1], linewidth=2, color="r")
-    ax3.set_ylabel("Barrier", fontsize=18)
+    ax3.plot(res_numbers, res_vec[res_numbers, 2], "yo", color=c_dots)
+    ax3.hlines(barrier_strengths[0], res_numbers0[0], res_numbers0[-1], linewidth=lw, color=c_lines)
+    ax3.hlines(barrier_strengths[1], res_numbers1[0], res_numbers1[-1], linewidth=lw, color=c_lines)
+    ax3.hlines(barrier_strengths[2], res_numbers2[0], res_numbers2[-1], linewidth=lw, color=c_lines)
+    ax3.hlines(barrier_strengths[3], res_numbers3[0], res_numbers3[-1], linewidth=lw, color=c_lines)
+    ax3.set_ylabel(r"$\gamma$", fontsize=18)
 
     
-    ax4.errorbar(res_numbers, res_vec[:, 3], yerr=res_vec[:, 3] - unc_vec[:, 3, 0], fmt="ko", label="ss")
-    ax4.hlines(0.52, 0, 100, linewidth=2)
-    ax4.set_ylabel("SS", fontsize=18)
+    ax4.plot(res_numbers, res_vec[:, 3], "ko", label="ss", color=c_dots)
+    ax4.hlines(0.52, 0, 100, linewidth=lw, color=c_lines)
+    ax4.set_ylabel("s", fontsize=18)
     # ax3.legend()
-    plt.xlabel("Dataset")
+    plt.xlabel("Dataset", fontsize=18)
     plt.show()
     
 def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
@@ -396,7 +407,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     # Put the Barrier Estimates >1 to 1:
     res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
     
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    f, ((ax1, ax2, ax3, ax4, ax5)) = plt.subplots(5, 1, sharex=True)
     ax32 = ax3.twinx()  # Copy for different y-Scaling
     
     # Nbh Size Plot:
@@ -455,10 +466,27 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     ax4.hlines(0.52, res_numbers[0], res_numbers[-1], linewidth=3, color="g")
     ax4.set_ylabel("s", fontsize=18, rotation=0, labelpad=10)
     ax4.set_xlabel("Dataset", fontsize=18)
-    plt.xlim([0, 200])
+    
+#     for i in xrange(len(bs)):  # Iterate over different parts of the Graph
+#         x0, x1 = i * nr_bts, (i + 1) * nr_bts
+#         y = bs[i]
+#         res_numbers_t = range(x0, x1)  # Where to Plot
+#         # Alternate the color:
+#         if i % 2 == 0:
+#             c = "cyan"
+#         else:
+#             c = "b"
+#         ax5.plot(res_numbers_t, res_vec[res_numbers_t, 2],
+#                     marker="o", linestyle="", alpha=0.8, color=c, zorder=0)
+#         ax5.hlines(y, x0, x1, linewidth=3, color="g", zorder=1)
+#     #ax5.yscale("log")
+#     ax5.set_ylim([0.01,1.1])
+#     ax5.set_yscale("log")
     plt.show()
     
-def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999], nr_reps=5):
+    
+    
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999], nr_reps=5, figsize=(12,12)):
     '''Plots the Bootstraps over Barriers.'''
     nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
     nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS
@@ -503,8 +531,8 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999
     ax1.hlines(4 * np.pi * 5, 0, nr_data_sets, linewidth=2, color="g")
     inds_sorted, true_inds = argsort_bts(res_vec[:, 0], nr_bts)
     
+    ax1.plot(x_vec_full1[true_inds], res_vec[x_true, 0], "ko", markersize=6, label="Estimate")
     ax1.scatter(x_vec_full1, res_vec[inds_sorted, 0], c=color_vec, label="Bootstrap Estimates")
-    ax1.plot(x_vec_full1[true_inds], res_vec[x_true, 0], "ko", markersize=6, label="True Values")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18, rotation=0, labelpad=16)
     # ax1.legend(loc="upper right")
@@ -513,7 +541,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999
     # L Plot:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 1], nr_bts)
     ax2.scatter(x_vec_full1, res_vec[inds_sorted, 1], c=color_vec)
-    ax2.plot(x_vec_full1[true_inds], res_vec[x_true, 1], "ko", markersize=6, label="True Values")
+    ax2.plot(x_vec_full1[true_inds], res_vec[x_true, 1], "ko", markersize=6, label="Estimate")
     ax2.hlines(0.006, 0, nr_data_sets, linewidth=2, color="g")
     ax2.set_ylim([0, 0.03])
     ax2.set_ylabel("m", fontsize=18, rotation=0, labelpad=10)
@@ -522,17 +550,19 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.001, 0.1, 0.5, 0.999
     # Plot Barrier:   
     inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
     ax3.scatter(x_vec_full1, res_vec[inds_sorted, 2], c=color_vec, alpha=0.6, zorder=0, label="Bootstrap Estimates")
-    ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="True Values", alpha=0.6, zorder=2)
+    ax3.plot(x_vec_full1[true_inds], res_vec[x_true, 2], "ko", markersize=6, label="Estimate", alpha=0.6, zorder=2)
     for i in range(nr_data_sets):
         ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=2, color="g", zorder=1)
     ax3.set_ylim([0, 1])
     ax3.legend(loc="upper left")
     ax3.set_ylabel("$\gamma$", fontsize=18, rotation=0, labelpad=10)
+    ax3.set_ylim(0.01,1.2)
+    #ax3.set_yscale("log")
  
 #     # SS Plot:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 3], nr_bts)
     ax4.scatter(x_vec_full1, res_vec[inds_sorted, 3], c=color_vec)
-    ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="True Values")
+    ax4.plot(x_vec_full1[true_inds], res_vec[x_true, 3], "ko", markersize=6, label="Estimate")
     ax4.hlines(0.52, 0, nr_data_sets, linewidth=2, color="g")
     ax4.set_ylabel("s", fontsize=18, rotation=0)
     plt.xlabel("Dataset", fontsize=18)
@@ -613,18 +643,18 @@ def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(
     plt.xlim([x_vec_full1[0], x_vec_full1[-1]])
     plt.show()
     
-    f, ((ax1, ax2)) = plt.subplots(2, 1, sharex=True)
+    f, ((ax1, ax2)) = plt.subplots(2, 1, sharex=True, figsize=(6, 8))
     # Plot Comparison k and k_only:
     ax1.scatter(x_vec_full1, res_vec[:, 2], c=color_vec, zorder=0)
     ax1.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
     ax1.set_ylim([0, 1])
-    ax1.set_ylabel("k", fontsize=18)
+    ax1.set_ylabel(r"$\gamma$", fontsize=18)
     
     ax2.scatter(x_vec_full1, res_vec_k[:, 0], c=color_vec_k, zorder=0.5)
     ax2.hlines(0.05, 0, nr_data_sets, linewidth=2, color=c_lines, zorder=1)
     ax2.set_ylim([0, 1])
-    ax2.set_ylabel("k_only", fontsize=18)
-    plt.xlabel("Loci Nr")
+    ax2.set_ylabel(r"$\gamma$ only", fontsize=18)
+    plt.xlabel("Loci Nr", fontsize=18)
     plt.xticks(x_ticks, loci_nr)
     plt.xlim([x_vec_full1[0], x_vec_full1[-1]])
     plt.show()
@@ -658,18 +688,18 @@ def multi_ind_single(folder, method, res_numbers=range(0, 100)):
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
     
-    x_vec = np.array(range(436, 4001, 36))[res_numbers]  # Length 100: from 404 to 4000
+    x_vec = np.array(range(200, 2200, 20))[res_numbers]  # Length 100: from 404 to 4000
     # plt.figure()
     f, ((ax1, ax2)) = plt.subplots(2, 1, sharex=True)
     
-    ax1.hlines(4 * np.pi * 5, 500, 4000, linewidth=3, color="g")
+    ax1.hlines(4 * np.pi * 5, min(x_vec), max(x_vec), linewidth=3, color="g")
     ax1.plot(x_vec, res_vec[:, 0], "o", label="Nbh", color="crimson")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.title.set_text("Method: %s" % str(method))
     # ax1.legend()
     
-    ax2.hlines(0.006, 500, 4000, linewidth=3, color="g")
+    ax2.hlines(0.006, min(x_vec), max(x_vec), linewidth=3, color="g")
     ax2.plot(x_vec, res_vec[:, 1], "o", label="L", color="crimson")
     ax2.set_ylabel("L", fontsize=18)
     ax2.set_ylim([0, 0.02])
@@ -684,88 +714,101 @@ def multi_ind_single(folder, method, res_numbers=range(0, 100)):
     
 def multi_ind_all(folder, res_numbers=range(10100)):
     '''Plots the Estimates from multiple Individuals'''
-    lw=3
-    ul_nb=350 # Upper Limit Neighborhood Size
+    lw = 3
+    ul_nb = 200  # Upper Limit Neighborhood Size
     # Load the Data for all three methods
     
+    x_vec = np.array(range(200, 2200, 20))  # Length 100: From 200 to 2200 Individuals
+    # x_vec = np.array(range(50, 350, 3))  # Length 100: from 50 to 350 Loci
+    x_min = np.min(x_vec)
+    x_max = np.max(x_vec)
+     
     # Extract Res-Numbers that actually exist for Data-Set 0
     res_numbers = np.array(res_numbers)
-    data_there = np.array([check_if_data(folder, i, 0) for i in res_numbers])
-    res_numbers0 = res_numbers[data_there]
+    
+    # Check for all Data whether it is there:
+    data_there0 = np.array([check_if_data(folder, i, 0) for i in res_numbers])
+    data_there1 = np.array([check_if_data(folder, i, 1) for i in res_numbers])
+    data_there2 = np.array([check_if_data(folder, i, 2) for i in res_numbers])
+    
+    res_numbers0 = res_numbers[data_there0]
+    res_numbers1 = res_numbers[data_there1]
+    res_numbers2 = res_numbers[data_there2]
+    
+    x_vec0 = x_vec[res_numbers0]
+    x_vec1 = x_vec[res_numbers1]
+    x_vec2 = x_vec[res_numbers2]
+    
+    print("Loading (Method)\n 0: %i \n 1: %i \n 2: %i" 
+          % (len(res_numbers0), len(res_numbers1), len(res_numbers2)))
     
     res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers0])
     unc_vec0 = np.array([load_pickle_data(folder, i, 1, method=0) for i in res_numbers0])
     
-    res_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers])
-    unc_vec1 = np.array([load_pickle_data(folder, i, 1, method=1) for i in res_numbers])
+    res_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers1])
+    unc_vec1 = np.array([load_pickle_data(folder, i, 1, method=1) for i in res_numbers1])
     
-    res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers])
-    unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers])
+    res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers2])
+    unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers2])
     
-    f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(11,11))
+    f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(6, 6))
     
-    ax1.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
-    ax1.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
-    ax1.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
-    ax1.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
-    ax1.plot(res_numbers0, res_vec0[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax1.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax1.plot(x_vec0, res_vec0[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
     ax1.set_ylim((0, ul_nb))
     ax1.set_ylabel("Nbh", fontsize=18)
     ax1.set_title("Method 1", fontsize=18)
 
-    ax2.plot(res_numbers0, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
-    ax2.hlines(0.006, 0, 100, linewidth=lw, color=c_lines)
+    ax2.plot(x_vec0, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax2.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines)
     ax2.set_ylabel("m", fontsize=18)
-    ax2.set_ylim((0, 0.02))
+    ax2.set_ylim((0, 0.03))
     
-    ax3.plot(res_numbers0, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
-    ax3.hlines(0.04, 0, 100, linewidth=lw, color=c_lines)
+    ax3.plot(x_vec0, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax3.hlines(0.04, x_min, x_max, linewidth=lw, color=c_lines)
     ax3.set_ylabel("Var. Par.", fontsize=18)
     
-    ax4.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
-    ax4.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
-    ax4.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
-    ax4.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
-    ax4.plot(res_numbers, res_vec1[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax4.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax4.plot(x_vec1, res_vec1[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
     ax4.set_ylim((0, ul_nb))
     ax4.set_title("Method 2", fontsize=18)
     ax4.set_yticks([])
     
-    ax5.plot(res_numbers, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
-    ax5.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-    ax5.set_ylim((0, 0.02))
+    ax5.plot(x_vec1, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax5.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines, zorder=1)
+    ax5.set_ylim((0, 0.03))
     ax5.set_yticks([])
     
-    ax6.plot(res_numbers, res_vec1[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
-    ax6.hlines(0.01, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-    ax6.set_yticks([])
+    ax6.plot(x_vec1, res_vec1[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax6.hlines(0.01, x_min, x_max, linewidth=lw, color=c_lines)
+    ax6.get_yaxis().set_tick_params(which='both', direction='out', pad=-35)
+    ax6.yaxis.tick_right()
     
-    ax7.hlines(4 * np.pi, 0, 25, linewidth=lw, color=c_lines)
-    ax7.hlines(4 * np.pi * 5, 25, 50, linewidth=lw, color=c_lines)
-    ax7.hlines(4 * np.pi * 9, 50, 75, linewidth=lw, color=c_lines)
-    ax7.hlines(4 * np.pi * 13, 75, 100, linewidth=lw, color=c_lines)
-    ax7.plot(res_numbers, res_vec2[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax7.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax7.plot(x_vec2, res_vec2[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
     ax7.set_ylim((0, ul_nb))
     ax7.set_title("Method 3", fontsize=18)
     ax7.set_yticks([])
     # ax1.legend()
     
-    ax8.plot(res_numbers, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
-    ax8.hlines(0.006, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-    ax8.set_ylim((0, 0.02))
+    ax8.plot(x_vec2, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax8.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines, zorder=1)
+    ax8.set_ylim((0, 0.03))
     ax8.set_yticks([])
     
-    ax9.plot(res_numbers, res_vec2[:, 2], "ko", label="Variance Parameter", color=c_dots, zorder=0)
-    ax9.hlines(0.52, 0, 100, linewidth=lw, color=c_lines, zorder=1)
-    ax9.set_yticks([])
-    plt.gcf().text(0.5,0.04,"Data Set Nr.", ha="center", fontsize=18) # Set the x-Label
+    ax9.plot(x_vec2, res_vec2[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax9.hlines(0.52, x_min, x_max, linewidth=lw, color=c_lines)
+    ax9.yaxis.tick_right()
+   # ax9.set_yticks([])
+    
+    plt.gcf().text(0.5, 0.04, "Number of Individuals", ha="center", fontsize=18)  # Set the x-Label
     plt.show()
     
     
-def multi_loci_single(folder, method):
+def multi_loci_single(folder, method, res_numbers=range(0, 100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
     # First quick function to unpickle the data:
-    res_numbers = range(0, 100)
+    # res_numbers = range(0, 100)
     # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
     # res_numbers = [1, 2, 7, 8, 9, 14, 17, 18, 19, 20]
     
@@ -781,7 +824,8 @@ def multi_loci_single(folder, method):
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
     
-    x_vec = range(50, 350, 3)  # Length 100: from 50 to 350
+    x_vec = np.array(range(50, 350, 3))  # Length 100: from 50 to 350
+    x_vec = x_vec[res_numbers]
     # plt.figure()
     f, ((ax1, ax2, ax3)) = plt.subplots(3, 1, sharex=True)
     
@@ -802,6 +846,98 @@ def multi_loci_single(folder, method):
     ax3.set_ylabel("SS", fontsize=18)
     # ax3.legend()
     plt.xlabel("Nr. of Loci")
+    plt.show()
+    
+def multi_loci_all(folder, res_numbers=range(100)):
+    '''Plot estimates for Data Sets with varying number of Loci.
+    Test all three Methods.'''
+    lw = 3
+    ul_nb = 200  # Upper Limit Neighborhood Size
+    # Load the Data for all three methods
+    
+    x_vec = np.array(range(50, 350, 3))  # Length 100: from 50 to 350 Loci
+    x_min = np.min(x_vec)
+    x_max = np.max(x_vec)
+     
+    # Extract Res-Numbers that actually exist for Data-Set 0
+    res_numbers = np.array(res_numbers)
+    
+    # Check for all Data whether it is there:
+    data_there0 = np.array([check_if_data(folder, i, 0) for i in res_numbers])
+    data_there1 = np.array([check_if_data(folder, i, 1) for i in res_numbers])
+    data_there2 = np.array([check_if_data(folder, i, 2) for i in res_numbers])
+    
+    res_numbers0 = res_numbers[data_there0]
+    res_numbers1 = res_numbers[data_there1]
+    res_numbers2 = res_numbers[data_there2]
+    
+    x_vec0 = x_vec[res_numbers0]
+    x_vec1 = x_vec[res_numbers1]
+    x_vec2 = x_vec[res_numbers2]
+    
+    print("Loading (Method)\n 0: %i \n 1: %i \n 2: %i" 
+          % (len(res_numbers0), len(res_numbers1), len(res_numbers2)))
+    
+    res_vec0 = np.array([load_pickle_data(folder, i, 0, method=0) for i in res_numbers0])
+    unc_vec0 = np.array([load_pickle_data(folder, i, 1, method=0) for i in res_numbers0])
+    
+    res_vec1 = np.array([load_pickle_data(folder, i, 0, method=1) for i in res_numbers1])
+    unc_vec1 = np.array([load_pickle_data(folder, i, 1, method=1) for i in res_numbers1])
+    
+    res_vec2 = np.array([load_pickle_data(folder, i, 0, method=2) for i in res_numbers2])
+    unc_vec2 = np.array([load_pickle_data(folder, i, 1, method=2) for i in res_numbers2])
+    
+    f, ((ax1, ax4, ax7), (ax2, ax5, ax8), (ax3, ax6, ax9)) = plt.subplots(3, 3, sharex=True, figsize=(7, 7))
+    
+    ax1.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax1.plot(x_vec0, res_vec0[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax1.set_ylim((0, ul_nb))
+    ax1.set_ylabel("Nbh", fontsize=18)
+    ax1.set_title("Method 1", fontsize=18)
+
+    ax2.plot(x_vec0, res_vec0[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax2.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines)
+    ax2.set_ylabel("m", fontsize=18)
+    ax2.set_ylim((0, 0.03))
+    
+    ax3.plot(x_vec0, res_vec0[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax3.hlines(0.04, x_min, x_max, linewidth=lw, color=c_lines)
+    ax3.set_ylabel("Var. Par.", fontsize=18)
+    
+    ax4.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax4.plot(x_vec1, res_vec1[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax4.set_ylim((0, ul_nb))
+    ax4.set_title("Method 2", fontsize=18)
+    ax4.set_yticks([])
+    
+    ax5.plot(x_vec1, res_vec1[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax5.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines, zorder=1)
+    ax5.set_ylim((0, 0.03))
+    ax5.set_yticks([])
+    
+    ax6.plot(x_vec1, res_vec1[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax6.hlines(0.01, x_min, x_max, linewidth=lw, color=c_lines)
+    ax6.get_yaxis().set_tick_params(which='both', direction='out', pad=-35)
+    ax6.yaxis.tick_right()
+    
+    ax7.hlines(4 * np.pi * 5, x_min, x_max, linewidth=lw, color=c_lines)
+    ax7.plot(x_vec2, res_vec2[:, 0], "ko", label="Nbh", color=c_dots, zorder=0)
+    ax7.set_ylim((0, ul_nb))
+    ax7.set_title("Method 3", fontsize=18)
+    ax7.set_yticks([])
+    # ax1.legend()
+    
+    ax8.plot(x_vec2, res_vec2[:, 1], "ko", label="L", color=c_dots, zorder=0)
+    ax8.hlines(0.006, x_min, x_max, linewidth=lw, color=c_lines, zorder=1)
+    ax8.set_ylim((0, 0.03))
+    ax8.set_yticks([])
+    
+    ax9.plot(x_vec2, res_vec2[:, 2], "ko", label="ss", color=c_dots, zorder=0)
+    ax9.hlines(0.52, x_min, x_max, linewidth=lw, color=c_lines)
+    ax9.yaxis.tick_right()
+   # ax9.set_yticks([])
+    
+    plt.gcf().text(0.5, 0.04, "Loci Number", ha="center", fontsize=18)  # Set the x-Label
     plt.show()
 
 
@@ -1045,44 +1181,47 @@ def cluster_plot(folder, method=2):
     c0, c1, c2, c3 = "yellow", "orange", "crimson", "purple"
     
     # plt.figure()
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6,6))
     
     ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color=c_lines)
     
-    ax1.errorbar(res_numbers0, res_vec[res_numbers0, 0], yerr=res_vec[res_numbers0, 0] - unc_vec[res_numbers0, 0, 0], fmt="o", color=c0, label="1x1")
-    ax1.errorbar(res_numbers1, res_vec[res_numbers1, 0], yerr=res_vec[res_numbers1, 0] - unc_vec[res_numbers1, 0, 0], fmt="o", color=c1, label="2x2")
-    ax1.errorbar(res_numbers2, res_vec[res_numbers2, 0], yerr=res_vec[res_numbers2, 0] - unc_vec[res_numbers2, 0, 0], fmt="o", color=c2, label="3x3")
-    ax1.errorbar(res_numbers3, res_vec[res_numbers3, 0], yerr=res_vec[res_numbers3, 0] - unc_vec[res_numbers3, 0, 0], fmt="o", color=c3, label="4x4")
+    ax1.plot(res_numbers0, res_vec[res_numbers0, 0], "ko", color=c0, label="1x1", zorder=0)
+    ax1.plot(res_numbers1, res_vec[res_numbers1, 0], "ko", color=c1, label="2x2", zorder=0)
+    ax1.plot(res_numbers2, res_vec[res_numbers2, 0], "ko", color=c2, label="3x3", zorder=0)
+    ax1.plot(res_numbers3, res_vec[res_numbers3, 0], "ko", color=c3, label="4x4", zorder=0)
     ax1.set_ylim([0, 200])
-    ax1.set_ylabel("Nbh Size", fontsize=18)
-    ax1.title.set_text("Various Clustering")
-    ax1.legend()
+    #ax1.set_xlim([0,120])
+    ax1.set_ylabel("Nbh", fontsize=18)
+    #ax1.legend(loc="upper left")
+    #ax1.title.set_text("Various Binning")
     
-    ax2.errorbar(res_numbers0, res_vec[res_numbers0, 1], yerr=res_vec[res_numbers0, 1] - unc_vec[res_numbers0, 1, 0], fmt="o", color=c0, label="1x1")
-    ax2.errorbar(res_numbers1, res_vec[res_numbers1, 1], yerr=res_vec[res_numbers1, 1] - unc_vec[res_numbers1, 1, 0], fmt="o", color=c1, label="2x2")
-    ax2.errorbar(res_numbers2, res_vec[res_numbers2, 1], yerr=res_vec[res_numbers2, 1] - unc_vec[res_numbers2, 1, 0], fmt="o", color=c2, label="3x3")
-    ax2.errorbar(res_numbers3, res_vec[res_numbers3, 1], yerr=res_vec[res_numbers3, 1] - unc_vec[res_numbers3, 1, 0], fmt="o", color=c3, label="4x4")
-    ax2.hlines(0.006, 0, 100, linewidth=2, color=c_lines)
-    ax2.set_ylabel("L", fontsize=18)
+    
+    ax2.plot(res_numbers0, res_vec[res_numbers0, 1], "ko", color=c0, label="1x1")
+    ax2.plot(res_numbers1, res_vec[res_numbers1, 1], "ko", color=c1, label="2x2")
+    ax2.plot(res_numbers2, res_vec[res_numbers2, 1], "ko", color=c2, label="3x3")
+    ax2.plot(res_numbers3, res_vec[res_numbers3, 1], "ko", color=c3, label="4x4")
+    ax2.hlines(0.006, 0, 100, linewidth=2, color=c_lines, zorder=1)
+    ax2.set_ylabel("m", fontsize=18)
     # ax2.legend()
     
-    ax3.errorbar(res_numbers0, res_vec[res_numbers0, 2], yerr=res_vec[res_numbers0, 2] - unc_vec[res_numbers0, 2, 0], fmt="o", color=c0, label="1x1")
-    ax3.errorbar(res_numbers1, res_vec[res_numbers1, 2], yerr=res_vec[res_numbers1, 2] - unc_vec[res_numbers1, 2, 0], fmt="o", color=c1, label="2x2")
-    ax3.errorbar(res_numbers2, res_vec[res_numbers2, 2], yerr=res_vec[res_numbers2, 2] - unc_vec[res_numbers2, 2, 0], fmt="o", color=c2, label="3x3")
-    ax3.errorbar(res_numbers3, res_vec[res_numbers3, 2], yerr=res_vec[res_numbers3, 2] - unc_vec[res_numbers3, 2, 0], fmt="o", color=c3, label="4x4")
-    ax3.hlines(0.1, 0, 100, linewidth=2, color=c_lines)
-    ax3.set_ylabel("Barrier", fontsize=18)
+    ax3.plot(res_numbers0, res_vec[res_numbers0, 2], "ko", color=c0, label="1x1")
+    ax3.plot(res_numbers1, res_vec[res_numbers1, 2], "ko", color=c1, label="2x2")
+    ax3.plot(res_numbers2, res_vec[res_numbers2, 2], "ko", color=c2, label="3x3")
+    ax3.plot(res_numbers3, res_vec[res_numbers3, 2], "ko", color=c3, label="4x4")
+    ax3.hlines(0.1, 0, 100, linewidth=2, color=c_lines, zorder=1)
+    ax3.set_ylabel(r"$\gamma$", fontsize=18)
     
-    ax4.errorbar(res_numbers0, res_vec[res_numbers0, 3], yerr=res_vec[res_numbers0, 3] - unc_vec[res_numbers0, 3, 0], fmt="o", color=c0, label="1x1")
-    ax4.errorbar(res_numbers1, res_vec[res_numbers1, 3], yerr=res_vec[res_numbers1, 3] - unc_vec[res_numbers1, 3, 0], fmt="o", color=c1, label="2x2")
-    ax4.errorbar(res_numbers2, res_vec[res_numbers2, 3], yerr=res_vec[res_numbers2, 3] - unc_vec[res_numbers2, 3, 0], fmt="o", color=c2, label="3x3")
-    ax4.errorbar(res_numbers3, res_vec[res_numbers3, 3], yerr=res_vec[res_numbers3, 3] - unc_vec[res_numbers3, 3, 0], fmt="o", color=c3, label="4x4")
-    ax4.hlines(0.52, 0, 100, linewidth=2, color=c_lines)
+    ax4.plot(res_numbers0, res_vec[res_numbers0, 3], "ko", color=c0, label="1x1")
+    ax4.plot(res_numbers1, res_vec[res_numbers1, 3], "ko", color=c1, label="2x2")
+    ax4.plot(res_numbers2, res_vec[res_numbers2, 3], "ko", color=c2, label="3x3")
+    ax4.plot(res_numbers3, res_vec[res_numbers3, 3], "ko", color=c3, label="4x4")
+    ax4.hlines(0.52, 0, 100, linewidth=2, color=c_lines, zorder=1)
     ax4.set_ylim([0.5, 0.53])
-    ax4.set_ylabel("SS", fontsize=18)
+    ax4.set_ylabel("s", fontsize=18)
+    
     # plt.xticks([10,35,60,85], ['1x1', '2x2', '3x3','4x4'])
     
-    plt.xlabel("Dataset")
+    plt.xlabel("Dataset Nr", fontsize=18)
     plt.show()
     
 def ll_barrier(folder):
@@ -1470,7 +1609,7 @@ def plot_homos(position_path, genotype_path, bins=50, max_dist=0, best_fit_param
     plt.plot(bin_dist, bin_h, "ro", label="Observed")
     plt.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
     plt.ylabel("Pairwise h", fontsize=18)
-    plt.xlabel("Pairwise Distance [m]", fontsize=18)
+    plt.xlabel(r"Pairwise Distance [$\sigma$]", fontsize=18) # Or [m]
     plt.legend(fontsize=18, loc="upper right")
     plt.title(title, fontsize=18)
     ax = plt.gca()
@@ -1479,8 +1618,7 @@ def plot_homos(position_path, genotype_path, bins=50, max_dist=0, best_fit_param
     
 def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, bins=50, max_dist=0, max_dist1=0,
                  best_fit_params=[200, 0.02, 0.52], best_fit_params1=[200, 0.02, 0.52],
-                 scale_factor=50, scale_factor1=100, demes_x=30, demes_y=20, demes_x1=30, demes_y1=20,
-                deme_bin=False):
+                 scale_factor=50, scale_factor1=100, demes_x=30, demes_y=20, demes_x1=30, demes_y1=20):
     
     positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
@@ -1495,11 +1633,13 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
     # Do the binning
     if np.min([demes_x, demes_y]) > 0:
         positions, genotypes, _ = group_inds(positions, genotypes,
-                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=1) 
+                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=3) 
         
     if np.min([demes_x1, demes_y1]) > 0:
         positions1, genotypes1, _ = group_inds(positions1, genotypes1,
                                                     demes_x=demes_x1, demes_y=demes_y1, min_ind_nr=1)
+    
+    print("Grouping Finished!")
     
     # Calculate the mean sharing in Bins
     print("Calculating Homo Matrix....")
@@ -1783,7 +1923,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # Load the Barrier Positions:
     barrier_fn = "barrier_pos.csv"
     path = folder + method_folder + barrier_fn
-    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64')*scale_factor
+    barrier_pos = np.loadtxt(path, delimiter='$').astype('float64') * scale_factor
     # print(barrier_pos[13]) 
     
     
@@ -1939,10 +2079,10 @@ if __name__ == "__main__":
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
-    multi_ind_single(multi_ind_folder, method=2) 
-    #multi_ind_all(multi_ind_folder, range(1,50)) # 3x3 Plot of all Methods    # All three methods for Multi Ind
-    # multi_loci_single(multi_loci_folder, method=1)
-    # multi_loci_all() # 3x3 Plot of all Methods   # To implement
+    # multi_ind_single(multi_ind_folder1, method=0) 
+    # multi_ind_all(multi_ind_folder1, range(0, 100))  # 3x3 Plot of all Methods    # All three methods for Multi Ind
+    # multi_loci_single(multi_loci_folder, method=0, res_numbers=range(0, 21))
+    # multi_loci_all(multi_loci_folder) # 3x3 Plot of all Methods   # Partially implemented
     
     # multi_barrier_single(multi_barrier_folder, method=2)  # Mingle with the above for different Barrier Strengths.
     # multi_barrier10("./barrier_folder10/")  # Print the 10 Barrier Data Sets
@@ -1965,7 +2105,7 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
     #               scale_factor=50, real_barrier=False) 
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
@@ -1995,12 +2135,18 @@ if __name__ == "__main__":
     #           bins=15, max_dist=20, best_fit_params=[67.74, 0.0107, 0.52343], bootstrap=False, nr_bootstraps=50,
     #           scale_factor=1, deme_bin=True, title="Simulated Data Set")  
     
-    # plot_homos_2(position_path="./Data/coordinatesHZALL2.csv", genotype_path="./Data/genotypesHZALL2.csv", 
-    #             position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #             bins=15, max_dist=3000, max_dist1=20, 
-    #             best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #             scale_factor=50, scale_factor1=1, demes_x=0, demes_y=0, demes_x1=30, demes_y1=20,
-    #            deme_bin=False)
+    # Plots the two Homozygote Plots in one:
+    plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
+                position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+                bins=15, max_dist=3000, max_dist1=20, 
+                best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
+                scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20)
+    
+    # Plot IBD for Dataset used in Geneland Comparison
+    # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
+    #           genotype_path="./barrier_folder2/barrier_file_genotypes60.csv",
+    #           bins=10, max_dist=16, best_fit_params=[50.316, 0.01857, 0.52246], bootstrap=False, nr_bootstraps=50,
+    #           scale_factor=1, deme_bin=False, title="IBD Scenario") # No Binning: Too few Individuals
     
     # ## Give Stats of Results:
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")

@@ -1618,7 +1618,7 @@ def plot_homos(position_path, genotype_path, bins=50, max_dist=0, best_fit_param
     
 def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, bins=50, max_dist=0, max_dist1=0,
                  best_fit_params=[200, 0.02, 0.52], best_fit_params1=[200, 0.02, 0.52],
-                 scale_factor=50, scale_factor1=100, demes_x=30, demes_y=20, demes_x1=30, demes_y1=20):
+                 scale_factor=50, scale_factor1=100, demes_x=30, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5, min_ind_nr1=1):
     
     positions = np.loadtxt(position_path, delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
     genotypes = np.loadtxt(genotype_path, delimiter='$').astype('float64')
@@ -1633,11 +1633,11 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
     # Do the binning
     if np.min([demes_x, demes_y]) > 0:
         positions, genotypes, _ = group_inds(positions, genotypes,
-                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=3) 
+                                                    demes_x=demes_x, demes_y=demes_y, min_ind_nr=min_ind_nr) 
         
     if np.min([demes_x1, demes_y1]) > 0:
         positions1, genotypes1, _ = group_inds(positions1, genotypes1,
-                                                    demes_x=demes_x1, demes_y=demes_y1, min_ind_nr=1)
+                                                    demes_x=demes_x1, demes_y=demes_y1, min_ind_nr=min_ind_nr1)
     
     print("Grouping Finished!")
     
@@ -1905,7 +1905,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     unc_vec = np.array([load_pickle_data(folder, i, 1, subfolder=method_folder) for i in res_numbers])
     
     # Put the Barrier Estimates >1 to 1:
-    res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
+    res_vec[:, 2] = np.where(res_vec[:, 2] > 1, 1, res_vec[:, 2])
     
     for l in range(len(res_numbers)):
         i = res_numbers[l]
@@ -1915,7 +1915,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
             print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
             
     # Mean Estimates:
-    mean_inds = range(0, np.max(res_numbers), nr_bts)
+    mean_inds = range(0, len(res_numbers), nr_bts)
     res_mean = res_vec[mean_inds, :]  
     # print(res_mean)  
     # print(res_mean[13])
@@ -1929,7 +1929,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     
     ##############################################################
     # Add upper bound here if only lower number of results are available
-    b_max = np.max(res_numbers) / nr_bts
+    b_max = (len(res_numbers)-1) / nr_bts
     barrier_pos = barrier_pos[:b_max + 1]   
     ##############################################################
     
@@ -1969,7 +1969,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # Do the plotting:
     f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
     # Plot the Nbh Estiamtes:
-    inds_sorted, true_inds = argsort_bts(res_vec[res_numbers, 0], nr_bts)
+    inds_sorted, true_inds = argsort_bts(res_vec[:, 0], nr_bts)
     ax1.scatter(barr_pos_plot, res_vec[inds_sorted, 0], c=color_vec, label="Bootstrap Estimate", alpha=0.8, zorder=1)
     ax1.plot(barr_pos_plot[true_inds], res_mean[:, 0], 'o', label="Estimate", color="k")
     ax1.set_ylim([0, 350])
@@ -1979,7 +1979,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # ax1.title.set_text("No Barrier")
     ax1.legend(loc="upper right")
     
-    inds_sorted, true_inds = argsort_bts(res_vec[res_numbers, 2], nr_bts)
+    inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
     ax2.scatter(barr_pos_plot, res_vec[inds_sorted, 2], label="Bootstrap Estimates", alpha=0.8, c=color_vec, zorder=1)
     ax2.plot(barr_pos_plot[true_inds], res_mean[:, 2], 'o', label="Estimate", color="k")
     ax2.set_ylim([0, 1])
@@ -2102,11 +2102,18 @@ if __name__ == "__main__":
     
     
     # ## Plots for Hybrid Zone Data
-    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))  # For Dataset where Demes are weighted
+    # For Dataset where Demes are weighted
+    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
     #               scale_factor=50, real_barrier=False) 
+    
+    # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
+    #multi_pos_plot("./multi_barrier_hz_ALL14/chr00/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
+    #               scale_factor=50, real_barrier=False) 
+    
+    #
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
     
     
@@ -2136,11 +2143,18 @@ if __name__ == "__main__":
     #           scale_factor=1, deme_bin=True, title="Simulated Data Set")  
     
     # Plots the two Homozygote Plots in one:
+    #plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
+    #            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #            bins=14, max_dist=2200, max_dist1=20, 
+    #            best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20)
+    
+    # 2014 Estimates:
     plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
-                position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-                bins=15, max_dist=3000, max_dist1=20, 
-                best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
-                scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20)
+            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+            bins=14, max_dist=2200, max_dist1=20, 
+            best_fit_params=[241.58, 0.0000126, 0.52169], best_fit_params1=[67.74, 0.0107, 0.52343],
+            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

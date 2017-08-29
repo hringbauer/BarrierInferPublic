@@ -1611,7 +1611,7 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/chr0/", multi_processing=1)
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/chr000/", multi_processing=1)
     MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL14.csv",
                         genotype_path="./Data/genotypesHZALL14.csv", loci_path="./Data/loci_infoALL.csv",
                         chromosome=0, scale_factor=50)

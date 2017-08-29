@@ -491,9 +491,12 @@ if __name__ == "__main__":
     # genotype_mat = np.loadtxt('./nbh_folder_gauss/nbh_file_genotypes200.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
     # position_list = np.loadtxt('./multi_barrier_hz/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
     # genotype_mat = np.loadtxt('./multi_barrier_hz/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
-    position_list = np.loadtxt("./barrier_folder2/barrier_file_coords60.csv", delimiter='$').astype('float64')  # Load the complete X-Data
-    genotype_mat = np.loadtxt("./barrier_folder2/barrier_file_genotypes60.csv", delimiter='$').astype('float64')  # Load the complete Y-Data
-
+    # position_list = np.loadtxt("./barrier_folder2/barrier_file_coords60.csv", delimiter='$').astype('float64')  # Load the complete X-Data
+    # genotype_mat = np.loadtxt("./barrier_folder2/barrier_file_genotypes60.csv", delimiter='$').astype('float64')  # Load the complete Y-Data
+    
+    position_list = np.loadtxt('./multi_barrier_hz_ALL14/chr0/mb_posHZ_coords00.csv', delimiter='$').astype('float64')  # Load the complete X-Data
+    genotype_mat = np.loadtxt('./multi_barrier_hz_ALL14/chr0/mb_posHZ_genotypes00.csv', delimiter='$').astype('float64')  # Load the complete Y-Data
+    
     
     
     #print(np.shape(genotype_mat))
@@ -502,8 +505,8 @@ if __name__ == "__main__":
     # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
     #analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
     
-    #analyze_normal(position_list, genotype_mat, nr_x_bins=50, nr_y_bins=10)
-    analyze_normal(position_list, genotype_mat)
+    analyze_normal(position_list, genotype_mat, nr_x_bins=50, nr_y_bins=10, nr_inds=3)
+    #analyze_normal(position_list, genotype_mat)
 #########################################
 
 

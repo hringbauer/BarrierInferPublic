@@ -2110,7 +2110,7 @@ if __name__ == "__main__":
     #               scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    #multi_pos_plot("./multi_barrier_hz_ALL14/chr00/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
+    # multi_pos_plot("./multi_barrier_hz_ALL14/chr000/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
     #               scale_factor=50, real_barrier=False) 
     
     #
@@ -2153,8 +2153,8 @@ if __name__ == "__main__":
     plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
             position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
             bins=14, max_dist=2200, max_dist1=20, 
-            best_fit_params=[241.58, 0.0000126, 0.52169], best_fit_params1=[67.74, 0.0107, 0.52343],
-            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=3)
+            best_fit_params=[213.3, 0.000036, 0.52276], best_fit_params1=[67.74, 0.0107, 0.52343],
+            scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

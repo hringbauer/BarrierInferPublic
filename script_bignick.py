@@ -46,8 +46,8 @@ def analyze_barrier_strengths_ll():
 
 
 data_set_nr = int(sys.argv[1])  # Which data-set to use
-#data_set_nr = 52
-#print("Starting Dataset Nr.: %i" % data_set_nr)
+# data_set_nr = 52
+# print("Starting Dataset Nr.: %i" % data_set_nr)
 data_set_nr = data_set_nr - 1
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -97,11 +97,10 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/chr000/", multi_
 
 # For HZ Analysis:
 MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=np.linspace(-30, 30, 25), use_ind_nr=0,
-                          min_dist=1.0, max_dist=30.0, nr_bts=20, nr_x_bins=50, nr_y_bins=10, min_ind_nr=5, start_params=[200.0,0.00002,0.52])
+                          min_dist=1.0, max_dist=30.0, nr_bts=10, nr_x_bins=75, nr_y_bins=15, min_ind_nr=3, start_params=[50.0, 0.001, 0.01])
 
 # MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
 #            res_folder="k_only/", min_ind_nr=5)
-
 
 # MultiRun.analyze_data_set_k_only(data_set_nr, nbh=60.06, l=0.0078575, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
 #                         res_folder="k_only_20/", min_ind_nr=1, loci=range(20))

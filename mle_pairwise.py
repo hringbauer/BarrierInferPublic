@@ -505,7 +505,7 @@ if __name__ == "__main__":
     # ind_deme_nr = np.ones(len(position_list))  # Load the Nr of Individuals per Deme
     #analyze_barrier(position_list, genotype_mat, ind_deme_nr)  # Do not forget to set position of barrier
     
-    analyze_normal(position_list, genotype_mat, nr_x_bins=50, nr_y_bins=10, nr_inds=3)
+    analyze_normal(position_list, genotype_mat, nr_x_bins=75, nr_y_bins=15, nr_inds=3)
     #analyze_normal(position_list, genotype_mat)
 #########################################
 

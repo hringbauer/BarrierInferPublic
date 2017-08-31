@@ -2110,8 +2110,9 @@ if __name__ == "__main__":
     #               scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    # multi_pos_plot("./multi_barrier_hz_ALL14/chr000/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
-    #               scale_factor=50, real_barrier=False) 
+    multi_pos_plot("./multi_barrier_hz_ALL14/chr0000/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+                   scale_factor=50, real_barrier=False) 
+    
     
     #
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
@@ -2150,11 +2151,11 @@ if __name__ == "__main__":
     #            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20)
     
     # 2014 Estimates:
-    plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
-            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-            bins=14, max_dist=2200, max_dist1=20, 
-            best_fit_params=[213.3, 0.000036, 0.52276], best_fit_params1=[67.74, 0.0107, 0.52343],
-            scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20, min_ind_nr=3)
+    #plot_homos_2(position_path="./multi_barrier_hz_ALL14/chr0000/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/chr0000/mb_posHZ_genotypes00.csv", 
+    #        position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #        bins=14, max_dist=3000, max_dist1=20, 
+    #        best_fit_params=[202.0127, 0.001119, 0.526965], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #        scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

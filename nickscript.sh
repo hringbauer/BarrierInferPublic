@@ -3,14 +3,14 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "HZ14.3"
+#$ -N "HZ14.4"
 #$ -m a    
 #$ -l mf=4G
 #$ -l mem_free=4G
 #$ -l h_vmem=4G
 #$ -l h_rt=72:00:00
 #$ -cwd
-#$ -t 1-250:1
+#$ -t 1-500:1
 
 export OMP_NUM_THREADS=1
 python script_bignick.py $SGE_TASK_ID

@@ -17,9 +17,9 @@ mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 # folder = "./cluster_folder/"
 # folder = "./bts_folder_test/"
 # folder = "./hz_folder/"
-# folder = "./multi_ind_nr1/"
+folder = "./multi_ind_nr1/"
 # folder = "./barrier_folder2/"
-folder ="./multi_loci_nr/"
+# folder ="./multi_loci_nr/"
 # folder = "./multi_2nd/"
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
@@ -29,12 +29,12 @@ folder ="./multi_loci_nr/"
 # MultiRun = fac_method("multi_cluster", folder, multi_processing=1)   
 # MultiRun = fac_method("multi_bts", folder, multi_processing=1)
 # MultiRun = fac_method("multi_HZ", folder, multi_processing=mp)
-# MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
+MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 
-MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_loci", folder, multi_processing=mp)
 
 
 

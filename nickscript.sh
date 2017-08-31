@@ -3,7 +3,7 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "MultiIndM2"
+#$ -N "HZ14.3"
 #$ -m a    
 #$ -l mf=4G
 #$ -l mem_free=4G

@@ -272,7 +272,7 @@ class MultiRun(object):
             MLE_obj = MLE_f_emp("DiffusionBarrierK0", position_list, genotype_mat, nr_inds=nr_inds,
                                 min_dist=min_dist, max_dist=max_dist, multi_processing=self.multi_processing,
                                 fit_params=fit_params, fixed_params=fixed_params)
-            start_params = start_params + [0.5, ]
+            start_params = start_params + [0.5255, ]
             fixed_params[-1] = 0.5
         elif method == 3:  # Do the fitting based on binned data
             MLE_obj = Analysis(position_list, genotype_mat) 
@@ -1611,7 +1611,7 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max2000/", multi_processing=1)
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max2001/", multi_processing=1)
     MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL14.csv",
                         genotype_path="./Data/genotypesHZALL14.csv", loci_path="./Data/loci_infoALL.csv",
                         chromosome=0, scale_factor=50)

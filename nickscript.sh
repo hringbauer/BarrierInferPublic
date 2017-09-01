@@ -3,11 +3,11 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "HZ14.4"
+#$ -N "HZ14.5"
 #$ -m a    
-#$ -l mf=4G
-#$ -l mem_free=4G
-#$ -l h_vmem=4G
+#$ -l mf=2G
+#$ -l mem_free=2G
+#$ -l h_vmem=2G
 #$ -l h_rt=72:00:00
 #$ -cwd
 #$ -t 1-500:1

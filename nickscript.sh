@@ -10,7 +10,7 @@
 #$ -l h_vmem=2G
 #$ -l h_rt=72:00:00
 #$ -cwd
-#$ -t 1-500:1
+#$ -t 1-250:1
 
 export OMP_NUM_THREADS=1
 python script_bignick.py $SGE_TASK_ID

@@ -2110,7 +2110,7 @@ if __name__ == "__main__":
     #               scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    multi_pos_plot("./multi_barrier_hz_ALL14/chr0000/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+    multi_pos_plot("./multi_barrier_hz_ALL14/max2001/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
                    scale_factor=50, real_barrier=False) 
     
     

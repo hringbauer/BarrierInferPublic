@@ -8,7 +8,7 @@ import pickle as pickle
 import numpy as np
 import sys
 
-mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
+mp = 1  # Whether to use MultiProcessing. 0: No 1: Yes
 
         
 ###########Methods for creating Barrier Likelihood Profiles:
@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-#data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
-data_set_nr = 51
+data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
+# data_set_nr = 101
 # print("Starting Dataset Nr.: %i" % data_set_nr)
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -71,7 +71,7 @@ data_set_nr = 51
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max2001/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
+MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max1000/", multi_processing=mp)  # Whole DataSet for Antirrhinum Analysis(Chromosome 0)
 # MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
@@ -96,7 +96,7 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max2001/", multi
 
 # For HZ Analysis:
 MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=np.linspace(-30, 30, 25), use_ind_nr=0,
-                          min_dist=1.0, max_dist=40.0, nr_bts=20, nr_x_bins=75, nr_y_bins=15, min_ind_nr=3, start_params=[150.0, 0.0001, 0.01])
+                          min_dist=1.0, max_dist=20.0, nr_bts=10, nr_x_bins=75, nr_y_bins=15, min_ind_nr=3, start_params=[150.0, 0.0001, 0.01])
 
 # MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
 #            res_folder="k_only/", min_ind_nr=5)

@@ -17,6 +17,7 @@ from analysis import kinship_coeff, calc_f_mat, calc_h_mat, group_inds  # Import
 from scipy.stats import binned_statistic
 from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
+from grid import Grid
 
 
 multi_nbh_folder = "./nbh_folder/"
@@ -345,7 +346,7 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     res_numbers3 = range(75, 100)
     res_numbers = res_numbers0 + res_numbers1 + res_numbers2 + res_numbers3
     
-    lw=3
+    lw = 3
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
     unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
@@ -360,12 +361,12 @@ def multi_barrier_single(folder, method, barrier_strengths=[0, 0.05, 0.1, 0.15])
     
     
     # plt.figure()
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6,6))
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6, 6))
     ax1.hlines(4 * np.pi * 5, res_numbers[0], res_numbers[-1], linewidth=lw, color=c_lines)
-    ax1.plot(res_numbers, res_vec[:, 0], "bo", color=c_dots,label="Nbh")
+    ax1.plot(res_numbers, res_vec[:, 0], "bo", color=c_dots, label="Nbh")
     ax1.set_ylim([0, 200])
     ax1.set_ylabel("Nbh", fontsize=18)
-    #ax1.title.set_text("Method: %s" % str(method))
+    # ax1.title.set_text("Method: %s" % str(method))
     # ax1.legend()
     
     ax2.plot(res_numbers, res_vec[:, 1], "go", color=c_dots, label="m")
@@ -486,7 +487,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     
     
     
-def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999], nr_reps=5, figsize=(12,12)):
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999], nr_reps=5, figsize=(12, 12)):
     '''Plots the Bootstraps over Barriers.'''
     nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
     nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS
@@ -556,8 +557,8 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999
     ax3.set_ylim([0, 1])
     ax3.legend(loc="upper left")
     ax3.set_ylabel("$\gamma$", fontsize=18, rotation=0, labelpad=10)
-    ax3.set_ylim(0.01,1.2)
-    #ax3.set_yscale("log")
+    ax3.set_ylim(0.01, 1.2)
+    # ax3.set_yscale("log")
  
 #     # SS Plot:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 3], nr_bts)
@@ -1181,7 +1182,7 @@ def cluster_plot(folder, method=2):
     c0, c1, c2, c3 = "yellow", "orange", "crimson", "purple"
     
     # plt.figure()
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6,6))
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(6, 6))
     
     ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=2, color=c_lines)
     
@@ -1190,10 +1191,10 @@ def cluster_plot(folder, method=2):
     ax1.plot(res_numbers2, res_vec[res_numbers2, 0], "ko", color=c2, label="3x3", zorder=0)
     ax1.plot(res_numbers3, res_vec[res_numbers3, 0], "ko", color=c3, label="4x4", zorder=0)
     ax1.set_ylim([0, 200])
-    #ax1.set_xlim([0,120])
+    # ax1.set_xlim([0,120])
     ax1.set_ylabel("Nbh", fontsize=18)
-    #ax1.legend(loc="upper left")
-    #ax1.title.set_text("Various Binning")
+    # ax1.legend(loc="upper left")
+    # ax1.title.set_text("Various Binning")
     
     
     ax2.plot(res_numbers0, res_vec[res_numbers0, 1], "ko", color=c0, label="1x1")
@@ -1609,7 +1610,7 @@ def plot_homos(position_path, genotype_path, bins=50, max_dist=0, best_fit_param
     plt.plot(bin_dist, bin_h, "ro", label="Observed")
     plt.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
     plt.ylabel("Pairwise h", fontsize=18)
-    plt.xlabel(r"Pairwise Distance [$\sigma$]", fontsize=18) # Or [m]
+    plt.xlabel(r"Pairwise Distance [$\sigma$]", fontsize=18)  # Or [m]
     plt.legend(fontsize=18, loc="upper right")
     plt.title(title, fontsize=18)
     ax = plt.gca()
@@ -1929,7 +1930,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     
     ##############################################################
     # Add upper bound here if only lower number of results are available
-    b_max = (len(res_numbers)-1) / nr_bts
+    b_max = (len(res_numbers) - 1) / nr_bts
     barrier_pos = barrier_pos[:b_max + 1]   
     ##############################################################
     
@@ -2071,11 +2072,113 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     plt.show()
     
 
+def sim_idea_grid():
+    '''Method to simulate the idea used for inference.
+    Produces figure in Paper
+    Use Grid Model to simulate'''
+    
+    # Do the simulations:
+    # Parameters:
+    grid_size = 1000
+    mid = grid_size / 2
+    sigma, ips, mu = 1.2, 1.0, 0.001
+    p_mean = 0.5
+    t = 5000
+    
+    # First: Set the position_list:
+    position_list = np.array([[mid + i, mid + j] for i in xrange(-30, 30) for j in xrange(-30, 30)])
+    l = int(np.sqrt(len(position_list)))  # Length of position list along given axis
+    
+    # Do the Simulation without Barrier
+    grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+    grid.set_parameters(grid_size, grid_size, sigma, ips, mu)
+    grid.set_samples(position_list)
+    grid.update_grid_t(t, p=p_mean, barrier=0)  # Uses p_mean[i] as mean allele Frequency.
+    genotypes = grid.genotypes
+    
+    # Do the Simulations with Barrier
+    grid_b = Grid()  # Creates new Grid. Maybe later on use factory Method
+    grid_b.set_parameters(grid_size, grid_size, sigma, ips, mu)
+    grid_b.set_barrier_parameters(mid + 0.5, barrier_strength=0.0)  # Where to set the Barrier and its strength
+    grid_b.set_samples(position_list)
+    grid_b.update_grid_t(t, p=p_mean, barrier=1)  # Uses p_mean[i] as mean allele Frequency.
+    genotypes_b = grid_b.genotypes
+    
+    # Do the smoothing
+    def smooth(positions, genotypes, sigma=1.2):
+        '''Smooth out the Genotypes with Kernel'''
+        # Calculate the Distance Matrix
+        start = time()
+        dist_mat = np.linalg.norm(positions[:, None] - positions, axis=2)
+        print("Dist Mat Calculation Time: %.3f" % (time() - start))
+        
+        # Smmothing
+        start = time()
+        p_mat = np.array(genotypes)  # Just in case that not numpy array
+        
+        print("Dist Mat Shape:")
+        print(np.shape(dist_mat))
+        
+        print("Shape Genotype")
+        print(np.shape(genotypes))
+        
+        weights = 1 / (2.0 * np.pi * sigma ** 2) * np.exp(-dist_mat ** 2 / (2.0 * sigma ** 2))  # Calculate the Gaussian weights
+        p_mean = np.dot(weights, p_mat) / np.sum(weights, axis=1)  # Calculate weighted mean
+        print("Time taken Gaussian Smoothing: %.3f" % (time() - start))
+        return p_mean
+        
+        # Use the Gaussian for smoothing
+    
+    p_mean = smooth(position_list, genotypes)
+    p_mean_b = smooth(position_list, genotypes_b)
+    p_mean = np.reshape(p_mean, (l, l)).T
+    p_mean_b = np.reshape(p_mean_b, (l, l)).T
+    
+    
+    # Do the plotting
+    x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+    
+    tf_size=20
+    label_size=12
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 6))
+    
+    ax1.imshow(p_mean, interpolation="bilinear", cmap="jet")
+    ax1.set_xlim(1,l-1)
+    ax1.set_ylim(1,l-1)
+    ax1.set_title("No Barrier", fontsize=tf_size)
+    ax1.set_xlabel("x-Axis",fontsize=label_size)
+    ax1.set_ylabel("y-Axis", fontsize=label_size)
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+    ax1.autoscale(False)
+    ax1.set_adjustable('box-forced')
+    #
+    im=ax2.imshow(p_mean_b, interpolation="bilinear", cmap="jet")
+    ax2.set_xlim(1,l-1)
+    ax2.set_ylim(1,l-1)
+    ax2.vlines(l / 2, 0, l, linewidth=15, color="k")
+    ax2.set_title("Strong Barrier",fontsize=tf_size)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    ax2.autoscale(False)
+    ax2.set_adjustable('box-forced')
+    
+    f.subplots_adjust(right=0.85)
+    cbar_ax = f.add_axes([0.87, 0.12, 0.02, 0.75]) # left, bottom, width, height
+    f.colorbar(im, cax=cbar_ax)
+    f.text(0.92, 0.5, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
+    #cbar = f.colorbar(cax)
+    #plt.tight_layout()
+    plt.show()
+
     
     
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
+    # sim_idea_grid()  # Simulate the Idea of the Grid
+    
+    
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
     # multi_nbh_single(multi_nbh_gauss_folder, method=0, res_numbers=range(0,100))
@@ -2106,12 +2209,12 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
     #               scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    multi_pos_plot("./multi_barrier_hz_ALL14/max2001/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 500), plot_hlines=0, color_path="colorsHZALL14.csv",
-                   scale_factor=50, real_barrier=False) 
+    #multi_pos_plot("./multi_barrier_hz_ALL14/max1000/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+    #               scale_factor=50, real_barrier=False) 
     
     
     #
@@ -2136,7 +2239,7 @@ if __name__ == "__main__":
     
     ##### Plot pairwise homozgyosity against distance:
     # plot_homos("./Data/coordinatesHZALL2.csv", "./Data/genotypesHZALL2.csv", bins=15, max_dist=3000, best_fit_params=[218.57, 0.000038, 0.52371],
-    #                     bootstrap=False, nr_bootstraps=50, scale_factor=50, title="Hybrid Zone Data")  # Plot for Hybrid Zone Data
+    #                     bootstrap=False, nr_bootstraps=50, scale_factor=50, title="Antirrhinum Data")  # Plot for Hybrid Zone Data
     
     # For Data from Barrier10 Dataset. Take Dataset Nr. 199
     # plot_homos("./barrier_folder10/barrier_file_coords199.csv", "./barrier_folder10/barrier_file_genotypes199.csv",
@@ -2147,15 +2250,15 @@ if __name__ == "__main__":
     #plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
     #            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
     #            bins=14, max_dist=2200, max_dist1=20, 
-    #            best_fit_params=[218.57, 0.000038, 0.52371], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20)
+    #            best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #            scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20)
     
     # 2014 Estimates:
-    #plot_homos_2(position_path="./multi_barrier_hz_ALL14/chr0000/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/chr0000/mb_posHZ_genotypes00.csv", 
-    #        position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #        bins=14, max_dist=3000, max_dist1=20, 
-    #        best_fit_params=[202.0127, 0.001119, 0.526965], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #        scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
+    plot_homos_2(position_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_genotypes00.csv", 
+            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+            bins=14, max_dist=3000, max_dist1=20, 
+            best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
+            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

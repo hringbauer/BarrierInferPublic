@@ -1153,7 +1153,7 @@ class MultiHZPosition(MultiBarrierPosition):
         super(MultiHZPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
         
     def create_data_set(self, data_set_nr=0, position_path="", genotype_path="", loci_path="",
-            scale_factor=50, chromosome=0, geo_r2=0.015, p_HW=0.00001,
+            scale_factor=50, chromosome=0, geo_r2=0.01, p_HW=0.0001,
             ld_r2=0.03, min_p=0.15):
         '''Creates the HZ Data-Set. Takes raw Data and pre-processes it:
         Filtering out number of Loci; based on chromosome
@@ -1611,7 +1611,7 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max1000/", multi_processing=1)
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/max2000v2/", multi_processing=1)
     MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL14.csv",
                         genotype_path="./Data/genotypesHZALL14.csv", loci_path="./Data/loci_infoALL.csv",
                         chromosome=0, scale_factor=50)

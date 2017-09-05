@@ -77,7 +77,7 @@ class Grid(object):
             if barrier == 0:
                 self.update_grid()  # Updates the update list
             
-            elif barrier == 1:  # In case of barrier
+            elif barrier == 1:  # In case of barrier)
                 self.update_grid_barrier()
                 
             else:

@@ -846,6 +846,7 @@ def memory_leak():
     
     for _ in xrange(100):
         kc.calc_kernel_mat(coords)
+        
     
     
     

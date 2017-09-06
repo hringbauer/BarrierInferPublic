@@ -2072,7 +2072,7 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     plt.show()
     
 
-def sim_idea_grid():
+def sim_idea_grid(save=True, load=True, path="idea_sim.p"):
     '''Method to simulate the idea used for inference.
     Produces figure in Paper
     Use Grid Model to simulate'''
@@ -2085,24 +2085,34 @@ def sim_idea_grid():
     p_mean = 0.5
     t = 5000
     
+    
+    
     # First: Set the position_list:
     position_list = np.array([[mid + i, mid + j] for i in xrange(-30, 30) for j in xrange(-30, 30)])
     l = int(np.sqrt(len(position_list)))  # Length of position list along given axis
     
-    # Do the Simulation without Barrier
-    grid = Grid()  # Creates new Grid. Maybe later on use factory Method
-    grid.set_parameters(grid_size, grid_size, sigma, ips, mu)
-    grid.set_samples(position_list)
-    grid.update_grid_t(t, p=p_mean, barrier=0)  # Uses p_mean[i] as mean allele Frequency.
-    genotypes = grid.genotypes
+    if save == True:
+        # Do the Simulation without Barrier
+        grid = Grid()  # Creates new Grid. Maybe later on use factory Method
+        grid.set_parameters(grid_size, grid_size, sigma, ips, mu)
+        grid.set_samples(position_list)
+        grid.update_grid_t(t, p=p_mean, barrier=0)  # Uses p_mean[i] as mean allele Frequency.
+        genotypes = grid.genotypes
+        
+        # Do the Simulations with Barrier
+        grid_b = Grid()  # Creates new Grid. Maybe later on use factory Method
+        grid_b.set_parameters(grid_size, grid_size, sigma, ips, mu)
+        grid_b.set_barrier_parameters(mid + 0.5, barrier_strength=0.0)  # Where to set the Barrier and its strength
+        grid_b.set_samples(position_list)
+        grid_b.update_grid_t(t, p=p_mean, barrier=1)  # Uses p_mean[i] as mean allele Frequency.
+        genotypes_b = grid_b.genotypes
+        
+        pickle.dump((position_list, genotypes, genotypes_b), open(path, "wb"))  # Pickle Dump the Data
+        
     
-    # Do the Simulations with Barrier
-    grid_b = Grid()  # Creates new Grid. Maybe later on use factory Method
-    grid_b.set_parameters(grid_size, grid_size, sigma, ips, mu)
-    grid_b.set_barrier_parameters(mid + 0.5, barrier_strength=0.0)  # Where to set the Barrier and its strength
-    grid_b.set_samples(position_list)
-    grid_b.update_grid_t(t, p=p_mean, barrier=1)  # Uses p_mean[i] as mean allele Frequency.
-    genotypes_b = grid_b.genotypes
+    if load == True:
+        res_vec = pickle.load(open(path, "rb"))  # Pickle Load the Data
+        position_list, genotypes, genotypes_b = res_vec
     
     # Do the smoothing
     def smooth(positions, genotypes, sigma=1.2):
@@ -2137,38 +2147,62 @@ def sim_idea_grid():
     
     # Do the plotting
     x_coords, y_coords = position_list[:, 0], position_list[:, 1]
+    x_min, x_max = min(x_coords), max(x_coords)
+    y_min, y_max = min(y_coords), max(y_coords)
     
-    tf_size=20
-    label_size=12
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 6))
+    tf_size = 20
+    label_size = 12
+    f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10, 10))
     
-    ax1.imshow(p_mean, interpolation="bilinear", cmap="jet")
-    ax1.set_xlim(1,l-1)
-    ax1.set_ylim(1,l-1)
-    ax1.set_title("No Barrier", fontsize=tf_size)
-    ax1.set_xlabel("x-Axis",fontsize=label_size)
-    ax1.set_ylabel("y-Axis", fontsize=label_size)
+    ax1.scatter(position_list[:, 0], position_list[:, 1], c=genotypes)
+    ax1.set_xlim([x_min, x_max])
+    ax1.set_ylim([y_min, y_max])
     ax1.set_xticks([])
     ax1.set_yticks([])
-    ax1.autoscale(False)
-    ax1.set_adjustable('box-forced')
-    #
-    im=ax2.imshow(p_mean_b, interpolation="bilinear", cmap="jet")
-    ax2.set_xlim(1,l-1)
-    ax2.set_ylim(1,l-1)
-    ax2.vlines(l / 2, 0, l, linewidth=15, color="k")
-    ax2.set_title("Strong Barrier",fontsize=tf_size)
+    ax1.set_title("No Barrier", fontsize=tf_size)
+    ax1.set_ylabel("Observed Genotypes", fontsize=tf_size)
+    
+    ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
+    ax2.set_title("Strong Barrier", fontsize=tf_size)
+    ax2.set_xlim([x_min, x_max])
+    ax2.set_ylim([y_min, y_max])
+    ax2.vlines(mid + 0.5, y_min, y_max, color="k", linewidth=5)
     ax2.set_xticks([])
     ax2.set_yticks([])
-    ax2.autoscale(False)
-    ax2.set_adjustable('box-forced')
+    
+    ax3.imshow(p_mean, interpolation="bilinear", cmap="jet")
+    ax3.set_xlim(1, l - 1)
+    ax3.set_ylim(1, l - 1)
+    # ax3.set_xlabel("x-Axis", fontsize=label_size)
+    # ax3.set_ylabel("y-Axis", fontsize=label_size)
+    ax3.set_xticks([])
+    ax3.set_yticks([])
+    ax3.autoscale(False)
+    ax3.set_adjustable('box-forced')
+    ax3.set_ylabel("Smoothed", fontsize=tf_size)
+    # Some Code for coordinate arrows:
+    ax3.arrow(3, 3, 0, 10, head_width=1.0, head_length=2, fc='k', ec='k')
+    ax3.arrow(3, 3, 10, 0, head_width=1.0, head_length=2, fc='k', ec='k')
+    ax3.annotate("x", (13, 4))
+    ax3.annotate("y", (4, 13))
+    ax3.text(0.6 * l, 0.86 * l, "Winter is coming", fontsize=8, color="blue", alpha=0.2)  # Trololol
+    
+    im = ax4.imshow(p_mean_b, interpolation="bilinear", cmap="jet")
+    ax4.set_xlim(1, l - 1)
+    ax4.set_ylim(1, l - 1)
+    ax4.vlines(l / 2, 0, l, color="k", linewidth=5)
+    # ax4.vlines(l / 2, 0, l, linewidth=15, color="k")
+    ax4.set_xticks([])
+    ax4.set_yticks([])
+    ax4.autoscale(False)
+    ax4.set_adjustable('box-forced')
     
     f.subplots_adjust(right=0.85)
-    cbar_ax = f.add_axes([0.87, 0.12, 0.02, 0.75]) # left, bottom, width, height
+    cbar_ax = f.add_axes([0.87, 0.14, 0.015, 0.3])  # left, bottom, width, height
     f.colorbar(im, cax=cbar_ax)
-    f.text(0.92, 0.5, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
-    #cbar = f.colorbar(cax)
-    #plt.tight_layout()
+    f.text(0.92, 0.27, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
+    # cbar = f.colorbar(cax)
+    # plt.tight_layout()
     plt.show()
 
     
@@ -2176,7 +2210,7 @@ def sim_idea_grid():
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    # sim_idea_grid()  # Simulate the Idea of the Grid
+    # sim_idea_grid(save=False, load=True)  # Simulate the Idea of the Grid
     
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
@@ -2209,12 +2243,12 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
     # For Dataset where Demes are not weighted; m.d.: 4200
-    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
-    #               scale_factor=50, real_barrier=False) 
+    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    #              scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    #multi_pos_plot("./multi_barrier_hz_ALL14/max1000/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
-    #               scale_factor=50, real_barrier=False) 
+    # multi_pos_plot("./multi_barrier_hz_ALL14/max2000v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+    #             scale_factor=50, real_barrier=False) 
     
     
     #
@@ -2248,17 +2282,17 @@ if __name__ == "__main__":
     
     # Plots the two Homozygote Plots in one:
     #plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
-    #            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #            bins=14, max_dist=2200, max_dist1=20, 
-    #            best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #            scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20)
+    #           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #           bins=14, max_dist=2200, max_dist1=20, 
+    #           best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #           scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20)
     
     # 2014 Estimates:
     plot_homos_2(position_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_genotypes00.csv", 
-            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-            bins=14, max_dist=3000, max_dist1=20, 
-            best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
-            scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)
+           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+           bins=30, max_dist=3000, max_dist1=20, 
+           best_fit_params=[217.05, 0.000817, 0.525849], best_fit_params1=[67.74, 0.0107, 0.52343],
+           scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

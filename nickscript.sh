@@ -3,7 +3,7 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "HZ14.m100"
+#$ -N "HZ14.m25"
 #$ -m a    
 #$ -l mf=4G
 #$ -l mem_free=4G

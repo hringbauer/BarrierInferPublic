@@ -45,8 +45,8 @@ def analyze_barrier_strengths_ll():
     
 
 
-#data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
-data_set_nr = 1
+data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
+#data_set_nr = 1
 # print("Starting Dataset Nr.: %i" % data_set_nr)
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -71,7 +71,7 @@ data_set_nr = 1
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
+MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.1/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
 #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=mp)  # Whole Data Set for Antirrhinum Analysis 2014
 # MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths

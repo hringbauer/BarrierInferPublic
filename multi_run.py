@@ -1044,7 +1044,7 @@ class MultiBarrierPosition(MultiRun):
         if len(barrier_pos) == 0:
             x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
             x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
-            x_barriers = x_barriers[0::2]  # Only take every second Barrier Step. 1 Start for uneven
+            x_barriers = x_barriers[4:-4:4]  # Only take every second Barrier Step. 1 Start for uneven
             print(x_barriers)
         
         else: x_barriers = barrier_pos
@@ -1611,9 +1611,20 @@ if __name__ == "__main__":
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=1)
-    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL14.csv",
-                        genotype_path="./Data/genotypesHZALL14.csv", loci_path="./Data/loci_infoALL.csv",
+    # 2014 Data
+    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/test/", multi_processing=0)
+    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL14.csv",
+    #                    genotype_path="./Data/genotypesHZALL14.csv", loci_path="./Data/loci_infoALL14.csv",
+    #                    chromosome=0, scale_factor=50)
+    #MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
+    #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,
+    #                          chromosome=0)
+    
+    #########
+    # All data:
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2/", multi_processing=0)
+    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
+                        genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
                         chromosome=0, scale_factor=50)
     #MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
     #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,

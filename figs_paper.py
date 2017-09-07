@@ -101,7 +101,7 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     plt.show()
     
     
-def calc_bin_homos(positions, genotypes, bins=25, max_dist=0):
+def calc_bin_homos(positions, genotypes, bins=25, max_dist=0, print_res=False):
     '''Calculate the average Number of Homozygotes in Distance Bins'''
     distance = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Empty container
     correlation = np.zeros(len(positions) * (len(positions) - 1) / 2)  # Container for correlation
@@ -129,8 +129,9 @@ def calc_bin_homos(positions, genotypes, bins=25, max_dist=0):
         pw_dist = pw_dist[inds_dist]
         
     bin_dist, bin_corr, stand_errors, _ = bin_correlations(pw_dist, pw_h, bins=bins)
-    print(bin_dist)
-    print(bin_corr)
+    if print_res==True:
+        print(bin_dist)
+        print(bin_corr)
     return bin_dist, bin_corr, stand_errors
     
 def calc_bin_correlations(positions, genotypes, bins=25, p=0.5, correction=True):
@@ -1636,9 +1637,12 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
         positions, genotypes, _ = group_inds(positions, genotypes,
                                                     demes_x=demes_x, demes_y=demes_y, min_ind_nr=min_ind_nr) 
         
+    print("Nr. of Demes left: %i" % len(positions))
+        
     if np.min([demes_x1, demes_y1]) > 0:
         positions1, genotypes1, _ = group_inds(positions1, genotypes1,
                                                     demes_x=demes_x1, demes_y=demes_y1, min_ind_nr=min_ind_nr1)
+    print("Nr. of Demes right: %i" % len(positions1))
     
     print("Grouping Finished!")
     
@@ -2247,8 +2251,8 @@ if __name__ == "__main__":
     #              scale_factor=50, real_barrier=False) 
     
     # For 2014 Dataset: 
-    multi_pos_plot("./multi_barrier_hz_ALL14/max1500v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
-                scale_factor=50, real_barrier=False) 
+    #multi_pos_plot("./multi_barrier_hz_ALL14/max1500v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+    #            scale_factor=50, real_barrier=False) 
     
     
     #
@@ -2281,18 +2285,19 @@ if __name__ == "__main__":
     #           scale_factor=1, deme_bin=True, title="Simulated Data Set")  
     
     # Plots the two Homozygote Plots in one:
-    #plot_homos_2(position_path="./Data/coordinatesHZALL142.csv", genotype_path="./Data/genotypesHZALL142.csv", 
-    #           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #           bins=14, max_dist=2200, max_dist1=20, 
-    #           best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #           scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20)
+    # All Year Estimates:
+    plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_genotypes00.csv", 
+               position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+               bins=50, max_dist=3000, max_dist1=20, 
+               best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
+               scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # 2014 Estimates:
-    plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
-           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-           bins=50, max_dist=3000, max_dist1=20, 
-           best_fit_params=[290.102813, 0.000051, 0.524790], best_fit_params1=[67.74, 0.0107, 0.52343],
-           scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
+    # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
+    #       position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #       bins=50, max_dist=3000, max_dist1=20, 
+    #       best_fit_params=[290.102813, 0.000051, 0.524790], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #       scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 

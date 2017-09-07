@@ -2246,9 +2246,9 @@ if __name__ == "__main__":
     #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
     #              scale_factor=50, real_barrier=False) 
     
-    # For 2014 Dataset: WATCH OUT; INDS SHIFTED BY ONE!
-    # multi_pos_plot("./multi_barrier_hz_ALL14/max2000v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
-    #             scale_factor=50, real_barrier=False) 
+    # For 2014 Dataset: 
+    multi_pos_plot("./multi_barrier_hz_ALL14/max1500v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+                scale_factor=50, real_barrier=False) 
     
     
     #
@@ -2288,10 +2288,10 @@ if __name__ == "__main__":
     #           scale_factor=50, scale_factor1=1, demes_x=75, demes_y=15, demes_x1=30, demes_y1=20)
     
     # 2014 Estimates:
-    plot_homos_2(position_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/max2000v2/mb_posHZ_genotypes00.csv", 
+    plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-           bins=30, max_dist=3000, max_dist1=20, 
-           best_fit_params=[217.05, 0.000817, 0.525849], best_fit_params1=[67.74, 0.0107, 0.52343],
+           bins=50, max_dist=3000, max_dist1=20, 
+           best_fit_params=[290.102813, 0.000051, 0.524790], best_fit_params1=[67.74, 0.0107, 0.52343],
            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison

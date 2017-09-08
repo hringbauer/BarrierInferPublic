@@ -1044,7 +1044,7 @@ class MultiBarrierPosition(MultiRun):
         if len(barrier_pos) == 0:
             x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
             x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
-            x_barriers = x_barriers[::4]  # Only take every second Barrier Step. 1 Start for uneven
+            x_barriers = x_barriers[::2]  # Only take every second Barrier Step. 1 Start for uneven
             print(x_barriers)
         
         else: x_barriers = barrier_pos

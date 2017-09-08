@@ -3,7 +3,7 @@
 #$ -S /bin/bash
 #$ -v TST=abc
 #$ -M hringbauer@ist.ac.at
-#$ -N "HZALL.v2.0"
+#$ -N "HZALL.v2.1"
 #$ -m a    
 #$ -l mf=4G
 #$ -l mem_free=4G

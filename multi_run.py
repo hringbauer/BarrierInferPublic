@@ -1044,7 +1044,7 @@ class MultiBarrierPosition(MultiRun):
         if len(barrier_pos) == 0:
             x_coords = np.unique(position_list[:, 0])  # Get the unique, sorted x-Coordinates
             x_barriers = (x_coords[1:] + x_coords[:-1]) / 2.0  # Calculate the barrier positions
-            x_barriers = x_barriers[4:-4:4]  # Only take every second Barrier Step. 1 Start for uneven
+            x_barriers = x_barriers[::4]  # Only take every second Barrier Step. 1 Start for uneven
             print(x_barriers)
         
         else: x_barriers = barrier_pos
@@ -1627,7 +1627,7 @@ if __name__ == "__main__":
     
     #########
     # All data:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing=0)
+    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.2/", multi_processing=0)
     MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
                         genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
                         chromosome=0, scale_factor=50)

@@ -2246,14 +2246,19 @@ if __name__ == "__main__":
     # For Dataset where Demes are weighted
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
-    # For Dataset where Demes are not weighted; m.d.: 4200
+    # For Dataset where Demes are not weighted; m.d.: 4200  
+    # Plot for Paper!!!
     #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
-    #              scale_factor=50, real_barrier=False) 
+    #              scale_factor=50, real_barrier=False)
+    
+    ###############################
+    # Tryout Plots for all Data
+    multi_pos_plot("./multi_barrier_hz_ALL/all_v2.2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 110), plot_hlines=0, color_path="colorsHZALL.csv",
+                  scale_factor=50, real_barrier=False) # The Plot for Paper
     
     # For 2014 Dataset: 
-    #multi_pos_plot("./multi_barrier_hz_ALL14/max1500v2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
+    # multi_pos_plot("./multi_barrier_hz_ALL14/min25/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
     #            scale_factor=50, real_barrier=False) 
-    
     
     #
     # multi_pos_plot_k_only("./multi_barrier_hz/chr0/", method_folder="k_only/", res_numbers=range(0, 360), nr_bts=20, real_barrier_pos=2, plot_hlines=0)
@@ -2286,11 +2291,11 @@ if __name__ == "__main__":
     
     # Plots the two Homozygote Plots in one:
     # All Year Estimates:
-    plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_genotypes00.csv", 
-               position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-               bins=50, max_dist=3000, max_dist1=20, 
-               best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
-               scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    # plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_genotypes00.csv", 
+    #           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #           bins=50, max_dist=3000, max_dist1=20, 
+    #           best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #           scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # 2014 Estimates:
     # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 

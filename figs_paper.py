@@ -129,7 +129,7 @@ def calc_bin_homos(positions, genotypes, bins=25, max_dist=0, print_res=False):
         pw_dist = pw_dist[inds_dist]
         
     bin_dist, bin_corr, stand_errors, _ = bin_correlations(pw_dist, pw_h, bins=bins)
-    if print_res==True:
+    if print_res == True:
         print(bin_dist)
         print(bin_corr)
     return bin_dist, bin_corr, stand_errors
@@ -1031,23 +1031,24 @@ def multi_secondary_contact_all(folder, folder_b, method=2):
     
     
     # plt.figure()
+    c0, c1, c2, c3 = "crimson", "coral", "sandybrown", "chocolate"
     f, ((ax1, ax4), (ax2, ax5), (ax3, ax6)) = plt.subplots(3, 2, sharex=True)
     
     ax1.hlines(4 * np.pi * 5, 0, 100, linewidth=3, color=c_lines)
     
-    ax1.plot(res_numbers0, res_vec[res_numbers0, 0], "ro", label=r"$R^2=1$")
-    ax1.plot(res_numbers1, res_vec[res_numbers1, 0], "yo", label=r"$R^2=0.02$")
-    ax1.plot(res_numbers2, res_vec[res_numbers2, 0], "bo", label=r"$R^2=0.01$")
-    ax1.plot(res_numbers3, res_vec[res_numbers3, 0], "mo", label=r"$R^2=0.005$")
+    ax1.scatter(res_numbers0, res_vec[res_numbers0, 0], color=c0, label=r"$R^2=1$")
+    ax1.scatter(res_numbers1, res_vec[res_numbers1, 0], color=c1, label=r"$R^2=0.02$")
+    ax1.scatter(res_numbers2, res_vec[res_numbers2, 0], color=c2, label=r"$R^2=0.01$")
+    ax1.scatter(res_numbers3, res_vec[res_numbers3, 0], color=c3, label=r"$R^2=0.005$")
     ax1.set_ylim([0, 300])
     ax1.set_ylabel("Nbh", fontsize=18, rotation=0, labelpad=18)
     ax1.set_title(r"No Barrier", fontsize=18)
-    ax1.legend(loc="upper right", fontsize=12)
+    ax1.legend(loc="upper right", fontsize=8, labelspacing=0)
     
-    ax4.plot(res_numbers0, res_vec_b[res_numbers0, 0], "ro", label=r"$R^2=1$")
-    ax4.plot(res_numbers1, res_vec_b[res_numbers1, 0], "yo", label=r"$R^2=0.02$")
-    ax4.plot(res_numbers2, res_vec_b[res_numbers2, 0], "bo", label=r"$R^2=0.01$")
-    ax4.plot(res_numbers3, res_vec_b[res_numbers3, 0], "mo", label=r"$R^2=0.005$")
+    ax4.scatter(res_numbers0, res_vec_b[res_numbers0, 0], color=c0, label=r"$R^2=1$")
+    ax4.scatter(res_numbers1, res_vec_b[res_numbers1, 0], color=c1, label=r"$R^2=0.02$")
+    ax4.scatter(res_numbers2, res_vec_b[res_numbers2, 0], color=c2, label=r"$R^2=0.01$")
+    ax4.scatter(res_numbers3, res_vec_b[res_numbers3, 0], color=c3, label=r"$R^2=0.005$")
     ax4.set_ylim([0, 300])
     ax4.hlines(4 * np.pi * 5, 0, 100, linewidth=3, color=c_lines)
     ax4.set_title(r"Barrier: $\gamma=0.05$", fontsize=18)
@@ -1056,33 +1057,33 @@ def multi_secondary_contact_all(folder, folder_b, method=2):
     
 
     
-    ax2.plot(res_numbers0, res_vec[res_numbers0, 2], "ro")
-    ax2.plot(res_numbers1, res_vec[res_numbers1, 2], "yo")
-    ax2.plot(res_numbers2, res_vec[res_numbers2, 2], "bo")
-    ax2.plot(res_numbers3, res_vec[res_numbers3, 2], "mo")
+    ax2.scatter(res_numbers0, res_vec[res_numbers0, 2], color=c0)
+    ax2.scatter(res_numbers1, res_vec[res_numbers1, 2], color=c1)
+    ax2.scatter(res_numbers2, res_vec[res_numbers2, 2], color=c2)
+    ax2.scatter(res_numbers3, res_vec[res_numbers3, 2], color=c3)
     ax2.hlines(0.99, 0, 100, linewidth=3, color=c_lines)
     ax2.set_ylim([0, 1])
     ax2.set_ylabel(r"$\gamma$", fontsize=18, rotation=0, labelpad=18)
     
-    ax5.plot(res_numbers0, res_vec_b[res_numbers0, 2], "ro")
-    ax5.plot(res_numbers1, res_vec_b[res_numbers1, 2], "yo")
-    ax5.plot(res_numbers2, res_vec_b[res_numbers2, 2], "bo")
-    ax5.plot(res_numbers3, res_vec_b[res_numbers3, 2], "mo")
+    ax5.scatter(res_numbers0, res_vec_b[res_numbers0, 2], color=c0)
+    ax5.scatter(res_numbers1, res_vec_b[res_numbers1, 2], color=c1)
+    ax5.scatter(res_numbers2, res_vec_b[res_numbers2, 2], color=c2)
+    ax5.scatter(res_numbers3, res_vec_b[res_numbers3, 2], color=c3)
     ax5.hlines(0.05, 0, 100, linewidth=3, color=c_lines)
     ax5.set_ylim([0, 1.0])
     ax5.yaxis.tick_right()
     
-    ax3.plot(res_numbers0, loci_nr_vec[res_numbers0], 'ro')
-    ax3.plot(res_numbers1, loci_nr_vec[res_numbers1], 'yo')
-    ax3.plot(res_numbers2, loci_nr_vec[res_numbers2], 'bo')
-    ax3.plot(res_numbers3, loci_nr_vec[res_numbers3], 'mo')
+    ax3.scatter(res_numbers0, loci_nr_vec[res_numbers0], color=c0)
+    ax3.scatter(res_numbers1, loci_nr_vec[res_numbers1], color=c1)
+    ax3.scatter(res_numbers2, loci_nr_vec[res_numbers2], color=c2)
+    ax3.scatter(res_numbers3, loci_nr_vec[res_numbers3], color=c3)
     ax3.hlines(200, 0, 100, linewidth=3, color=c_lines)
     ax3.set_ylabel("Nr. of Loci", fontsize=18)
     
-    ax6.plot(res_numbers0, loci_nr_vec_b[res_numbers0], 'ro')
-    ax6.plot(res_numbers1, loci_nr_vec_b[res_numbers1], 'yo')
-    ax6.plot(res_numbers2, loci_nr_vec_b[res_numbers2], 'bo')
-    ax6.plot(res_numbers3, loci_nr_vec_b[res_numbers3], 'mo')
+    ax6.scatter(res_numbers0, loci_nr_vec_b[res_numbers0], color=c0)
+    ax6.scatter(res_numbers1, loci_nr_vec_b[res_numbers1], color=c1)
+    ax6.scatter(res_numbers2, loci_nr_vec_b[res_numbers2], color=c2)
+    ax6.scatter(res_numbers3, loci_nr_vec_b[res_numbers3], color=c3)
     ax6.hlines(200, 0, 100, linewidth=3, color=c_lines)
     ax6.yaxis.tick_right()
     f.text(0.5, 0.025, "Dataset", ha='center', fontsize=18)
@@ -1120,40 +1121,40 @@ def plot_theory_f():
     # y_vec20=np.array([num_integral(x, t0=2, sigma=sigma, mu=mu) for x in x_vec])
     y_bessel = 1 / (4 * np.pi * 5) * kv(0, np.sqrt(2 * mu) * x_vec)  # The numerical Result from Mathematica
     
-
-    
+    c0, c1, c2 = "black", "crimson", "blue"
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw = {'width_ratios':[2, 3]})
     # Plot the IBD
-    plt.figure(figsize=(6, 6))
-    plt.plot(x_vec, y_bessel, alpha=0.8, color="black", label="Analytical Solution", linewidth=6)
-    plt.plot(x_vec, y_vec01, alpha=0.8, label="No Barrier", color="blue", linewidth=6)
-    plt.plot(x_vec, y_vec, alpha=0.9, color="red", label="Different Side of Barrier", linewidth=6)
-    plt.plot(x_vec, y_vec2, alpha=0.9, color="green", label="Same Side of Barrier", linewidth=6)
-    plt.xlim([0, max(x_vec)])
-    plt.ylim([0, 0.05])
-    plt.xlabel("Pairwise Distance", fontsize=18)
-    plt.ylabel("Pairwise F", fontsize=18)
+    ax1.plot(x_vec, y_bessel, alpha=0.8, color=c0, label="Analytical Solution", linewidth=6)
+    ax1.plot(x_vec, y_vec01, alpha=0.6, label="No Barrier", color="green", linewidth=6)
+    ax1.plot(x_vec, y_vec, alpha=0.9, color=c1, label="Different Side of Barrier", linewidth=6)
+    ax1.plot(x_vec, y_vec2, alpha=0.9, color=c2, label="Same Side of Barrier", linewidth=6)
+    ax1.set_xlim([0, max(x_vec)])
+    ax1.set_ylim([0, 0.05])
+    ax1.set_xlabel("Pairwise Distance", fontsize=18)
+    ax1.set_ylabel("Pairwise F", fontsize=18)
     
     # plt.xscale("log")
-    plt.legend(fontsize=14)
-    plt.show()
+    ax1.legend(fontsize=12, labelspacing=0.3)
     
-    ###############################################################
+    #####################################
     # Plot the positions
-    pos = np.array([[i, j] for i in range(10) for j in range(6)])
-    pos1 = np.array([[i, 3] for i in range(5)])
-    pos2 = np.array([[1 + i, 2] for i in range(5)])
+    pos = np.array([[i, j] for i in range(8) for j in range(6)])
+    pos1 = np.array([[i, 3] for i in range(4)])
+    pos2 = np.array([[1 + i, 2] for i in range(4)])
     
-    
-    plt.figure()
-    plt.scatter(pos[:, 0], pos[:, 1], marker='o', s=400, color='grey', alpha=0.5)
-    plt.scatter(pos1[:, 0], pos1[:, 1], marker='o', s=400, color="green", label="Same Side")
-    plt.scatter(pos2[:, 0], pos2[:, 1], marker='o', s=400, color="red", label="Different Side")
-    plt.scatter(4, 3, marker='o', s=70, color="white")  # Right End Point
-    plt.scatter(5, 2, marker='o', s=70, color="white")  # Right End Point
+    ax2.scatter(pos[:, 0], pos[:, 1], marker='o', s=800, color='grey', alpha=0.5)
+    ax2.scatter(pos1[:, 0], pos1[:, 1], marker='o', s=800, color=c2, label="Same Side")
+    ax2.scatter(pos2[:, 0], pos2[:, 1], marker='o', s=800, color=c1, label="Different Side")
+    ax2.scatter(3, 3, marker='o', s=100, color="white")  # Right End Point
+    ax2.scatter(4, 2, marker='o', s=100, color="white")  # Right End Point
+    ax2.set_xlabel("x-Axis", fontsize=18)
+    ax2.set_ylabel("y-Axis", fontsize=18)
+    ax2.set_xlim([min(pos[:, 0]) - 0.5, max(pos[:, 0]) + 0.5])
+    ax2.set_ylim([min(pos[:, 1]) - 0.5, max(pos[:, 1]) + 0.5])
     # plt.text(3.9, 2.9,"R",color="white",fontsize=18)
     # plt.text(4.9, 1.9,"R",color="white",fontsize=18)
-    plt.tick_params(axis='both', which='both', bottom='off', top='off', labelbottom='off', right='off', left='off', labelleft='off')
-    plt.vlines(4.5, -0.5, 5.5, linewidth=6)
+    ax2.tick_params(axis='both', which='both', bottom='off', top='off', labelbottom='off', right='off', left='off', labelleft='off')
+    ax2.vlines(3.5, -0.5, 5.5, linewidth=6)
     # plt.legend(loc="upper right", borderpad=2)
     plt.show()
     
@@ -2230,7 +2231,7 @@ if __name__ == "__main__":
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
-    # plot_theory_f() # Plots the theoretical F; from Kernel calculations
+    # plot_theory_f()  # Plots the theoretical F; from Kernel calculations
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
@@ -2248,12 +2249,12 @@ if __name__ == "__main__":
     
     # For Dataset where Demes are not weighted; m.d.: 4200  
     # Plot for Paper!!!
-    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
     #              scale_factor=50, real_barrier=False)
     
     ###############################
     # Tryout Plots for all Data
-    multi_pos_plot("./multi_barrier_hz_ALL/all_v2.2/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 110), plot_hlines=0, color_path="colorsHZALL.csv",
+    multi_pos_plot("./multi_barrier_hz_ALL/all_v2.3/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL.csv",
                   scale_factor=50, real_barrier=False) # The Plot for Paper
     
     # For 2014 Dataset: 
@@ -2291,11 +2292,11 @@ if __name__ == "__main__":
     
     # Plots the two Homozygote Plots in one:
     # All Year Estimates:
-    # plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2/mb_posHZ_genotypes00.csv", 
+    #plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
     #           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #           bins=50, max_dist=3000, max_dist1=20, 
-    #           best_fit_params=[126.88, 0.019, 0.528825], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #           scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    #           bins=15, max_dist=3000, max_dist1=20, 
+    #           best_fit_params=[186.441849, 0.001062, 0.526655], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #           scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # 2014 Estimates:
     # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 

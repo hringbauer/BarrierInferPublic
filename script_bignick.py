@@ -71,7 +71,7 @@ data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.3/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
+MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
 #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=mp)  # Whole Data Set for Antirrhinum Analysis 2014
 # MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
@@ -100,7 +100,7 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.3/", multi_
 #                          min_dist=0.5, max_dist=30.0, nr_bts=10, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3, start_params=[150.0, 0.0001, 0.05])
 
 MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
-                          min_dist=1.0, max_dist=35.0, nr_bts=10, nr_x_bins=50, nr_y_bins=10, min_ind_nr=5, start_params=[180.0, 0.005, 0.3])
+                          min_dist=1.0, max_dist=35.0, nr_bts=10, nr_x_bins=100, nr_y_bins=20, min_ind_nr=5, start_params=[180.0, 0.005, 0.3])
 
 # MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
 #            res_folder="k_only/", min_ind_nr=5)

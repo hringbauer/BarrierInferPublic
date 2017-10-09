@@ -505,21 +505,21 @@ class MultiBarrier(MultiRun):
         # barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
         # barrier_strength = barrier_strength_list[data_set_nr]
         # barrier_strength = 0.05
-        bs = [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
+        bs = [0.0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
         barrier_strength_list = [b for b in bs for  _ in range(20)]
         barrier_strength = barrier_strength_list[data_set_nr]
         
-        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        ips = 10  # 32 Number of haploid Individuals per Node (For D_e divide by 2)
         
         # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
         position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
-        nr_loci = 200
+        nr_loci = 200 # 60
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
         barrier_pos = 500.5
         sigma = 0.965  # 0.965 # 1.98
-        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        mu = 0.003  # 0.001 Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
         sd_p = 0.1  # Standard Deviation Allele Frequency
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
@@ -1158,8 +1158,8 @@ class MultiHZPosition(MultiBarrierPosition):
         super(MultiHZPosition, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
         
     def create_data_set(self, data_set_nr=0, position_path="", genotype_path="", loci_path="",
-            scale_factor=50, chromosome=0, geo_r2=0.015, p_HW=0.0001,
-            ld_r2=0.1, min_p=0.15):
+            scale_factor=50, chromosome=0, geo_r2=0.015, p_HW=0.00001,
+            ld_r2=0.03, min_p=0.15):   # V1. p_HW = 0.0001, ld_r2=0.01
         '''Creates the HZ Data-Set. Takes raw Data and pre-processes it:
         Filtering out number of Loci; based on chromosome
         Position_Path: Where to find the Positions of one Individual
@@ -1567,7 +1567,7 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=1)
+    # MultiRun = fac_method("multi_barrier", "./barrier_folder_HZ_synth/", multi_processing=1) # Simulate data with HZ params.
     # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
     # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
     # MultiRun.create_data_set(1)
@@ -1608,11 +1608,17 @@ if __name__ == "__main__":
     ####################################################
     # Multi Barrier Position Data Set:
     # MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
-    # MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
-    #                       genotype_path="./Data/barrier_file_genotypes01.csv")
-    # MultiRun.analyze_data_set(1, method=2)
+    MultiRun = fac_method("multi_barrier_pos", "./barrier_folder_HZ_synth/")
+    #MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
+    #                        genotype_path="./Data/barrier_file_genotypes01.csv")
+    
+    # Analysis of Data simulated with HZ:
+    #MultiRun.create_data_set(0, position_path= "./barrier_folder_HZ_synth/barrier_file_coords01.csv", 
+    #                        genotype_path="./barrier_folder_HZ_synth/barrier_file_genotypes01.csv")
+    MultiRun.analyze_data_set(41, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+                              min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
     # MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-    #                     res_folder="test_k/", min_ind_nr=1, loci=range(10))
+    #                    res_folder="test_k/", min_ind_nr=1, loci=range(10))
     
     ####################################################
     # Multi Position Hybrid Zone Data Set:
@@ -1627,10 +1633,10 @@ if __name__ == "__main__":
     
     #########
     # All data:
-    MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing=0)
-    MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
-                        genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
-                        chromosome=0, scale_factor=50)
+    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/final_data/", multi_processing=0)
+    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
+    #                    genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
+    #                    chromosome=0, scale_factor=50)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
     #                          min_dist=1.0, max_dist=42, nr_bts=100, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3,
     #                          chromosome=0)

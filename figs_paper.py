@@ -1122,7 +1122,7 @@ def plot_theory_f():
     y_bessel = 1 / (4 * np.pi * 5) * kv(0, np.sqrt(2 * mu) * x_vec)  # The numerical Result from Mathematica
     
     c0, c1, c2 = "black", "crimson", "blue"
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw = {'width_ratios':[2, 3]})
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'width_ratios':[2, 3]})
     # Plot the IBD
     ax1.plot(x_vec, y_bessel, alpha=0.8, color=c0, label="Analytical Solution", linewidth=6)
     ax1.plot(x_vec, y_vec01, alpha=0.6, label="No Barrier", color="green", linewidth=6)
@@ -1700,6 +1700,16 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
     ax2.legend(fontsize=18, loc="upper right")
     ax2.set_title("Simulated Data", fontsize=18)
     plt.show()
+    
+    plt.plot()
+    plt.plot(bin_dist, bin_h, "ro", label="Observed")
+    plt.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
+    plt.ylabel("Pairwise h", fontsize=18)
+    plt.xlabel("Pw. Distance [m]", fontsize=18)
+    # ax1.legend(fontsize=18, loc="upper right")
+    ax1.set_title("Hybrid Zone IBD", fontsize=18)
+    plt.legend(fontsize=18, loc="upper right")
+    plt.show()
         
     
     
@@ -2077,7 +2087,7 @@ def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_b
     plt.show()
     
 
-def sim_idea_grid(save=True, load=True, path="idea_sim.p"):
+def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     '''Method to simulate the idea used for inference.
     Produces figure in Paper
     Use Grid Model to simulate'''
@@ -2190,7 +2200,9 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p"):
     ax3.arrow(3, 3, 10, 0, head_width=1.0, head_length=2, fc='k', ec='k')
     ax3.annotate("x", (13, 4))
     ax3.annotate("y", (4, 13))
-    ax3.text(0.6 * l, 0.86 * l, "Winter is coming", fontsize=8, color="blue", alpha=0.2)  # Trololol
+    if winter == True:
+        # ax3.text(0.6 * l, 0.86 * l, "Winter is coming", fontsize=8, color="blue", alpha=0.2)
+        ax3.text(0.4 * l, 0.86 * l, "Winter is coming", fontsize=16, color="lightblue", alpha=0.9)  # Trololol In paper 8 and blue
     
     im = ax4.imshow(p_mean_b, interpolation="bilinear", cmap="jet")
     ax4.set_xlim(1, l - 1)
@@ -2215,7 +2227,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p"):
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    # sim_idea_grid(save=False, load=True)  # Simulate the Idea of the Grid
+    # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
     
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
@@ -2245,17 +2257,17 @@ if __name__ == "__main__":
     
     # ## Plots for Hybrid Zone Data
     # For Dataset where Demes are weighted
-    # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
+    #multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
     # For Dataset where Demes are not weighted; m.d.: 4200  
     # Plot for Paper!!!
-    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
-    #              scale_factor=50, real_barrier=False)
+    multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+                  scale_factor=50, real_barrier=False)
     
     ###############################
     # Tryout Plots for all Data
-    multi_pos_plot("./multi_barrier_hz_ALL/all_v2.3/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL.csv",
-                  scale_factor=50, real_barrier=False) # The Plot for Paper
+    #multi_pos_plot("./multi_barrier_hz_ALL/all_v2.4/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL.csv",
+    #             scale_factor=50, real_barrier=False) # The Plot for Paper
     
     # For 2014 Dataset: 
     # multi_pos_plot("./multi_barrier_hz_ALL14/min25/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL14.csv",
@@ -2292,11 +2304,11 @@ if __name__ == "__main__":
     
     # Plots the two Homozygote Plots in one:
     # All Year Estimates:
-    #plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
-    #           position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #           bins=15, max_dist=3000, max_dist1=20, 
-    #           best_fit_params=[186.441849, 0.001062, 0.526655], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #           scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    # plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
+    #            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #            bins=12, max_dist=1800, max_dist1=20, 
+    #            best_fit_params=[192.203738, 0.000839, 0.528088], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # 2014 Estimates:
     # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
@@ -2306,10 +2318,10 @@ if __name__ == "__main__":
     #       scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
-    # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
-    #           genotype_path="./barrier_folder2/barrier_file_genotypes60.csv",
-    #           bins=10, max_dist=16, best_fit_params=[50.316, 0.01857, 0.52246], bootstrap=False, nr_bootstraps=50,
-    #           scale_factor=1, deme_bin=False, title="IBD Scenario") # No Binning: Too few Individuals
+    #plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
+    #          genotype_path="./barrier_folder2/barrier_file_genotypes60.csv",
+    #          bins=10, max_dist=16, best_fit_params=[50.316, 0.01857, 0.52246], bootstrap=False, nr_bootstraps=50,
+    #          scale_factor=1, deme_bin=False, title="IBD Scenario") # No Binning: Too few Individuals
     
     # ## Give Stats of Results:
     # give_result_stats(multi_pos_hz_folder, subfolder="allind/")
@@ -2319,7 +2331,3 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
-    
-    
-    
-

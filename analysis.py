@@ -16,7 +16,7 @@ from scipy.optimize.minpack import curve_fit
 from time import time
 
 
-parameters_fit = [100.75, 0.002, 1.0, 0.0376]  # Parameters used in manual Kernel Plot. Old: 0.04194
+parameters_fit = [200, 0.002, 1.0, 0.046]  # Parameters used in manual Kernel Plot. Old: 0.04194
 # 7.38282829e+01   9.44133108e-04   5.15210543e-01
 
 class Fit_class(object):
@@ -68,7 +68,7 @@ class Analysis(object):
             assert(len(self.loci_info) == np.shape(self.genotypes)[1])  # Make sure that Data match!
             print("Loci Information successfully loaded!")
            
-    def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False):
+    def clean_hz_data(self, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False, save_loci=False):
         '''Method to clean HZ Data.
         Extracts loci with min. Geographic Correlation; min. p-Value for HW
         min. ld_score and minimal allele Frequency.'''
@@ -78,7 +78,7 @@ class Analysis(object):
         # Call the cleaning Method:
         genotypes = clean_hz_data(genotypes, loci_info,
                                   geo_r2=geo_r2, p_HW=p_HW, ld_r2=ld_r2,
-                                  min_p=min_p, plot=plot, chromosome=chromosome)
+                                  min_p=min_p, plot=plot, chromosome=chromosome, save_loci=save_loci)
         
         return genotypes, self.position_list
     
@@ -446,7 +446,7 @@ def bootstrap_genotypes(genotype_mat):
 
 
 def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
-                  p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False):
+                  p_HW=0.00001, ld_r2=0.03, min_p=0.15, chromosome=0, plot=False, save_loci=False):
     '''Method to clean HZ Data.
     Extracts loci with min. Geographic Correlation; min. p-Value for HW
     min. ld_score and minimal allele Frequency.
@@ -512,7 +512,16 @@ def clean_hz_data(genotypes, loci_info, geo_r2=0.015,
         ax = plt.gca()
         [t.set_color(i) for (i, t) in zip(colors, ax.xaxis.get_ticklabels())]
         plt.show()
-    
+        
+    # Save Loci - if required.
+    print("HERE")
+    print(save_loci)
+    if save_loci==True:
+        names_okay = df["Name"][inds_okay]
+        print("Good Loci Names:")
+        print names_okay
+        np.savetxt("good_loci.csv", names_okay, delimiter="$", fmt="%s")  # Save the coordinates
+        print("Nr. of Loci %i successfully saved." % len(names_okay))
     return genotypes
 
 

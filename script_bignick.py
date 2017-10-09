@@ -60,6 +60,7 @@ data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
 # folder = "./multi_barrier_hz_all/"
+folder ="./barrier_folder_HZ_synth/"
 
 # MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
 # MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
@@ -69,10 +70,10 @@ data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
-# MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
+MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
-MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
-#MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=mp)  # Whole Data Set for Antirrhinum Analysis 2014
+#  MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
+# MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=mp)  # Whole Data Set for Antirrhinum Analysis 2014
 # MultiRun = fac_method("multi_barrier", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
@@ -95,12 +96,15 @@ MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
 
+MultiRun.analyze_data_set(data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
+
 # For HZ Analysis: # 2014 Analysis
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=np.linspace(-30, 30, 25), use_ind_nr=0,
 #                          min_dist=0.5, max_dist=30.0, nr_bts=10, nr_x_bins=100, nr_y_bins=20, min_ind_nr=3, start_params=[150.0, 0.0001, 0.05])
 
-MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
-                          min_dist=1.0, max_dist=35.0, nr_bts=10, nr_x_bins=100, nr_y_bins=20, min_ind_nr=5, start_params=[180.0, 0.005, 0.3])
+#MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=[], use_ind_nr=0,
+#                          min_dist=1.0, max_dist=35.0, nr_bts=10, nr_x_bins=100, nr_y_bins=20, min_ind_nr=5, start_params=[180.0, 0.005, 0.3])
 
 # MultiRun.analyze_data_set_k_only(data_set_nr, nbh=200.0, l=0.0004, method=2, nr_x_bins=50, nr_y_bins=10, nr_bts=20,
 #            res_folder="k_only/", min_ind_nr=5)

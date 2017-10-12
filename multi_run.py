@@ -505,22 +505,22 @@ class MultiBarrier(MultiRun):
         # barrier_strength_list = 25 * [0.0] + 25 * [0.05] + 25 * [0.1] + 25 * [0.15]
         # barrier_strength = barrier_strength_list[data_set_nr]
         # barrier_strength = 0.05
-        bs = [0.0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
-        barrier_strength_list = [b for b in bs for  _ in range(20)]
+        bs = [0.02, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
+        barrier_strength_list = [b for b in bs for  _ in range(20)] # 20 bootstraps
         barrier_strength = barrier_strength_list[data_set_nr]
         
-        ips = 10  # 32 Number of haploid Individuals per Node (For D_e divide by 2)
+        ips = 32  # 32 Number of haploid Individuals per Node (For D_e divide by 2)
         
         # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
         position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
-        nr_loci = 200 # 60
+        nr_loci = 60 # 60
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
         barrier_pos = 500.5
         sigma = 0.965  # 0.965 # 1.98
-        mu = 0.003  # 0.001 Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
-        sd_p = 0.1  # Standard Deviation Allele Frequency
+        mu = 0.001  # 0.003 Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.117355  #0.1 Standard Deviation Allele Frequency
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
         p_mean = p_mean + p_delta
@@ -544,8 +544,8 @@ class MultiBarrier(MultiRun):
         
             
         # Now Pickle Some additional Information:
-        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "sd_p", "Position List"]
-        ps = [nr_loci, t, p_mean, sigma, mu, ips, sd_p, position_list]
+        p_names = ["Nr Loci", "t", "p_mean", "sigma", "mu", "ips", "gamma", "sd_p", "Position List"]
+        ps = [nr_loci, t, p_mean, sigma, mu, ips, barrier_strength, sd_p, position_list]
         additional_info = ("10x20 Barriers. [0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]")
         self.pickle_parameters(p_names, ps, additional_info)
             
@@ -1567,10 +1567,8 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    # MultiRun = fac_method("multi_barrier", "./barrier_folder_HZ_synth/", multi_processing=1) # Simulate data with HZ params.
-    # MultiRun = fac_method("multi_nbh", "./nbh_folder/", multi_processing=1)
-    # MultiRun = fac_method("multi_nbh_gaussian", "./nbh_folder_gauss/", multi_processing=1)
-    # MultiRun.create_data_set(1)
+    MultiRun = fac_method("multi_barrier", "./barrier_folder_HZ_synth/", multi_processing=1) # Simulate data with HZ params.
+    MultiRun.create_data_set(2)
     # MultiRun.analyze_data_set(2, method=2, deme_x_nr=30, deme_y_nr=20)
     
     ####################################################
@@ -1608,15 +1606,15 @@ if __name__ == "__main__":
     ####################################################
     # Multi Barrier Position Data Set:
     # MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
-    MultiRun = fac_method("multi_barrier_pos", "./barrier_folder_HZ_synth/")
+    # MultiRun = fac_method("multi_barrier_pos", "./barrier_folder_HZ_synth/")
     #MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
     #                        genotype_path="./Data/barrier_file_genotypes01.csv")
     
     # Analysis of Data simulated with HZ:
     #MultiRun.create_data_set(0, position_path= "./barrier_folder_HZ_synth/barrier_file_coords01.csv", 
     #                        genotype_path="./barrier_folder_HZ_synth/barrier_file_genotypes01.csv")
-    MultiRun.analyze_data_set(41, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-                              min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
+    #MultiRun.analyze_data_set(41, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+    #                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
     # MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
     #                    res_folder="test_k/", min_ind_nr=1, loci=range(10))
     

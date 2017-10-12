@@ -100,6 +100,24 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None):
     plt.title("Nbh Size")
     plt.show()
     
+def print_run_params(folder, info_file_name="parameters.p"):
+    '''Load the Parameters of the scenario, that were saved with pickle'''
+    path = folder + info_file_name
+    
+    param_names, params, additional_info = pickle.load(open(path, "rb"))
+    print(param_names)
+    print(params)
+    
+    print("Parameters Values of this Scenario:")
+    for i in xrange(len(param_names)):
+        try:
+            print("Parameters %s: %.4g" % (param_names[i], params[i]))
+        except:
+            continue
+        
+        
+    print("Additional Info:")
+    print(additional_info)
     
 def calc_bin_homos(positions, genotypes, bins=25, max_dist=0, print_res=False):
     '''Calculate the average Number of Homozygotes in Distance Bins'''
@@ -1909,8 +1927,8 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
         
     
 
-def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1,
-                   color_path="", scale_factor=1, real_barrier=True):
+def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, 
+                   true_gamma=0.05, true_nbh=62.831, plot_hlines=1, color_path="", scale_factor=1, real_barrier=True):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -1991,7 +2009,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     ax1.set_ylim([0, 350])
     ax1.set_ylabel("Nbh", fontsize=18)
     if plot_hlines:
-        ax1.hlines(4 * np.pi * 5, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color=c_lines)
+        ax1.hlines(true_nbh, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color=c_lines)
     # ax1.title.set_text("No Barrier")
     ax1.legend(loc="upper right")
     
@@ -2000,6 +2018,8 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     ax2.plot(barr_pos_plot[true_inds], res_mean[:, 2], 'o', label="Estimate", color="k")
     ax2.set_ylim([0, 1])
     ax2.set_ylabel(r"$\gamma$", fontsize=18)
+    if plot_hlines:
+        ax2.hlines(true_gamma, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color=c_lines)
     # ax1.title.set_text("No Barrier")
     # ax2.legend(loc="lower right")
     
@@ -2252,7 +2272,10 @@ if __name__ == "__main__":
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
     # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0, 300))
-    # multi_pos_plot_k_only(multi_pos_syn_folder, method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
+    # Plot for simulated Data with HZ Parameters:
+    multi_pos_plot("./barrier_folder_HZ_synth/", met2_folder, res_numbers=range(0, 300), true_nbh=200)
+    
+    # multi_pos_plot_k_only("./multi_barrier_hz_ALL/all_v2.4/", method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
     
     
     # ## Plots for Hybrid Zone Data
@@ -2261,11 +2284,13 @@ if __name__ == "__main__":
     
     # For Dataset where Demes are not weighted; m.d.: 4200  
     # Plot for Paper!!!
-    multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
-                  scale_factor=50, real_barrier=False)
+    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    #               scale_factor=50, real_barrier=False)
+    
+    
     
     ###############################
-    # Tryout Plots for all Data
+    # Try-out Plots for all Data
     #multi_pos_plot("./multi_barrier_hz_ALL/all_v2.4/", "result/", nr_bts=10 , real_barrier_pos=2, res_numbers=range(0, 250), plot_hlines=0, color_path="colorsHZALL.csv",
     #             scale_factor=50, real_barrier=False) # The Plot for Paper
     
@@ -2304,11 +2329,19 @@ if __name__ == "__main__":
     
     # Plots the two Homozygote Plots in one:
     # All Year Estimates:
-    # plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
+    #plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
     #            position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
     #            bins=12, max_dist=1800, max_dist1=20, 
     #            best_fit_params=[192.203738, 0.000839, 0.528088], best_fit_params1=[67.74, 0.0107, 0.52343],
     #            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    
+    # Compared to data simulated under HZ parameters:
+    plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
+                position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
+                bins=12, max_dist=1800, max_dist1=30, 
+                best_fit_params=[192.203738, 0.000839, 0.528088], best_fit_params1=[200, 0.002, 0.5233],
+                scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    
     
     # 2014 Estimates:
     # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
@@ -2318,7 +2351,7 @@ if __name__ == "__main__":
     #       scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
-    #plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
+    # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
     #          genotype_path="./barrier_folder2/barrier_file_genotypes60.csv",
     #          bins=10, max_dist=16, best_fit_params=[50.316, 0.01857, 0.52246], bootstrap=False, nr_bootstraps=50,
     #          scale_factor=1, deme_bin=False, title="IBD Scenario") # No Binning: Too few Individuals
@@ -2331,3 +2364,6 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
+    
+    ## Print the saved Run Parameters of a Scenario:
+    #print_run_params("./barrier_folder_HZ_synth/")

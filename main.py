@@ -287,10 +287,10 @@ def main():
                 inp10 = int(input("\n(1) Load HZ Data \n(2) Save HZ Data \n(3) Clean HZ Data \n(4) Go back\n"))
             
                 if inp10 == 1:
-                    position_list = np.loadtxt('./Data/coordinatesHZALL14.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
+                    position_list = np.loadtxt('./Data/coordinatesHZALL.csv', delimiter='$').astype('float64')  # nbh_file_coords30.csv # ./Data/coordinates00.csv
                     scale_factor = float(input("Scale Factor?\n"))
                     position_list = position_list / scale_factor  # Normalize; for position_list and genotype Matrix of HZ data!
-                    genotype_matrix = np.loadtxt('./Data/genotypesHZALL14.csv', delimiter='$').astype('float64')
+                    genotype_matrix = np.loadtxt('./Data/genotypesHZALL.csv', delimiter='$').astype('float64')
                     
                     print("Successfully Loaded!")
                     print("Nr. of Loci: %i" % np.shape(genotype_matrix)[1])
@@ -302,9 +302,9 @@ def main():
                     print("Successfully Saved!")
                     
                 elif inp10 == 3:
-                    loci_path = "./Data/loci_infoALL14.csv"
+                    loci_path = "./Data/loci_infoALL.csv"
                     analysis = Analysis(position_list, genotype_matrix, loci_path=loci_path)
-                    genotype_matrix, position_list = analysis.clean_hz_data(plot=True)
+                    genotype_matrix, position_list = analysis.clean_hz_data(plot=True, geo_r2=0.015, p_HW=0.00001, ld_r2=0.03, min_p=0.15)
                 
                 elif inp10 == 4:
                     break         

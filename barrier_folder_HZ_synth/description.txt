@@ -1,0 +1,4 @@
+Data Set description:
+
+mb_pos 1: Synthetic data set with ss=0.1 gamma=0.01 nbh=200 mu=0.001
+mb_pos 0: Synthetic data set with ss=0.0 gamma=0.02 nbh=200 mu=0.001

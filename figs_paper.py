@@ -2273,7 +2273,7 @@ if __name__ == "__main__":
     # ll_barrier("./barrier_folder1/")
     # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0, 300))
     # Plot for simulated Data with HZ Parameters:
-    multi_pos_plot("./barrier_folder_HZ_synth/", met2_folder, res_numbers=range(0, 300), true_nbh=200)
+    multi_pos_plot("./barrier_folder_HZ_synth/", "method2/", res_numbers=range(0, 300), true_nbh=200)
     
     # multi_pos_plot_k_only("./multi_barrier_hz_ALL/all_v2.4/", method_folder="k_only/", res_numbers=range(0,300), nr_bts=20, real_barrier_pos=500) # k_only
     
@@ -2336,11 +2336,11 @@ if __name__ == "__main__":
     #            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # Compared to data simulated under HZ parameters:
-    plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
-                position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
-                bins=12, max_dist=1800, max_dist1=30, 
-                best_fit_params=[192.203738, 0.000839, 0.528088], best_fit_params1=[200, 0.002, 0.5233],
-                scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
+    # plot_homos_2(position_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/all_v2.5/mb_posHZ_genotypes00.csv", 
+    #             position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
+    #             bins=12, max_dist=1800, max_dist1=30, 
+    #             best_fit_params=[192.203738, 0.000839, 0.528088], best_fit_params1=[150.6, 0.0055816, 0.52735],
+    #             scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     
     # 2014 Estimates:

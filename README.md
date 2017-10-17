@@ -17,3 +17,8 @@ To visualize the results, figs_paper.py contains various methods to plot data an
 
 
 Also, in analysis.py, several helper methods are implemented, that are called from the other classes (for instance, binning of individual genotype data).
+
+## Data Availability
+The Scripts used for filtering the hybrid zone data can be found in the subfolder "./SNP Cleaning Scripts"
+
+The filtered Antirrhinum hybrid zone data used for inference (positions and genotypes) can be found in the folder "./DataHZ"

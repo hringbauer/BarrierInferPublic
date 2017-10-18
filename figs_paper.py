@@ -1733,6 +1733,9 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
     ax1.set_title("Hybrid Zone IBD", fontsize=18)
     plt.legend(fontsize=18, loc="upper right")
     plt.show()
+    
+    # Plot Dataset left: Left: IBD for pairwise heterozygosity. Right: Pairwise F
+    # Wait until Reviewers demand that!
         
     
     
@@ -2369,7 +2372,7 @@ if __name__ == "__main__":
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res/")  # 25-2100 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
     # give_result_stats(multi_pos_hz_folder, subfolder="range_res2/")   # 50-2500 m
-    give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
+    # give_result_stats(multi_pos_hz_folder, subfolder="chr0/result/", res_vec=range(460))
     # give_result_stats(multi_pos_syn_folder, subfolder = met2_folder)
     
     # # Print the saved Run Parameters of a Scenario:

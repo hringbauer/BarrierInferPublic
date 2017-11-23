@@ -8,6 +8,8 @@ produced in high Quality for the final paper.
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib import cm
 import itertools
 import os
 from scipy.special import kv as kv  # Import Bessel Function
@@ -230,11 +232,6 @@ def argsort_bts(x, nr_bts):
 
 def multi_nbh_single(folder, method, res_numbers=range(100)):
     '''Print several Neighborhood Sizes simulated under the model - using one method'''
-    # First quick function to unpickle the data:
-    # res_numbers = range(0, 50)
-    # res_numbers = [2, 3, 8, 11, 12, 13, 21, 22, 27, 29, 33, 35, 37, 38, 40, 75]  # 2
-    # res_numbers = [1, 7, 8, 9, 14, 17, 18, 19, 20]
-    
     
     res_vec = np.array([load_pickle_data(folder, i, 0, method) for i in res_numbers])
     unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
@@ -1117,11 +1114,10 @@ def plot_theory_f():
     kc = fac_kernel("DiffusionBarrierK0")
     # Density: 5, mu=0.003, t0=1, Diff=1, k=0.5
     # kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens; In old ordering
-    k = 0.1
+    k = 0.01 # Barrier Strength
     kc.set_parameters([4 * np.pi * 5, 0.006, k, 1.0, 0.0])  # Nbh, L, k, t0, ss
     
     k0 = fac_kernel("DiffusionK0")
-    # k0.set_parameters([1.0, 1.0, 0.001, 5.0, 0.0])  # Diffusion; t0; mutation; density; ss 
     k0.set_parameters([4 * np.pi * 5, 0.006, 1.0, 0.0])
     
     print("Parameters Barrier: ")
@@ -1135,22 +1131,25 @@ def plot_theory_f():
     # dens = k0.give_parameters
     
     # x_vec = np.logspace(-2, 2.0, 100) + 2.0
-    x_vec = np.linspace(1.0, 30, 100) + 0.0001
+    x_vec = np.linspace(2.1, 30, 100) + 0.0001
     y_vec = [kc.num_integral_barrier(0, -1, -1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
     y_vec2 = [kc.num_integral_barrier(0, 1, 1 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
+    y_vec3 = [kc.num_integral_barrier(0, 5, 5 + x1) for x1 in x_vec]  # 0 Difference along the y-Axis ; 
+    
      
     y_vec01 = np.array([k0.num_integral(r) for r in x_vec])  # Numerical Integral no barrier
     # y_vec1=np.array([num_integral(x, t0=1, sigma=sigma, mu=mu) for x in x_vec])
     # y_vec20=np.array([num_integral(x, t0=2, sigma=sigma, mu=mu) for x in x_vec])
     y_bessel = 1 / (4 * np.pi * 5) * kv(0, np.sqrt(2 * mu) * x_vec)  # The numerical Result from Mathematica
     
-    c0, c1, c2 = "black", "crimson", "blue"
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'width_ratios':[2, 3]})
+    c0, c1, c2, c3 = "black", "blue", "crimson", "yellow"
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'width_ratios':[2, 2.5]})
     # Plot the IBD
-    ax1.plot(x_vec, y_bessel, alpha=0.8, color=c0, label="Analytical Solution", linewidth=6)
-    ax1.plot(x_vec, y_vec01, alpha=0.6, label="No Barrier", color="green", linewidth=6)
-    ax1.plot(x_vec, y_vec, alpha=0.9, color=c1, label="Different Side of Barrier", linewidth=6)
-    ax1.plot(x_vec, y_vec2, alpha=0.9, color=c2, label="Same Side of Barrier", linewidth=6)
+    ax1.plot(x_vec, y_bessel, alpha=0.8, color=c0, linestyle='--', label="Analytical Solution", linewidth=2, zorder=1)
+    ax1.plot(x_vec, y_vec01, alpha=0.8, label="No Barrier", color="Lime", linewidth=6, zorder=0)
+    ax1.plot(x_vec, y_vec, alpha=0.9, color=c1, label="Different Side of Barrier", linewidth=5)
+    ax1.plot(x_vec, y_vec2, alpha=0.9, color=c2, label="Same Side (Barrier near)", linewidth=5)
+    ax1.plot(x_vec, y_vec3, alpha=0.9, color=c3, label="Same Side (Barrier distant)", linewidth=5)
     ax1.set_xlim([0, max(x_vec)])
     ax1.set_ylim([0, 0.05])
     ax1.set_xlabel("Pairwise Distance", fontsize=18)
@@ -1160,18 +1159,22 @@ def plot_theory_f():
     ax1.legend(fontsize=12, labelspacing=0.3)
     
     #####################################
+    ps=1200 # Pointsize
     # Plot the positions
-    pos = np.array([[i, j] for i in range(8) for j in range(6)])
-    pos1 = np.array([[i, 3] for i in range(4)])
-    pos2 = np.array([[1 + i, 2] for i in range(4)])
+    pos = np.array([[i, j] for i in range(6) for j in range(5)]) # The Grid Points
+    pos1 = np.array([[i, 2] for i in range(4)])
+    pos2 = np.array([[i, 1] for i in range(5)])
+    pos3 = np.array([[i, 3] for i in range(2)])
     
-    ax2.scatter(pos[:, 0], pos[:, 1], marker='o', s=800, color='grey', alpha=0.5)
-    ax2.scatter(pos1[:, 0], pos1[:, 1], marker='o', s=800, color=c2, label="Same Side")
-    ax2.scatter(pos2[:, 0], pos2[:, 1], marker='o', s=800, color=c1, label="Different Side")
-    ax2.scatter(3, 3, marker='o', s=100, color="white")  # Right End Point
-    ax2.scatter(4, 2, marker='o', s=100, color="white")  # Right End Point
-    ax2.set_xlabel("x-Axis", fontsize=18)
-    ax2.set_ylabel("y-Axis", fontsize=18)
+    ax2.scatter(pos[:, 0], pos[:, 1], marker='o', s=ps, color='grey', alpha=0.5)
+    ax2.scatter(pos1[:, 0], pos1[:, 1], marker='o', s=ps, color=c2, label="Same Side Close")
+    ax2.scatter(pos2[:, 0], pos2[:, 1], marker='o', s=ps, color=c1, label="Different Side")
+    ax2.scatter(pos3[:, 0], pos3[:, 1], marker='o', s=ps, color=c3, label="Same Side Dist")
+    ax2.scatter(3, 2, marker='o', s=100, color="white")  # Right End Point
+    ax2.scatter(4, 1, marker='o', s=100, color="white")  # Right End Point
+    ax2.scatter(1, 3, marker='o', s=100, color="white")  # Right End Point
+    # ax2.set_xlabel("x-Axis", fontsize=18)
+    # ax2.set_ylabel("y-Axis", fontsize=18)
     ax2.set_xlim([min(pos[:, 0]) - 0.5, max(pos[:, 0]) + 0.5])
     ax2.set_ylim([min(pos[:, 1]) - 0.5, max(pos[:, 1]) + 0.5])
     # plt.text(3.9, 2.9,"R",color="white",fontsize=18)
@@ -1179,6 +1182,13 @@ def plot_theory_f():
     ax2.tick_params(axis='both', which='both', bottom='off', top='off', labelbottom='off', right='off', left='off', labelleft='off')
     ax2.vlines(3.5, -0.5, 5.5, linewidth=6)
     # plt.legend(loc="upper right", borderpad=2)
+    
+    # Plot the arrows:
+    ax2.arrow(-0.4, -0.4, 0, 1, head_width=0.1, head_length=0.2, fc='k', ec='k')
+    ax2.arrow(-0.4, -0.4, 1, 0, head_width=0.1, head_length=0.2, fc='k', ec='k')
+    ax2.annotate("x", (0.85, -0.4))
+    ax2.annotate("y", (-0.45, 0.85))
+    
     plt.show()
     
     
@@ -2130,8 +2140,6 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     p_mean = 0.5
     t = 5000
     
-    
-    
     # First: Set the position_list:
     position_list = np.array([[mid + i, mid + j] for i in xrange(-30, 30) for j in xrange(-30, 30)])
     l = int(np.sqrt(len(position_list)))  # Length of position list along given axis
@@ -2186,8 +2194,15 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     
     p_mean = smooth(position_list, genotypes)
     p_mean_b = smooth(position_list, genotypes_b)
+    
+    
     p_mean = np.reshape(p_mean, (l, l)).T
     p_mean_b = np.reshape(p_mean_b, (l, l)).T
+    
+    p_dis =  np.reshape(genotypes, (l, l)).T
+    p_dis_b = np.reshape(genotypes_b, (l, l)).T
+    
+    # Make a custom Color Map:
     
     
     # Do the plotting
@@ -2195,25 +2210,43 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     x_min, x_max = min(x_coords), max(x_coords)
     y_min, y_max = min(y_coords), max(y_coords)
     
+    # Make a custom color Map:
+    # Get the colors first:
+    cmap0 = cm.get_cmap('jet')
+    red = cmap0(0.85)
+    blue = cmap0(0.05)
+    
+    # Make the colormap
+    cmap_dis = colors.ListedColormap([blue, red])
+    bounds = [0, 0.5, 1.0]
+    norm = colors.BoundaryNorm(bounds, cmap_dis.N)
+    
     tf_size = 20
     label_size = 12
     f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(10, 10))
     
-    ax1.scatter(position_list[:, 0], position_list[:, 1], c=genotypes)
-    ax1.set_xlim([x_min, x_max])
-    ax1.set_ylim([y_min, y_max])
+    ax1.imshow(p_dis, cmap=cmap_dis, norm=norm)
+    ax1.set_xlim(1, l - 1)
+    ax1.set_ylim(1, l - 1)
     ax1.set_xticks([])
     ax1.set_yticks([])
     ax1.set_title("No Barrier", fontsize=tf_size)
     ax1.set_ylabel("Observed Genotypes", fontsize=tf_size)
+
+
     
-    ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
+    #ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
+    im0=ax2.imshow(p_dis_b, cmap=cmap_dis, norm=norm)
     ax2.set_title("Strong Barrier", fontsize=tf_size)
-    ax2.set_xlim([x_min, x_max])
-    ax2.set_ylim([y_min, y_max])
-    ax2.vlines(mid + 0.5, y_min, y_max, color="k", linewidth=5)
+    # ax2.set_xlim([x_min, x_max])
+    # ax2.set_ylim([y_min, y_max])
+    ax2.set_xlim(1, l - 1)
+    ax2.set_ylim(1, l - 1)
+    #ax2.vlines(mid + 0.5, y_min, y_max, color="k", linewidth=5,zorder=1)
+    ax2.vlines(l / 2, 0, l, color="k", linewidth=5)
     ax2.set_xticks([])
     ax2.set_yticks([])
+    ax2.legend(location="upper right")
     
     ax3.imshow(p_mean, interpolation="bilinear", cmap="jet")
     ax3.set_xlim(1, l - 1)
@@ -2232,7 +2265,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     ax3.annotate("y", (4, 13))
     if winter == True:
         # ax3.text(0.6 * l, 0.86 * l, "Winter is coming", fontsize=8, color="blue", alpha=0.2)
-        ax3.text(0.4 * l, 0.86 * l, "Winter is coming", fontsize=16, color="lightblue", alpha=0.9)  # Trololol In paper 8 and blue
+        ax3.text(0.4 * l, 0.86 * l, "Winter is coming", fontsize=16, color="lightblue", alpha=0.15)  # Trololol In paper 8 and blue
     
     im = ax4.imshow(p_mean_b, interpolation="bilinear", cmap="jet")
     ax4.set_xlim(1, l - 1)
@@ -2244,12 +2277,19 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     ax4.autoscale(False)
     ax4.set_adjustable('box-forced')
     
+    # Plot the custom colorbars:
     f.subplots_adjust(right=0.85)
-    cbar_ax = f.add_axes([0.87, 0.14, 0.015, 0.3])  # left, bottom, width, height
+    cbar_ax = f.add_axes([0.87, 0.17, 0.015, 0.3])  # left, bottom, width, height
     f.colorbar(im, cax=cbar_ax)
-    f.text(0.92, 0.27, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
+    f.text(0.92, 0.32, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
+    
+    cbar_ax1 = f.add_axes([0.87, 0.54, 0.015, 0.3])  # left, bottom, width, height
+    f.colorbar(im0, cax=cbar_ax1, cmap=cmap_dis, ticks=[0,1])
+    f.text(0.92, 0.69, 'Allele', va='center', rotation=270, fontsize=tf_size)
     # cbar = f.colorbar(cax)
-    # plt.tight_layout()
+    #plt.tight_layout()
+    plt.subplots_adjust(left=None, bottom=0.13, right=None, top=None,
+                wspace=0.07, hspace=0)
     plt.show()
 
     
@@ -2257,7 +2297,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
+    sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
     
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
@@ -2273,7 +2313,7 @@ if __name__ == "__main__":
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
-    # plot_theory_f()  # Plots the theoretical F; from Kernel calculations
+    # plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)
@@ -2346,11 +2386,11 @@ if __name__ == "__main__":
     #            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # Compared to data simulated under HZ parameters:
-    plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
-              position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
-              bins=15, max_dist=1800, max_dist1=25, 
-              best_fit_params=[188.12, 0.0004426, 0.5257], best_fit_params1=[150.6, 0.0055816, 0.52735],
-              scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)  #192.2, 0.000839, 0.528088
+    # plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
+    #          position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
+    #          bins=15, max_dist=1800, max_dist1=25, 
+    #          best_fit_params=[188.12, 0.0004426, 0.5257], best_fit_params1=[150.6, 0.0055816, 0.52735],
+    #          scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)  #192.2, 0.000839, 0.528088
     
     
     # 2014 Estimates:

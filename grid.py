@@ -511,8 +511,108 @@ class Secondary_Grid(Grid):
                 
         print(self.genotypes)
             
-                   
 
+#############################################################################################
+class Coalescence_Grid(Grid):
+    # Grid that simulates coalescence of two sample
+    gridsize_x = 20
+    gridsize_y = 20
+    position_list = []  # List of initial positions.
+    start_pos1 = [5, 5]  # Position of first Individual
+    start_pos2 = [14, 5]  # Position of second Individual
+    
+    t = 0  # Current time back in generations.
+    t_max = 30000  # How long to run the simulations for 
+    
+    barrier = 9.5
+    barrier_strength = 1.0  # The strength of the barrier # 1 Everything migrates; 0 Nothing Migrates
+    sigma = 0.965  # 0.965  # 1.98 # 0.965
+    ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+    mu = 0.003  # The Mutation/Long Distance Migration rate.
+    
+    def __init__(self, start_pos1=[], start_pos2=[]):  # Initializes an empty grid
+        '''Allows to set start positions.'''
+        if len(start_pos1) == 2:
+            self.start_pos1 = start_pos1
+            
+        if len(start_pos2) == 2:
+            self.start_pos2 = start_pos2
+        print("Grid Successfully initiliazed")  
+            
+    def reset_positions(self):
+        '''Resets the Grid so that Positions agree with Start Positions'''
+        self.pos1 = self.start_pos1[:]
+        self.pos2 = self.start_pos2[:]
+        
+    def run_until_coalescence(self):
+        '''Run the samples until coalescence. Return coalescence time'''
+        t = 0  # When to start the coalescence simulations
+        self.reset_positions()
+        
+        while t < self.t_max:
+            t += 1
+            # Update the two individuals positions
+            if (self.pos1 == self.pos2) and (np.random.random() < 1.0 / (self.ips)):  # Only in case if individuals fall an the same ancestor
+                return t
+            
+            # update the individual positions:
+            self.pos1 = self.update_individual_pos_barrier(self.pos1[0], self.pos1[1])
+            self.pos2 = self.update_individual_pos_barrier(self.pos2[0], self.pos2[1])
+            
+        print("Warning: Maximum time hit")
+        return t  # In case
+    
+    def return_coalescence_times(self, n=1):
+        '''Run n coalescence simulations. Return array of n coalescence times.'''
+        coal_times = np.zeros(n)
+        for i in xrange(n):
+            print("Doing run: %i" % i)
+            coal_times[i] = self.run_until_coalescence()
+        return coal_times
+    
+    
+    def update_individual_pos_barrier(self, x, y):
+        '''Method that updates individual positions with barrier'''
+        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
+        delta_x = np.around(np.random.laplace(scale=scale))  # Draw random off-set
+        delta_y = np.around(np.random.laplace(scale=scale))  # Draw random off-set
+        
+        x1 = (x + delta_x)
+        # print("Old/New: %.2f %.2f" % (x,x1))   For Debugging...
+        y1 = (y + delta_y)
+        
+        if (x > self.barrier and x1 <= self.barrier):
+            if np.random.random() > self.barrier_strength:  # In case of reflection
+                x1 = x  # Nothing happens
+                # x1 = self.barrier + (self.barrier - x1)  # x1 gets reflected#
+                # x1 = self.barrier + 1 
+            
+        elif (x < self.barrier and x1 >= self.barrier):
+            if np.random.random() > self.barrier_strength:  # In case of reflection 
+                x1 = x  # Nothing happens       
+                # x1 = self.barrier - (x1 - self.barrier)  # x1 gets reflected
+                # x1 = self.barrier - 1 
+        
+        # Check whether everything is in boundary as it should!
+        if x1 >= self.gridsize_x:
+            x1 = self.gridsize_x - 1
+        
+        elif x1 < 0:
+            x1 = 0
+            
+        if y1 >= self.gridsize_y:
+            y1 = self.gridsize_y - 1
+            
+        elif y1 < 0:
+            y1 = 0
+            
+        x1 = x1 % self.gridsize_x
+        y1 = y1 % self.gridsize_y   
+         
+        return(x1, y1)
+        
+        
+        
 def arc_sin_lin(x):
     '''Arcus-Sinus Link function'''
     x = np.where(x < 0, 0, x)  # If x smaller 0 make it 0
@@ -570,7 +670,6 @@ def bessel0(x, C, a):
 
 ############################################################################################################
 
-
 def test_fit_f():
     '''Function to fit F'''
     position_list = [(i, j) for i in range(502, 600, 4) for j in range(502, 600, 4)]  # Position_List describing individual positions
@@ -590,16 +689,28 @@ def test_secondary_contact():
     grid.update_grid_t(10, p1=0.0, p2=1.0)  # Updates for t Generations
     grid.fit_F(show=True)
     np.savetxt("./coordinates_snd.csv", position_list, delimiter="$")  # Save the coordinates
-    genotypes= np.reshape(grid.genotypes, (len(grid.genotypes)), 1)
+    genotypes = np.reshape(grid.genotypes, (len(grid.genotypes)), 1)
     np.savetxt("./data_genotypes_snd.csv", genotypes, delimiter="$")  # Save the data 
     print("Run Complete; data saved.")
         
     
+def test_coalescence_sim():
+    '''Tests whether the coalescene framework actually works'''
     
+    grid = Coalescence_Grid()  # Calls the coalescence Grid
+    start=time()
+    #t = grid.run_until_coalescence()
+    t_coals = grid.return_coalescence_times(100)
+    end=time()
+    print("Runtime %.4f: " % (end-start))
+    print(t_coals)
+    
+
     
 if __name__ == "__main__":
     # test_fit_f()
-    test_secondary_contact()
+    # test_secondary_contact()
+    test_coalescence_sim()
     
     # grid.extract_F(20, show=True)
 

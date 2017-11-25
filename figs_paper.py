@@ -2217,7 +2217,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     blue = cmap0(0.05)
     
     # Make the colormap
-    cmap_dis = colors.ListedColormap([blue, red])
+    cmap_dis = colors.ListedColormap([blue, red])  # ["Black", "Gainsboro"]
     bounds = [0, 0.5, 1.0]
     norm = colors.BoundaryNorm(bounds, cmap_dis.N)
     
@@ -2233,8 +2233,6 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     ax1.set_title("No Barrier", fontsize=tf_size)
     ax1.set_ylabel("Observed Genotypes", fontsize=tf_size)
 
-
-    
     #ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
     im0=ax2.imshow(p_dis_b, cmap=cmap_dis, norm=norm)
     ax2.set_title("Strong Barrier", fontsize=tf_size)

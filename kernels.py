@@ -848,13 +848,10 @@ def memory_leak():
         kc.calc_kernel_mat(coords)
         
     
-    
-    
-
 if __name__ == "__main__":
     kernel_test()
-    #test_parallel()  # Tests; but also has timer
-    #test_diffusion_barrier()
+    # test_parallel()  # Tests; but also has timer
+    # test_diffusion_barrier()
     # plot_samples()
     
     # Time the Kernel

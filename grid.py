@@ -17,6 +17,7 @@ from scipy.special import kv as kv
 from scipy.optimize.minpack import curve_fit
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
 from time import time
+import multiprocessing as mp
 # from kernels import fac 
 
 class Grid(object):
@@ -102,7 +103,12 @@ class Grid(object):
         '''Update the grid in case of a barrier'''
         new_coords = [self.update_individual_pos_barrier(pos[0], pos[1]) for pos in self.update_list]
         self.update_list = new_coords
-        
+    
+    def draw_delta(self):
+        '''Draws the individual axial position Offsets'''
+        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
+        return np.around(np.random.laplace(scale=scale))  # Draw random off-set
+           
     def update_individual_pos(self, x, y):
         '''Method that updates the position of an individual'''
         scale = self.sigma / np.sqrt(2)  # For Laplace Dispersal
@@ -112,9 +118,8 @@ class Grid(object):
     
     def update_individual_pos_barrier(self, x, y):
         '''Method that updates individual positions with barrier'''
-        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
-        delta_x = np.around(np.random.laplace(scale=scale))  # Draw random off-set
-        delta_y = np.around(np.random.laplace(scale=scale))  # Draw random off-set
+        delta_x = self.draw_delta() # Draw the x off-set
+        delta_y = self.draw_delta()  # Draw the y off-set
         
         x1 = (x + delta_x)
         # print("Old/New: %.2f %.2f" % (x,x1))   For Debugging...
@@ -520,6 +525,9 @@ class Coalescence_Grid(Grid):
     position_list = []  # List of initial positions.
     start_pos1 = [5, 5]  # Position of first Individual
     start_pos2 = [14, 5]  # Position of second Individual
+    multi_processing = False
+    
+    offset_drawer = 0  # An object that draws the Laplace offsets.
     
     t = 0  # Current time back in generations.
     t_max = 30000  # How long to run the simulations for 
@@ -530,13 +538,20 @@ class Coalescence_Grid(Grid):
     ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
     mu = 0.003  # The Mutation/Long Distance Migration rate.
     
-    def __init__(self, start_pos1=[], start_pos2=[]):  # Initializes an empty grid
+    def __init__(self, start_pos1=[], start_pos2=[], drawer=0):  # Initializes an empty grid
         '''Allows to set start positions.'''
         if len(start_pos1) == 2:
             self.start_pos1 = start_pos1
             
         if len(start_pos2) == 2:
             self.start_pos2 = start_pos2
+            
+        if drawer == 0:
+            print("Initializing Drawer...")
+            self.offset_drawer = Laplace_Offsets(1000, sigma=self.sigma)
+            
+        else:
+            self.offset_drawer = drawer
         print("Grid Successfully initiliazed")  
             
     def reset_positions(self):
@@ -544,7 +559,7 @@ class Coalescence_Grid(Grid):
         self.pos1 = self.start_pos1[:]
         self.pos2 = self.start_pos2[:]
         
-    def run_until_coalescence(self):
+    def run_until_coalescence(self, warning=False):
         '''Run the samples until coalescence. Return coalescence time'''
         t = 0  # When to start the coalescence simulations
         self.reset_positions()
@@ -558,60 +573,72 @@ class Coalescence_Grid(Grid):
             # update the individual positions:
             self.pos1 = self.update_individual_pos_barrier(self.pos1[0], self.pos1[1])
             self.pos2 = self.update_individual_pos_barrier(self.pos2[0], self.pos2[1])
-            
-        print("Warning: Maximum time hit")
+        
+        if warning == True:
+            print("Warning: Maximum time hit")
+        t = np.nan  # So that no counted in statistics
         return t  # In case
     
-    def return_coalescence_times(self, n=1):
+    def return_coalescence_times(self, n=1, report_int=1, warning=False):
         '''Run n coalescence simulations. Return array of n coalescence times.'''
         coal_times = np.zeros(n)
-        for i in xrange(n):
-            print("Doing run: %i" % i)
-            coal_times[i] = self.run_until_coalescence()
+        
+        # Does not work actually... Cannot run class functions from map
+        if self.multi_processing == True:
+            warnings = [warning for _ in xrange(n)] # Just a vector of dummy variables
+            pool_size = mp.cpu_count() * 2
+            pool = mp.Pool(processes=pool_size)
+            coal_times = pool.map(self.run_until_coalescence, warnings)  # map
+            pool.close()
+            pool.join()
+        
+        # If not Multiprocessing:
+        else:
+            for i in xrange(n):
+                if i % report_int == 0:
+                    print("Doing run: %i" % i)
+                coal_times[i] = self.run_until_coalescence()
         return coal_times
     
+    def draw_delta(self):
+        '''Overwrites the drawing of the Offsets to make it quicker here.'''
+        offset = self.offset_drawer.give_offset()   # Gives the actual Offset
+        return offset
     
-    def update_individual_pos_barrier(self, x, y):
-        '''Method that updates individual positions with barrier'''
-        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
-        delta_x = np.around(np.random.laplace(scale=scale))  # Draw random off-set
-        delta_y = np.around(np.random.laplace(scale=scale))  # Draw random off-set
         
-        x1 = (x + delta_x)
-        # print("Old/New: %.2f %.2f" % (x,x1))   For Debugging...
-        y1 = (y + delta_y)
+class Laplace_Offsets(object):
+    '''This class draws the Laplace offsets. 
+    It makes a list, and then draws from it.'''
+    offsets = [] # Array of Offsets
+    n = 1          # Size of the List
+    sigma = 0.965  # The STD of Laplacian
+    i=0            # Counter where one stands
+    
+    def __init__(self, list_size, sigma=0.965):
+        '''Draws the Offsets. The idea is to draw them together'''
+        self.n = list_size
+        self.sigma = sigma
+        self.draw_offsets() # Draw all offsets.
+        self.i=0 # Set the counter to 0.
+        print("Drawer initialized!")
+    
+    def draw_offsets(self):
+        '''Draw all n offsets'''
+        scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace-Dispersal.
+        offsets =  np.around(np.random.laplace(scale=scale, size=self.n))  # Draws all the Offsets
+        self.offsets = offsets
+    
+    def give_offset(self):
+        '''Give the Offset. Redraw if necessary'''
+        # Redraw if needed:
+        if self.i>=self.n:
+            self.draw_offsets()
+            self.i = 0
         
-        if (x > self.barrier and x1 <= self.barrier):
-            if np.random.random() > self.barrier_strength:  # In case of reflection
-                x1 = x  # Nothing happens
-                # x1 = self.barrier + (self.barrier - x1)  # x1 gets reflected#
-                # x1 = self.barrier + 1 
-            
-        elif (x < self.barrier and x1 >= self.barrier):
-            if np.random.random() > self.barrier_strength:  # In case of reflection 
-                x1 = x  # Nothing happens       
-                # x1 = self.barrier - (x1 - self.barrier)  # x1 gets reflected
-                # x1 = self.barrier - 1 
-        
-        # Check whether everything is in boundary as it should!
-        if x1 >= self.gridsize_x:
-            x1 = self.gridsize_x - 1
-        
-        elif x1 < 0:
-            x1 = 0
-            
-        if y1 >= self.gridsize_y:
-            y1 = self.gridsize_y - 1
-            
-        elif y1 < 0:
-            y1 = 0
-            
-        x1 = x1 % self.gridsize_x
-        y1 = y1 % self.gridsize_y   
-         
-        return(x1, y1)
-        
-        
+        # Give the offset
+        offset = self.offsets[self.i]
+        self.i = self.i + 1
+        return offset
         
 def arc_sin_lin(x):
     '''Arcus-Sinus Link function'''
@@ -698,20 +725,18 @@ def test_coalescence_sim():
     '''Tests whether the coalescene framework actually works'''
     
     grid = Coalescence_Grid()  # Calls the coalescence Grid
-    start=time()
-    #t = grid.run_until_coalescence()
+    start = time()
+    # t = grid.run_until_coalescence()
     t_coals = grid.return_coalescence_times(100)
-    end=time()
-    print("Runtime %.4f: " % (end-start))
+    end = time()
+    print("Runtime %.4f: " % (end - start))
     print(t_coals)
     
 
-    
 if __name__ == "__main__":
     # test_fit_f()
     # test_secondary_contact()
-    test_coalescence_sim()
-    
+    test_coalescence_sim() 
     # grid.extract_F(20, show=True)
 
 # test_fit_f()   # Runs the actual testing Function

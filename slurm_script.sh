@@ -1,4 +1,4 @@
-
+#!/bin/bash
 #SBATCH --ntasks=1
 #SBATCH --job-name=coalescence_sims
 #SBATCH --time=24:00:00

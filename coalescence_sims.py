@@ -80,8 +80,6 @@ def do_panel_row_simulations(row=0, report_int=50, reps_short=100, reps_long=100
     positions1 = [[18,20], [12,20], [18,20]]
     positions2 = [[18,20], [12,20], [21,20]]
     save_names = ["1818.csv","1212.csv","1821.csv"]
-    replicates_short = 1000  # Do replicates for long.
-    replicates_long = 100  # Do replicates for short.
     
     pos1 = positions1[row]
     pos2 = positions2[row]
@@ -89,18 +87,18 @@ def do_panel_row_simulations(row=0, report_int=50, reps_short=100, reps_long=100
     
     start = time()
     do_panel_simulations(pos1=pos1, pos2=pos2, save_path=save_name,
-                         replicates=replicates_short, report_int=report_int, short=True)
+                         replicates=reps_short, report_int=report_int, short=True)
     end = time()
     print("Time Run Short: %.4f" % (end-start))
     
     start = time()
     do_panel_simulations(pos1=pos1, pos2=pos2, save_path=save_name,
-                     replicates=replicates_long, report_int=report_int, short=False)
+                     replicates=reps_long, report_int=report_int, short=False)
     end = time()
     print("Time Run Long: %.4f" % (end-start))
     
 # Which Row to run
 #row=0
 row = int(sys.argv[1])  # Read the input
-do_panel_row_simulations(row=row, reps_short=1000, reps_long=100, report_int=100)
+do_panel_row_simulations(row=row, reps_short=1000000, reps_long=100000, report_int=1000)
 print("Run %i completed. Good job!" % row)

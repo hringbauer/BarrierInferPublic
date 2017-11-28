@@ -215,6 +215,14 @@ class MultiRun(object):
         print("Successfully saved to: ")
         print(path)
         
+    def batch_decider(self, i, reps):
+        '''Given Run i and a total number of Representatives reps,
+        give back the Batch Number and the relative total Number 
+        one resides in'''
+        batch_nr = i / reps  # What Batch Number
+        rel_nr = i % reps  # What relative Number
+        return batch_nr, rel_nr
+        
         
     def fit_barrier(self, position_barrier, start_params, data_set_nr=0, method=2,
                     res_folder=None, position_list=[], genotype_mat=[], nr_inds=[], random_ind_nr=None,
@@ -506,7 +514,7 @@ class MultiBarrier(MultiRun):
         # barrier_strength = barrier_strength_list[data_set_nr]
         # barrier_strength = 0.05
         bs = [0.02, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5, 1.0]
-        barrier_strength_list = [b for b in bs for  _ in range(20)] # 20 bootstraps
+        barrier_strength_list = [b for b in bs for  _ in range(20)]  # 20 bootstraps
         barrier_strength = barrier_strength_list[data_set_nr]
         
         ips = 32  # 32 Number of haploid Individuals per Node (For D_e divide by 2)
@@ -514,13 +522,13 @@ class MultiBarrier(MultiRun):
         # position_list = np.array([(500 + i, 500 + j) for i in range(-19, 21, 2) for j in range(-49, 51, 2)])  # 1000 Individuals; spaced 2 sigma apart. Original data_set
         position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; space 2 sigma apart.
         # position_list = np.array([(500 + i, 500 + j) for i in range(-9, 11, 1) for j in range(-9, 11, 1)])  # Updated position list.
-        nr_loci = 60 # 60
+        nr_loci = 60  # 60
         t = 5000
         gridsize_x, gridsize_y = 1000, 1000
         barrier_pos = 500.5
         sigma = 0.965  # 0.965 # 1.98
         mu = 0.001  # 0.003 Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
-        sd_p = 0.117355  #0.1 Standard Deviation Allele Frequency
+        sd_p = 0.117355  # 0.1 Standard Deviation Allele Frequency
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
         p_mean = p_mean + p_delta
@@ -557,7 +565,7 @@ class MultiBarrier(MultiRun):
         
         # Creates the "right" starting parameters:
         # barrier_strength_list = 25 * [0.01] + 25 * [0.2] + 25 * [0.5] + 25 * [1.0]
-        barrier_strength_list = 200 * [0.5]
+        barrier_strength_list = 200 * [0.1]
         l = 0.006
         nbh_size = 4 * np.pi * 5  # 4 pi sigma**2 D = 4 * pi * 1 * ips/2.0
         start_list = [[nbh_size, l, bs] for bs in barrier_strength_list]  # General Vector for Start-Lists
@@ -595,6 +603,86 @@ class MultiBarrier(MultiRun):
             
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
 
+#############################################################################################################################
+def MultiParams(MultiBarrier):
+    '''Simulate and Analyze where multiple Parameters are varied'''
+    
+    def create_data_set(self, data_set_nr, k=0.01):
+        '''Creates a Dataset'''
+        # Set all 3 default Parameters:
+        mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
+        sd_p = 0.1  # Standard Deviation Allele Frequency
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        
+        mu_vec = [0.001, 0.003, 0.005, 0.007, 0.09]
+        sd_p_vec = [0.04, 0.06, 0.08, 0.1, 0.12]
+        ips_vec = [6, 10, 14, 18, 22]
+        
+        sigma = 0.965  # 0.965 # 1.98
+        barrier_strength = k
+        # Nr of Replicates per Parameter:
+        nr_reps = 20  # How Many Replicates per parameter
+        # Nr of Parameters 
+        nr_per_param = nr_reps * len(mu_vec)  # How many runs per Parameter
+        
+        #########################
+        # Decide in which Batch one is:
+        batch_nr, rel_nr = self.batch_decider(data_set_nr, nr_per_param)
+        param_ind, _ = self.batch_decider(rel_nr, nr_reps)  # Which relative Nr one is in
+        
+        if batch_nr == 0:
+            mu = mu_vec[param_ind]
+            
+        elif batch_nr == 1:
+            sd_p = sd_p_vec[param_ind]
+            
+        elif batch_nr == 2:
+            ips = ips_vec[param_ind]
+            
+        else:
+            raise ValueError("Whoopsi Daisy")
+        
+        #########################
+        # Create the standard Position List
+        position_list = np.array([(500 + i, 500 + j) for i in range(-29, 31, 1) for j in range(-19, 21, 1)])  # 1000 Individuals; spaced 1 sigma apart.
+        nr_loci = 200
+        t = 10000
+        gridsize_x, gridsize_y = 1000, 1000
+        barrier_pos = 500.5
+        
+        p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
+        p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
+        p_mean = p_mean + p_delta
+        
+        # Do the actual Simulation
+        genotype_matrix = self.simulate_barrier(position_list, gridsize_x, gridsize_y, t,
+                              sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength)
+        
+        # Save the Data Set:
+        self.save_data_set(position_list, genotype_matrix, data_set_nr)  
+        
+        
+    def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20,
+                         nr_data_sets=600, position_barrier=500.5):
+        '''Analyze a single Data Set. Here do it the same way for each Dataset.
+        '''
+        if (data_set_nr < 0) & (data_set_nr >= nr_data_sets):
+            raise ValueError("Data Set Nr. outside of Range!")
+        
+        # Then pick the Starting Parameters:
+        nbh_size = 80
+        l = 0.008
+        bs = 0.2
+        start_params = [nbh_size, l, bs]       
+        
+        # Pick the right Dataset:
+        data_set_eff = data_set_nr % nr_bts  # Which data-set to use
+        batch_nr = int(np.floor(data_set_nr / nr_bts))  # Which batch to use
+
+        position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
+            
+        self.fit_barrier(position_barrier, start_params, genotype_mat=genotype_mat,
+                         method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr=data_set_nr)
         
 ##############################################################################################################################
 class MultiCluster(MultiBarrier):
@@ -1159,7 +1247,7 @@ class MultiHZPosition(MultiBarrierPosition):
         
     def create_data_set(self, data_set_nr=0, position_path="", genotype_path="", loci_path="",
             scale_factor=50, chromosome=0, geo_r2=0.015, p_HW=0.00001,
-            ld_r2=0.03, min_p=0.15):   # V1. p_HW = 0.0001, ld_r2=0.01
+            ld_r2=0.03, min_p=0.15):  # V1. p_HW = 0.0001, ld_r2=0.01
         '''Creates the HZ Data-Set. Takes raw Data and pre-processes it:
         Filtering out number of Loci; based on chromosome
         Position_Path: Where to find the Positions of one Individual
@@ -1513,6 +1601,9 @@ def fac_method(method, folder, multi_processing=0):
     elif method == "multi_loci_barrier":
         return MultiLociBarrier(folder, multi_processing=multi_processing)
     
+    elif method == "multi_params":
+        return MultiParams(folder, multi_processing=multi_processing)
+    
     else: raise ValueError("Wrong method entered!")
 
 #########################################################################################
@@ -1567,8 +1658,8 @@ if __name__ == "__main__":
     
     ####################################################
     ####Create Multi Barrier Data Set
-    MultiRun = fac_method("multi_barrier", "./barrier_folder_HZ_synth/", multi_processing=1) # Simulate data with HZ params.
-    MultiRun.create_data_set(2)
+    # MultiRun = fac_method("multi_barrier", "./barrier_folder_HZ_synth/", multi_processing=1)  # Simulate data with HZ params.
+    # MultiRun.create_data_set(2)
     # MultiRun.analyze_data_set(2, method=2, deme_x_nr=30, deme_y_nr=20)
     
     ####################################################
@@ -1607,13 +1698,13 @@ if __name__ == "__main__":
     # Multi Barrier Position Data Set:
     # MultiRun = fac_method("multi_barrier_pos", "./multi_barrier_synth/", multi_processing=1)
     # MultiRun = fac_method("multi_barrier_pos", "./barrier_folder_HZ_synth/")
-    #MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
+    # MultiRun.create_data_set(0, position_path= "./Data/barrier_file_coords01.csv", 
     #                        genotype_path="./Data/barrier_file_genotypes01.csv")
     
     # Analysis of Data simulated with HZ:
-    #MultiRun.create_data_set(0, position_path= "./barrier_folder_HZ_synth/barrier_file_coords01.csv", 
+    # MultiRun.create_data_set(0, position_path= "./barrier_folder_HZ_synth/barrier_file_coords01.csv", 
     #                        genotype_path="./barrier_folder_HZ_synth/barrier_file_genotypes01.csv")
-    #MultiRun.analyze_data_set(41, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+    # MultiRun.analyze_data_set(41, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
     #                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
     # MultiRun.analyze_data_set_k_only(0, nbh=60.2095, l=0.007882, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
     #                    res_folder="test_k/", min_ind_nr=1, loci=range(10))
@@ -1631,8 +1722,8 @@ if __name__ == "__main__":
     
     #########
     # All data:
-    #MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/final_data/", multi_processing=0)
-    #MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
+    # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/final_data/", multi_processing=0)
+    # MultiRun.create_data_set(0, position_path="./Data/coordinatesHZALL.csv",
     #                    genotype_path="./Data/genotypesHZALL.csv", loci_path="./Data/loci_infoALL.csv",
     #                    chromosome=0, scale_factor=50)
     # MultiRun.analyze_data_set(45, method=2, res_folder="ind_info/", barrier_pos=[2.0,], use_ind_nr=0,
@@ -1653,6 +1744,13 @@ if __name__ == "__main__":
     # MultiRun.analyze_data_set(0, method=2)
     # MultiRun.analyze_data_set_k_only(0, method=2)
     
+    
+    #####################################################
+    # Multi Paramaters
+    MultiRun = fac_method("multi_params", "./multi_param_strong", multi_processing=0)
+    MultiRun.create_data_set(0)
+    MultiRun.analyze_data_set(0, method=2)
+    MultiRun.analyze_data_set_k_only(0, method=2)
     
     
     

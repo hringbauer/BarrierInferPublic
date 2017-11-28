@@ -20,6 +20,7 @@ from scipy.stats import binned_statistic
 from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
 from grid import Grid
+from scipy.special import erfc
 
 
 multi_nbh_folder = "./nbh_folder/"
@@ -40,8 +41,8 @@ met2_folder = "method2/"
 # Some Default Colors:
 c_dots = "crimson"
 c_lines = "g"
-
 c0, c1, c2, c3 = "yellow", "orange", "crimson", "purple"
+
 ######################################################################################
 #### First some helper functions
 
@@ -2290,12 +2291,220 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
                 wspace=0.07, hspace=0)
     plt.show()
 
+###############################################################################
+### Helper Functions for Plotting Coalescence Times
+# Do the analytical approximations:
+# Formulas are valid for x0>0; flip if needed!  
+  
+def gaussian1d(t, dy, D=1):
+    '''The One Dimensional Gaussian. 
+    Differnce: Here dy notes the difference along the y axis'''
+    return 1.0 / np.sqrt(4 * np.pi * D * t) * np.exp(-dy ** 2 / (4 * D * t))
+
+def GS(t, y, x, k=1.0, D=1):
+    '''1D Diffusion for same side of the Barrier'''
+    n1 = np.exp(-(x - y) ** 2 / (4 * D * t)) + np.exp(-(x + y) ** 2 / (4 * D * t))
+    d1 = np.sqrt(4 * np.pi * D * t)
+
+    a2 = k / D * np.exp(2 * k / D * (y + x + 2 * k * t))
+    b2 = erfc((y + x + 4 * k * t) / (2 * np.sqrt(D * t)))
+    res = n1 / d1 - a2 * b2
+    if np.isnan(res) or np.isinf(res):  # Check if numerical instability
+        return gaussian1d(t, y-x, D=D)  # Fall back to Gaussian (to which one converges)
+    else: return res
+        
+def GD(t, y, x, k=1.0, D=1):
+    '''1D Diffusion for different sides of the Barrier'''
+    a1 = k / D * np.exp(2 * k / D * (y - x + 2 * k * t))
+    b1 = erfc((y - x + 4 * k * t) / (2 * np.sqrt(D * t)))
+    res = a1 * b1
+    if np.isnan(res) or np.isinf(res):  # Check if numerical instability
+        return gaussian1d(t, y-x, D=D)  # Fall back to Gaussian (to which one converges)
+    else: return res
     
+def coal_prob_ss(t, dy, x0, x1, k=1.0, D=1.0, De=5):
+    '''The integrand in case there is no barrier
+    Product of 1d Gaussian along y-Axis and x-Axis Barrier Pdf.
+    And a term for the long-distance migration'''
+    return (gaussian1d(t, dy, D=D) * GS(t, x0, x1, k=k, D=D)/ (2*De))
+
+def coal_prob_ds(t, dy, x0, x1, k=1.0, D=1.0, De=5):
+    '''the integrand for cases of different sided of the barrier.
+    Product of 1d Gaussian along y-Axis
+    And a term for the long-distance migration'''
+    return (gaussian1d(t, dy, D=D) * GD(t, x0, x1, k=k, D=D) / (2*De))
+
+def coal_prob(t, dy, x0, x1, k=1.0, D=1.0, De=5):
+    '''Coal Prob at time t.
+    Flip x coords if needed and choose according subfunction'''
+    # Flip if needed
+    if x0<0:
+        x0=-x0
+        x1=-x1
+        
+    if x1>0:
+        prob = coal_prob_ss(t, dy, x0, x1, k, D, De)
+        
+    if x1<0:
+        prob = coal_prob_ds(t, dy, x0, x1, k, D, De)
+        
+    return prob
+
+
+###############################################################################
+def plot_coal_times():
+    '''Method to plot the simulated Coalescence Times'''
+    data_folder="coal_times/"  # Where to save the Results to
+    # Load all the simulated Data:
+    save_names = np.array([["short_1818.csv", "short_1212.csv", "short_1821.csv"],
+                  ["long_1818.csv", "long_1212.csv", "long_1821.csv"],
+                  ["short_barrier_1818.csv", "short_barrier_1212.csv", "short_barrier_1821.csv"],
+                  ["long_barrier_1818.csv", "long_barrier_1212.csv", "long_barrier_1821.csv"]])
+    
+    x0s=[-1.5, -7.5, -1.5]
+    x1s=[-1.5, -7.5, 1.5]
+    
+    k0=1.0 # The weak barrier
+    k1=0.01 # The strong barrier
+    
+    ### Nr of Replicates
+    reps_short = 1000000
+    reps_long = 100000
+    
+    ###
+    De=5.0 # Density
+    D=1.0 # Diffusion
+    
+    ### Define the Bins:
+    # Short:
+    t_min=5
+    t_max=205
+    bin_width=10
+    bins_s=np.array([t_min - 0.5 + i*bin_width for i in xrange(int((t_max - t_min)/float(bin_width)))])
+    means_s = (bins_s[1:] + bins_s[:-1])/2.0
+    bin_width_s = (bins_s[1] - bins_s[0])
+    norm_s = (reps_short * bin_width_s) # The Normalization Factor for Short
+    
+    # Long:
+    t_min_l=100
+    t_max_l=50100
+    bin_width_l=2000
+    bins_l=np.array([t_min_l-0.5 + i*bin_width_l for i in xrange(int((t_max_l-t_min_l)/float(bin_width_l)))])
+    means_l = (bins_l[1:]+bins_l[:-1])/2.0
+    bin_width_l=(bins_l[1]-bins_l[0])
+    norm_l = (reps_long * bin_width_l) # The Normalization Factor for Long
+    
+    ### Prepare the Results Containers:
+    coal_results_s = np.zeros((3, 2, len(means_s)))  # Coal Results Short
+    coal_results_l = np.zeros((3, 2, len(means_l)))   # Coal Results Long
+    ana_predicts_s = np.zeros((3, 2, len(means_s))) # Analytical Predictions Short
+    ana_predicts_l = np.zeros((3, 2, len(means_l))) # Analytical Predictions Long
+    mean_s = np.zeros((3,2))
+    mean_l = np.zeros((3,2))
+    
+    for i in xrange(3):
+        # Do all the Precalcs:
+        
+        # Load the Data
+        path_s = data_folder + save_names[0, i]
+        path_bar_s = data_folder + save_names[2, i]
+        path_l = data_folder + save_names[1, i]
+        path_bar_l = data_folder + save_names[3, i]
+        
+        s = np.loadtxt(path_s, dtype="int")
+        l =  np.loadtxt(path_l, dtype="int") 
+        s_b = np.loadtxt(path_bar_s, dtype="int")
+        l_b = np.loadtxt(path_bar_l, dtype="int")
+        
+        # Bin and store the data:
+        ns, _ = np.histogram(s, bins=bins_s) # Normed = True
+        ns_b, _ = np.histogram(s_b, bins=bins_s)
+        nl, _ =  np.histogram(l, bins=bins_l)
+        nl_b, _ = np.histogram(l_b, bins=bins_l)
+        
+        # Normalize and store
+        coal_results_s[i, 0, :] = ns/norm_s
+        coal_results_s[i, 1, :] = ns_b/norm_s
+        coal_results_l[i, 0, :] = nl/norm_l
+        coal_results_l[i, 1, :] = nl_b/norm_l
+        
+        # Do the analytical Approximations:
+        x0=x0s[i]
+        x1=x1s[i]
+        ana_predicts_s[i,0,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_s] # No Barrier
+        ana_predicts_s[i,1,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_s] # Barrier
+        ana_predicts_l[i,0,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_l] # No Barrier
+        ana_predicts_l[i,1,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_l] # Barrier
+        
+        # Calculate the Means:
+        mean_s[i, 0]=np.mean(s)
+        mean_s[i, 1]=np.mean(s_b)
+        mean_l[i, 0]=np.mean(l)
+        mean_l[i, 1]=np.mean(l_b)
+        
+        ##########################################
+        ##########################################
+        ### Now do the plot
+
+    f, axes  = plt.subplots(3, 2, figsize=(8, 10)) # ((ax1, ax2), (ax3, ax4))
+    #axes[0,0].xaxis.set_ticklabels([])
+    
+    for i in xrange(3):
+        '''Make the three Subfigures'''
+        # The Short Pic
+        ax=axes[i,0]
+        ax.plot(means_s, coal_results_s[i, 0, :], "ro-", label="No Barrier")
+        ax.plot(means_s, coal_results_s[i, 1, :], "bo-", label="Barrier")
+    
+        ax.plot(means_s, ana_predicts_s[i, 0, :], label="Approx. No Barrier", color="Orange", linewidth=4)
+        ax.plot(means_s, ana_predicts_s[i, 1, :], label="Approx. Barrier", color="LightBlue", linewidth=4)
+    
+        #plt.xlabel("Coalescence Probability", fontsize=20)
+        #plt.ylabel("Density", fontsize=20)
+        # The Long Pic
+        ax=axes[i,1]
+        ax.plot(means_l, coal_results_l[i, 0, :], "ro-")
+        ax.plot(means_l, coal_results_l[i, 1, :], "bo-")
+        
+        ax.plot(means_l, ana_predicts_l[i,0,:], color="Orange", linewidth=4)
+        ax.plot(means_l, ana_predicts_l[i,1,:], color="LightBlue", linewidth=4)
+        
+        # Plot the Means:
+        ax.axvline(mean_l[i,0], color='r', linestyle='dashed', linewidth=2, label="Mean No Barrier")
+        ax.axvline(mean_l[i,1], color='b', linestyle='dashed', linewidth=2, label="Mean Barrier")
+        
+        # Do the big Axes Labels:
+        plt.text(0.6, 0.4, r"$x_0=%.1f$" % x0s[i] + "\n" + r"$x_1=%.1f$" % x1s[i], transform = ax.transAxes, fontsize=12)
+        
+    # Do the labelling Spice:
+    # Turn xlabels of
+    for i in xrange(2):
+        for j in xrange(2):
+            axes[i,j].xaxis.set_visible(False)
+            
+    for i in xrange(3):
+            axes[i,1].yaxis.tick_right()
+            axes[i,0].set_ylim([0,0.001])
+            axes[i,1].set_ylim([0,0.00008])
+    
+    axes[0,0].legend(fontsize=12)
+    axes[0,1].legend(fontsize=12)
+    axes[0,0].set_title("Intermediate Timescale", fontsize=18)
+    axes[0,1].set_title("Long Timescale", fontsize=18)
+    #axes.yaxis.set_visible(False)
+    plt.gcf().text(0.5, 0.04, "Coalescence Time [Gen]", ha="center", fontsize=18)  # Set the x-Label
+    plt.gcf().text(0.025, 0.5, 'Probability [per Gen]', ha='center', va='center', rotation='vertical', fontsize=18)
+    #plt.tight_layout()
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
+            wspace=0.05, hspace=0.1)
+    plt.show()
+
     
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
+    #sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
+    plot_coal_times()
     
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))

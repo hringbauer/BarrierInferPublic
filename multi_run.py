@@ -106,6 +106,7 @@ class MultiRun(object):
         
         np.savetxt(data_set_name_coords, coords, delimiter="$")  # Save the coordinates
         np.savetxt(data_set_name_genotypes, genotype_matrix, delimiter="$")  # Save the data 
+        print("Saved successfully!")
         
         
     def load_data_set(self, data_set_nr):
@@ -140,7 +141,8 @@ class MultiRun(object):
                          sigma, ips, mu, p_mean, nr_loci, barrier_pos, barrier_strength):
         '''Simulate Barrier Scenario. Return Genotype Matrix'''
         assert(len(p_mean) == nr_loci)  # Sanity Check.
-        print("Parameters loaded: ")
+        print("Parameters for simulation: ")
+        print(["Ips, sigma, mu, barrier_strength"])
         print([ips, sigma, mu, barrier_strength])
         genotype_matrix = -np.ones((len(position_list), nr_loci))  # Set Genotype Matrix to -1 to detect Errors.
         
@@ -604,24 +606,28 @@ class MultiBarrier(MultiRun):
         pickle.dump(ll_vec, open(path, "wb"))  # Pickle the Info
 
 #############################################################################################################################
-def MultiParams(MultiBarrier):
+class MultiParams(MultiBarrier):
     '''Simulate and Analyze where multiple Parameters are varied'''
+    name="mp_file"
     
-    def create_data_set(self, data_set_nr, k=0.01):
+    def __init__(self, folder, nr_data_sets=300, nr_params=5, **kwds):
+        super(MultiParams, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
+        
+    def create_data_set(self, data_set_nr, barrier_strength=0.01):
         '''Creates a Dataset'''
-        # Set all 3 default Parameters:
+        # Set all default Parameters:
+        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        sigma = 0.965  # 0.965 # 1.98
         mu = 0.003  # Mutation/Long Distance Migration Rate # Idea is that at mu=0.01 there is quick decay which stabilizes at around sd_p
         sd_p = 0.1  # Standard Deviation Allele Frequency
-        ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
+        barrier_strength = barrier_strength # To remind the reader.
         
-        mu_vec = [0.001, 0.003, 0.005, 0.007, 0.09]
+        mu_vec = [0.001, 0.003, 0.005, 0.007, 0.009]
         sd_p_vec = [0.04, 0.06, 0.08, 0.1, 0.12]
         ips_vec = [6, 10, 14, 18, 22]
-        
-        sigma = 0.965  # 0.965 # 1.98
-        barrier_strength = k
         # Nr of Replicates per Parameter:
         nr_reps = 20  # How Many Replicates per parameter
+        
         # Nr of Parameters 
         nr_per_param = nr_reps * len(mu_vec)  # How many runs per Parameter
         
@@ -650,6 +656,7 @@ def MultiParams(MultiBarrier):
         gridsize_x, gridsize_y = 1000, 1000
         barrier_pos = 500.5
         
+        print("STD p: %.4f" % sd_p)
         p_delta = np.random.normal(scale=sd_p, size=nr_loci)  # Draw some random Delta p from a normal distribution
         p_mean = np.ones(nr_loci) * 0.5  # Sets the mean allele Frequency
         p_mean = p_mean + p_delta
@@ -663,7 +670,7 @@ def MultiParams(MultiBarrier):
         
         
     def analyze_data_set(self, data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20,
-                         nr_data_sets=600, position_barrier=500.5):
+                         nr_data_sets=300, position_barrier=500.5):
         '''Analyze a single Data Set. Here do it the same way for each Dataset.
         '''
         if (data_set_nr < 0) & (data_set_nr >= nr_data_sets):
@@ -674,14 +681,11 @@ def MultiParams(MultiBarrier):
         l = 0.008
         bs = 0.2
         start_params = [nbh_size, l, bs]       
-        
-        # Pick the right Dataset:
-        data_set_eff = data_set_nr % nr_bts  # Which data-set to use
-        batch_nr = int(np.floor(data_set_nr / nr_bts))  # Which batch to use
+
 
         position_list, genotype_mat = self.load_data_set(data_set_nr)  # Loads the Data 
             
-        self.fit_barrier(position_barrier, start_params, genotype_mat=genotype_mat,
+        self.fit_barrier(position_barrier, start_params, genotype_mat=genotype_mat, position_list = position_list,
                          method=method, deme_x_nr=nr_x_bins, deme_y_nr=nr_y_bins, data_set_nr=data_set_nr)
         
 ##############################################################################################################################
@@ -1747,10 +1751,9 @@ if __name__ == "__main__":
     
     #####################################################
     # Multi Paramaters
-    MultiRun = fac_method("multi_params", "./multi_param_strong", multi_processing=0)
-    MultiRun.create_data_set(0)
+    MultiRun = fac_method("multi_params", "./multi_param_strong/", multi_processing=0)
+    #MultiRun.create_data_set(0, barrier_strength=0.01)
     MultiRun.analyze_data_set(0, method=2)
-    MultiRun.analyze_data_set_k_only(0, method=2)
     
     
     

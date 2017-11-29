@@ -2499,13 +2499,37 @@ def plot_coal_times():
             wspace=0.05, hspace=0.1)
     plt.show()
 
+def plot_variation_param_estimates(folder, method=2, res_numbers=range(200), res_folder=None):
+    '''Plot what happens when various Parameters are varied'''
+    array_l = 5 # How many Parameters have been varied.
+    
+    
+    
+    # Load the Results
+    res_vec = np.array([load_pickle_data(folder, i, 0, method, subfolder=res_folder) for i in res_numbers])
+    
+    # Do the Data Analysis (calculate Mean and Std)
+    #means = 
+    #stds = 
+    
+    # Do the plot
+    
+    
+    # The x-array to plot against 
+    x = np.array(range(array_l)) + 0.5 
+    
+    #plt.figure()
+    
+    #plt.plot()
+    
+    print("To Implement")
     
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
-    #sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
-    plot_coal_times()
-    
+    # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
+    # plot_coal_times()  # Plots the Distribution of Coalescence Times.
+    plot_variation_param_estimates(,method=2, res_number)
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))

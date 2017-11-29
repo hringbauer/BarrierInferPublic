@@ -40,16 +40,27 @@ class Grid(object):
     ips = 10  # Number of haploid Individuals per Node (For D_e divide by 2)
     mu = 0.003  # The Mutation/Long Distance Migration rate.
     
-    def __init__(self):  # Initializes an empty grid
+    def __init__(self, drawer=0):  # Initializes an empty grid
+        
+        # Initialize Drawer if needed:
+        if drawer == 0:
+            print("Initializing Drawer...")
+            self.offset_drawer = Laplace_Offsets(1000, sigma=self.sigma)
+            
+        else:
+            self.offset_drawer = drawer
+        
         print("Initializing...")  # Actually all relevant things are set with set_samples
         
     def set_parameters(self, gridsize_x, gridsize_y, sigma, ips, mu):
-        '''Sets all important Grid Parameters'''
+        '''Sets all important Grid Parameters. Update the drawer accordingly'''
         self.gridsize_x = gridsize_x
         self.gridsize_y = gridsize_y
         self.sigma = sigma
         self.ips = ips
         self.mu = mu
+        # Update the drawer
+        self.offset_drawer = Laplace_Offsets(1000, sigma=self.sigma)
         
     def set_barrier_parameters(self, barrier, barrier_strength):
         '''Sets important Barrier Parameters'''
@@ -105,6 +116,11 @@ class Grid(object):
         self.update_list = new_coords
     
     def draw_delta(self):
+        '''Overwrites the drawing of the Offsets to make it quicker here.'''
+        offset = self.offset_drawer.give_offset()   # Gives the actual Offset
+        return offset
+    
+    def draw_delta_old(self):
         '''Draws the individual axial position Offsets'''
         scale = self.sigma / np.sqrt(2)  # To scale it right for Laplace Dispersal.
         return np.around(np.random.laplace(scale=scale))  # Draw random off-set

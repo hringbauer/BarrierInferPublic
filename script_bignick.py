@@ -14,7 +14,7 @@ mp = 0  # Whether to use MultiProcessing. 0: No 1: Yes
 ###########Methods for creating Barrier Likelihood Profiles:
 def load_pickle_data(i):
     '''Function To load pickled Data.
-    Also visualizes it.'''
+    Also visualize it.'''
     data_folder = folder
     # path = data_folder + "result" + str(i).zfill(2) + ".p"  # Path to Alex Estimates
     
@@ -44,9 +44,8 @@ def analyze_barrier_strengths_ll():
     # analyze_nbh_data_sets_model(data_set_nrs=[2,]) # Analyze 100 Neighborhood Samples
     
 
-
-data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
-# data_set_nr = 100
+data_set_nr = int(sys.argv[1])  # Which data-set to use
+# data_set_nr = 0
 # print("Starting Dataset Nr.: %i" % data_set_nr)
 
 # folder = "./nbh_folder_gauss1/"  # Where the results are saved to.
@@ -60,7 +59,8 @@ data_set_nr = int(sys.argv[1]) - 1  # Which data-set to use
 # folder = "./multi_2nd_b/"
 # folder = "./multi_barrier_synth/"
 # folder = "./multi_barrier_hz_all/"
-folder ="./barrier_folder_HZ_synth/"
+# folder ="./barrier_folder_HZ_synth/"
+# folder ="./multi_param_strong/"
 
 # MultiRun = fac_method("multi_nbh", folder, multi_processing=mp)  # Loads the right class.
 # MultiRun = fac_method("multi_nbh_gaussian", folder, multi_processing=mp) 
@@ -70,7 +70,7 @@ folder ="./barrier_folder_HZ_synth/"
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_inds", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_2nd_cont", folder, multi_processing=mp)
-MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
+# MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz/", multi_processing=mp)
 #  MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL/all_v2.5/", multi_processing = mp)  # Date Set for Antirrhinum Analysis All
 # MultiRun = fac_method("multi_hz_pos", "./multi_barrier_hz_ALL14/min25/", multi_processing=mp)  # Whole Data Set for Antirrhinum Analysis 2014
@@ -78,11 +78,12 @@ MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun = fac_method("multi_barrier", "./barrier_folder10/", multi_processing=mp) # Data Set with 10x20 Strengths
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
 # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
+MultiRun = fac_method("multi_params", "./multi_param_strong/", multi_processing=mp)
 
 
 ########### For creating and analyzing the data sets ###############
 # MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-# MultiRun.create_data_set(data_set_nr, barrier_strength=0.05)
+MultiRun.create_data_set(data_set_nr, barrier_strength=0.01)
 
 
 ########### For analyzing the data set ##############
@@ -96,8 +97,12 @@ MultiRun = fac_method("multi_barrier_pos", folder, multi_processing=mp)
 # MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="noind/", 
 #                          barrier_pos=[2.0,], use_ind_nr=0, nr_bts=100)
 
-MultiRun.analyze_data_set(data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
-                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
+# MultiRun.analyze_data_set(data_set_nr, method=2, nr_x_bins=30, nr_y_bins=20, nr_bts=20,
+#                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
+
+MultiRun.analyze_data_set(data_set_nr, method=2)
+
+
 
 # For HZ Analysis: # 2014 Analysis
 #MultiRun.analyze_data_set(data_set_nr, method=2, res_folder="result/", barrier_pos=np.linspace(-30, 30, 25), use_ind_nr=0,

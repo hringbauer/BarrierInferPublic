@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=1
-#SBATCH --job-name=coalescence_sims
+#SBATCH --job-name=param_sims1
 #SBATCH --time=24:00:00
 #SBATCH --mem=4G
 #SBATCH --mail-user=hringbauer@ist.ac.at

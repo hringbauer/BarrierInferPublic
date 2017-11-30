@@ -79,11 +79,11 @@ data_set_nr = int(sys.argv[1])  # Which data-set to use
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
 # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
 # MultiRun = fac_method("multi_params", "./multi_param_strong/", multi_processing=mp)
-MultiRun = fac_method("multi_params", "./multi_param_weak/", multi_processing=mp)
+MultiRun = fac_method("multi_params", "./multi_param_intermediate/", multi_processing=mp)
 
 ########### For creating and analyzing the data sets ###############
 # MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.create_data_set(data_set_nr, barrier_strength=0.2)
+MultiRun.create_data_set(data_set_nr, barrier_strength=0.1)
 
 
 ########### For analyzing the data set ##############
@@ -101,7 +101,6 @@ MultiRun.create_data_set(data_set_nr, barrier_strength=0.2)
 #                          min_ind_nr=2, use_ind_nr=0, start_params=[150, 0.002, 0.2])
 
 MultiRun.analyze_data_set(data_set_nr, method=2)
-
 
 
 # For HZ Analysis: # 2014 Analysis

@@ -610,7 +610,7 @@ class MultiParams(MultiBarrier):
     '''Simulate and Analyze where multiple Parameters are varied'''
     name="mp_file"
     
-    def __init__(self, folder, nr_data_sets=300, nr_params=5, **kwds):
+    def __init__(self, folder, nr_data_sets=1500, nr_params=5, **kwds):
         super(MultiParams, self).__init__(folder, nr_data_sets, nr_params, **kwds)  # Run initializer of full MLE object.
         
     def create_data_set(self, data_set_nr, barrier_strength=0.01):
@@ -626,7 +626,7 @@ class MultiParams(MultiBarrier):
         sd_p_vec = [0.04, 0.06, 0.08, 0.1, 0.12]
         ips_vec = [6, 10, 14, 18, 22]
         # Nr of Replicates per Parameter:
-        nr_reps = 20  # How Many Replicates per parameter
+        nr_reps = 100  # How Many Replicates per parameter
         
         # Nr of Parameters 
         nr_per_param = nr_reps * len(mu_vec)  # How many runs per Parameter

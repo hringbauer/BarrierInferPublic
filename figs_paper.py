@@ -105,7 +105,7 @@ def give_result_stats(folder, res_vec=range(100), method=2, subfolder=None, boot
     
     nr_bootstraps = len(res_vec) / bootstraps
     for i in xrange(nr_bootstraps):
-        print("Estimate %i:" %i)
+        print("Estimate %i:" % i)
         print(res_vec[i * bootstraps])
     
 def print_run_params(folder, info_file_name="parameters.p"):
@@ -1115,7 +1115,7 @@ def plot_theory_f():
     kc = fac_kernel("DiffusionBarrierK0")
     # Density: 5, mu=0.003, t0=1, Diff=1, k=0.5
     # kc.set_parameters([0, 1.0, 1.0, 0.001, 5.0])  # k, Diff, t0, mu, dens; In old ordering
-    k = 0.01 # Barrier Strength
+    k = 0.01  # Barrier Strength
     kc.set_parameters([4 * np.pi * 5, 0.006, k, 1.0, 0.0])  # Nbh, L, k, t0, ss
     
     k0 = fac_kernel("DiffusionK0")
@@ -1160,9 +1160,9 @@ def plot_theory_f():
     ax1.legend(fontsize=12, labelspacing=0.3)
     
     #####################################
-    ps=1200 # Pointsize
+    ps = 1200  # Pointsize
     # Plot the positions
-    pos = np.array([[i, j] for i in range(6) for j in range(5)]) # The Grid Points
+    pos = np.array([[i, j] for i in range(6) for j in range(5)])  # The Grid Points
     pos1 = np.array([[i, 2] for i in range(4)])
     pos2 = np.array([[i, 1] for i in range(5)])
     pos3 = np.array([[i, 3] for i in range(2)])
@@ -2200,7 +2200,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     p_mean = np.reshape(p_mean, (l, l)).T
     p_mean_b = np.reshape(p_mean_b, (l, l)).T
     
-    p_dis =  np.reshape(genotypes, (l, l)).T
+    p_dis = np.reshape(genotypes, (l, l)).T
     p_dis_b = np.reshape(genotypes_b, (l, l)).T
     
     # Make a custom Color Map:
@@ -2234,14 +2234,14 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     ax1.set_title("No Barrier", fontsize=tf_size)
     ax1.set_ylabel("Observed Genotypes", fontsize=tf_size)
 
-    #ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
-    im0=ax2.imshow(p_dis_b, cmap=cmap_dis, norm=norm)
+    # ax2.scatter(position_list[:, 0], position_list[:, 1], c=genotypes_b)
+    im0 = ax2.imshow(p_dis_b, cmap=cmap_dis, norm=norm)
     ax2.set_title("Strong Barrier", fontsize=tf_size)
     # ax2.set_xlim([x_min, x_max])
     # ax2.set_ylim([y_min, y_max])
     ax2.set_xlim(1, l - 1)
     ax2.set_ylim(1, l - 1)
-    #ax2.vlines(mid + 0.5, y_min, y_max, color="k", linewidth=5,zorder=1)
+    # ax2.vlines(mid + 0.5, y_min, y_max, color="k", linewidth=5,zorder=1)
     ax2.vlines(l / 2, 0, l, color="k", linewidth=5)
     ax2.set_xticks([])
     ax2.set_yticks([])
@@ -2283,16 +2283,16 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     f.text(0.92, 0.32, 'Allele Frequency', va='center', rotation=270, fontsize=tf_size)
     
     cbar_ax1 = f.add_axes([0.87, 0.54, 0.015, 0.3])  # left, bottom, width, height
-    f.colorbar(im0, cax=cbar_ax1, cmap=cmap_dis, ticks=[0,1])
+    f.colorbar(im0, cax=cbar_ax1, cmap=cmap_dis, ticks=[0, 1])
     f.text(0.92, 0.69, 'Allele', va='center', rotation=270, fontsize=tf_size)
     # cbar = f.colorbar(cax)
-    #plt.tight_layout()
+    # plt.tight_layout()
     plt.subplots_adjust(left=None, bottom=0.13, right=None, top=None,
                 wspace=0.07, hspace=0)
     plt.show()
 
 ###############################################################################
-### Helper Functions for Plotting Coalescence Times
+# ## Helper Functions for Plotting Coalescence Times
 # Do the analytical approximations:
 # Formulas are valid for x0>0; flip if needed!  
   
@@ -2310,7 +2310,7 @@ def GS(t, y, x, k=1.0, D=1):
     b2 = erfc((y + x + 4 * k * t) / (2 * np.sqrt(D * t)))
     res = n1 / d1 - a2 * b2
     if np.isnan(res) or np.isinf(res):  # Check if numerical instability
-        return gaussian1d(t, y-x, D=D)  # Fall back to Gaussian (to which one converges)
+        return gaussian1d(t, y - x, D=D)  # Fall back to Gaussian (to which one converges)
     else: return res
         
 def GD(t, y, x, k=1.0, D=1):
@@ -2319,33 +2319,33 @@ def GD(t, y, x, k=1.0, D=1):
     b1 = erfc((y - x + 4 * k * t) / (2 * np.sqrt(D * t)))
     res = a1 * b1
     if np.isnan(res) or np.isinf(res):  # Check if numerical instability
-        return gaussian1d(t, y-x, D=D)  # Fall back to Gaussian (to which one converges)
+        return gaussian1d(t, y - x, D=D)  # Fall back to Gaussian (to which one converges)
     else: return res
     
 def coal_prob_ss(t, dy, x0, x1, k=1.0, D=1.0, De=5):
     '''The integrand in case there is no barrier
     Product of 1d Gaussian along y-Axis and x-Axis Barrier Pdf.
     And a term for the long-distance migration'''
-    return (gaussian1d(t, dy, D=D) * GS(t, x0, x1, k=k, D=D)/ (2*De))
+    return (gaussian1d(t, dy, D=D) * GS(t, x0, x1, k=k, D=D) / (2 * De))
 
 def coal_prob_ds(t, dy, x0, x1, k=1.0, D=1.0, De=5):
     '''the integrand for cases of different sided of the barrier.
     Product of 1d Gaussian along y-Axis
     And a term for the long-distance migration'''
-    return (gaussian1d(t, dy, D=D) * GD(t, x0, x1, k=k, D=D) / (2*De))
+    return (gaussian1d(t, dy, D=D) * GD(t, x0, x1, k=k, D=D) / (2 * De))
 
 def coal_prob(t, dy, x0, x1, k=1.0, D=1.0, De=5):
     '''Coal Prob at time t.
     Flip x coords if needed and choose according subfunction'''
     # Flip if needed
-    if x0<0:
-        x0=-x0
-        x1=-x1
+    if x0 < 0:
+        x0 = -x0
+        x1 = -x1
         
-    if x1>0:
+    if x1 > 0:
         prob = coal_prob_ss(t, dy, x0, x1, k, D, De)
         
-    if x1<0:
+    if x1 < 0:
         prob = coal_prob_ds(t, dy, x0, x1, k, D, De)
         
     return prob
@@ -2354,53 +2354,53 @@ def coal_prob(t, dy, x0, x1, k=1.0, D=1.0, De=5):
 ###############################################################################
 def plot_coal_times():
     '''Method to plot the simulated Coalescence Times'''
-    data_folder="coal_times/"  # Where to save the Results to
+    data_folder = "coal_times/"  # Where to save the Results to
     # Load all the simulated Data:
     save_names = np.array([["short_1818.csv", "short_1212.csv", "short_1821.csv"],
                   ["long_1818.csv", "long_1212.csv", "long_1821.csv"],
                   ["short_barrier_1818.csv", "short_barrier_1212.csv", "short_barrier_1821.csv"],
                   ["long_barrier_1818.csv", "long_barrier_1212.csv", "long_barrier_1821.csv"]])
     
-    x0s=[-1.5, -7.5, -1.5]
-    x1s=[-1.5, -7.5, 1.5]
+    x0s = [-1.5, -7.5, -1.5]
+    x1s = [-1.5, -7.5, 1.5]
     
-    k0=1.0 # The weak barrier
-    k1=0.01 # The strong barrier
+    k0 = 1.0  # The weak barrier
+    k1 = 0.01  # The strong barrier
     
-    ### Nr of Replicates
+    # ## Nr of Replicates
     reps_short = 1000000
     reps_long = 100000
     
-    ###
-    De=5.0 # Density
-    D=1.0 # Diffusion
+    # ##
+    De = 5.0  # Density
+    D = 1.0  # Diffusion
     
-    ### Define the Bins:
+    # ## Define the Bins:
     # Short:
-    t_min=5
-    t_max=205
-    bin_width=10
-    bins_s=np.array([t_min - 0.5 + i*bin_width for i in xrange(int((t_max - t_min)/float(bin_width)))])
-    means_s = (bins_s[1:] + bins_s[:-1])/2.0
+    t_min = 5
+    t_max = 205
+    bin_width = 10
+    bins_s = np.array([t_min - 0.5 + i * bin_width for i in xrange(int((t_max - t_min) / float(bin_width)))])
+    means_s = (bins_s[1:] + bins_s[:-1]) / 2.0
     bin_width_s = (bins_s[1] - bins_s[0])
-    norm_s = (reps_short * bin_width_s) # The Normalization Factor for Short
+    norm_s = (reps_short * bin_width_s)  # The Normalization Factor for Short
     
     # Long:
-    t_min_l=100
-    t_max_l=50100
-    bin_width_l=2000
-    bins_l=np.array([t_min_l-0.5 + i*bin_width_l for i in xrange(int((t_max_l-t_min_l)/float(bin_width_l)))])
-    means_l = (bins_l[1:]+bins_l[:-1])/2.0
-    bin_width_l=(bins_l[1]-bins_l[0])
-    norm_l = (reps_long * bin_width_l) # The Normalization Factor for Long
+    t_min_l = 100
+    t_max_l = 50100
+    bin_width_l = 2000
+    bins_l = np.array([t_min_l - 0.5 + i * bin_width_l for i in xrange(int((t_max_l - t_min_l) / float(bin_width_l)))])
+    means_l = (bins_l[1:] + bins_l[:-1]) / 2.0
+    bin_width_l = (bins_l[1] - bins_l[0])
+    norm_l = (reps_long * bin_width_l)  # The Normalization Factor for Long
     
-    ### Prepare the Results Containers:
+    # ## Prepare the Results Containers:
     coal_results_s = np.zeros((3, 2, len(means_s)))  # Coal Results Short
-    coal_results_l = np.zeros((3, 2, len(means_l)))   # Coal Results Long
-    ana_predicts_s = np.zeros((3, 2, len(means_s))) # Analytical Predictions Short
-    ana_predicts_l = np.zeros((3, 2, len(means_l))) # Analytical Predictions Long
-    mean_s = np.zeros((3,2))
-    mean_l = np.zeros((3,2))
+    coal_results_l = np.zeros((3, 2, len(means_l)))  # Coal Results Long
+    ana_predicts_s = np.zeros((3, 2, len(means_s)))  # Analytical Predictions Short
+    ana_predicts_l = np.zeros((3, 2, len(means_l)))  # Analytical Predictions Long
+    mean_s = np.zeros((3, 2))
+    mean_l = np.zeros((3, 2))
     
     for i in xrange(3):
         # Do all the Precalcs:
@@ -2412,124 +2412,183 @@ def plot_coal_times():
         path_bar_l = data_folder + save_names[3, i]
         
         s = np.loadtxt(path_s, dtype="int")
-        l =  np.loadtxt(path_l, dtype="int") 
+        l = np.loadtxt(path_l, dtype="int") 
         s_b = np.loadtxt(path_bar_s, dtype="int")
         l_b = np.loadtxt(path_bar_l, dtype="int")
         
         # Bin and store the data:
-        ns, _ = np.histogram(s, bins=bins_s) # Normed = True
+        ns, _ = np.histogram(s, bins=bins_s)  # Normed = True
         ns_b, _ = np.histogram(s_b, bins=bins_s)
-        nl, _ =  np.histogram(l, bins=bins_l)
+        nl, _ = np.histogram(l, bins=bins_l)
         nl_b, _ = np.histogram(l_b, bins=bins_l)
         
         # Normalize and store
-        coal_results_s[i, 0, :] = ns/norm_s
-        coal_results_s[i, 1, :] = ns_b/norm_s
-        coal_results_l[i, 0, :] = nl/norm_l
-        coal_results_l[i, 1, :] = nl_b/norm_l
+        coal_results_s[i, 0, :] = ns / norm_s
+        coal_results_s[i, 1, :] = ns_b / norm_s
+        coal_results_l[i, 0, :] = nl / norm_l
+        coal_results_l[i, 1, :] = nl_b / norm_l
         
         # Do the analytical Approximations:
-        x0=x0s[i]
-        x1=x1s[i]
-        ana_predicts_s[i,0,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_s] # No Barrier
-        ana_predicts_s[i,1,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_s] # Barrier
-        ana_predicts_l[i,0,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_l] # No Barrier
-        ana_predicts_l[i,1,:] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_l] # Barrier
+        x0 = x0s[i]
+        x1 = x1s[i]
+        ana_predicts_s[i, 0, :] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_s]  # No Barrier
+        ana_predicts_s[i, 1, :] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_s]  # Barrier
+        ana_predicts_l[i, 0, :] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k0, D=D, De=De) for t in means_l]  # No Barrier
+        ana_predicts_l[i, 1, :] = [coal_prob(t=t, dy=0, x0=x0, x1=x1, k=k1, D=D, De=De) for t in means_l]  # Barrier
         
         # Calculate the Means:
-        mean_s[i, 0]=np.mean(s)
-        mean_s[i, 1]=np.mean(s_b)
-        mean_l[i, 0]=np.mean(l)
-        mean_l[i, 1]=np.mean(l_b)
+        mean_s[i, 0] = np.mean(s)
+        mean_s[i, 1] = np.mean(s_b)
+        mean_l[i, 0] = np.mean(l)
+        mean_l[i, 1] = np.mean(l_b)
         
         ##########################################
         ##########################################
-        ### Now do the plot
+        # ## Now do the plot
 
-    f, axes  = plt.subplots(3, 2, figsize=(8, 10)) # ((ax1, ax2), (ax3, ax4))
-    #axes[0,0].xaxis.set_ticklabels([])
+    f, axes = plt.subplots(3, 2, figsize=(8, 10))  # ((ax1, ax2), (ax3, ax4))
+    # axes[0,0].xaxis.set_ticklabels([])
     
     for i in xrange(3):
         '''Make the three Subfigures'''
         # The Short Pic
-        ax=axes[i,0]
+        ax = axes[i, 0]
         ax.plot(means_s, coal_results_s[i, 0, :], "ro-", label="No Barrier")
         ax.plot(means_s, coal_results_s[i, 1, :], "bo-", label="Barrier")
     
         ax.plot(means_s, ana_predicts_s[i, 0, :], label="Approx. No Barrier", color="Orange", linewidth=4)
         ax.plot(means_s, ana_predicts_s[i, 1, :], label="Approx. Barrier", color="LightBlue", linewidth=4)
     
-        #plt.xlabel("Coalescence Probability", fontsize=20)
-        #plt.ylabel("Density", fontsize=20)
+        # plt.xlabel("Coalescence Probability", fontsize=20)
+        # plt.ylabel("Density", fontsize=20)
         # The Long Pic
-        ax=axes[i,1]
+        ax = axes[i, 1]
         ax.plot(means_l, coal_results_l[i, 0, :], "ro-")
         ax.plot(means_l, coal_results_l[i, 1, :], "bo-")
         
-        ax.plot(means_l, ana_predicts_l[i,0,:], color="Orange", linewidth=4)
-        ax.plot(means_l, ana_predicts_l[i,1,:], color="LightBlue", linewidth=4)
+        ax.plot(means_l, ana_predicts_l[i, 0, :], color="Orange", linewidth=4)
+        ax.plot(means_l, ana_predicts_l[i, 1, :], color="LightBlue", linewidth=4)
         
         # Plot the Means:
-        ax.axvline(mean_l[i,0], color='r', linestyle='dashed', linewidth=2, label="Mean No Barrier")
-        ax.axvline(mean_l[i,1], color='b', linestyle='dashed', linewidth=2, label="Mean Barrier")
+        ax.axvline(mean_l[i, 0], color='r', linestyle='dashed', linewidth=2, label="Mean No Barrier")
+        ax.axvline(mean_l[i, 1], color='b', linestyle='dashed', linewidth=2, label="Mean Barrier")
         
         # Do the big Axes Labels:
-        plt.text(0.6, 0.4, r"$x_0=%.1f$" % x0s[i] + "\n" + r"$x_1=%.1f$" % x1s[i], transform = ax.transAxes, fontsize=12)
+        plt.text(0.6, 0.4, r"$x_0=%.1f$" % x0s[i] + "\n" + r"$x_1=%.1f$" % x1s[i], transform=ax.transAxes, fontsize=12)
         
     # Do the labelling Spice:
     # Turn xlabels of
     for i in xrange(2):
         for j in xrange(2):
-            axes[i,j].xaxis.set_visible(False)
+            axes[i, j].xaxis.set_visible(False)
             
     for i in xrange(3):
-            axes[i,1].yaxis.tick_right()
-            axes[i,0].set_ylim([0,0.001])
-            axes[i,1].set_ylim([0,0.00008])
+            axes[i, 1].yaxis.tick_right()
+            axes[i, 0].set_ylim([0, 0.001])
+            axes[i, 1].set_ylim([0, 0.00008])
     
-    axes[0,0].legend(fontsize=12)
-    axes[0,1].legend(fontsize=12)
-    axes[0,0].set_title("Intermediate Timescale", fontsize=18)
-    axes[0,1].set_title("Long Timescale", fontsize=18)
-    #axes.yaxis.set_visible(False)
+    axes[0, 0].legend(fontsize=12)
+    axes[0, 1].legend(fontsize=12)
+    axes[0, 0].set_title("Intermediate Timescale", fontsize=18)
+    axes[0, 1].set_title("Long Timescale", fontsize=18)
+    # axes.yaxis.set_visible(False)
     plt.gcf().text(0.5, 0.04, "Coalescence Time [Gen]", ha="center", fontsize=18)  # Set the x-Label
     plt.gcf().text(0.025, 0.5, 'Probability [per Gen]', ha='center', va='center', rotation='vertical', fontsize=18)
-    #plt.tight_layout()
+    # plt.tight_layout()
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
             wspace=0.05, hspace=0.1)
     plt.show()
 
-def plot_variation_param_estimates(folder, method=2, res_numbers=range(200), res_folder=None):
-    '''Plot what happens when various Parameters are varied'''
-    array_l = 5 # How many Parameters have been varied.
+def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res_folder=None, pr=True, k=0.01):
+    '''Plot what happens when various Parameters are varied
+    pr  Print Results if needed'''
+    reps = 20 # How many replicates
+    array_l = 5  # How often Parameters have been varied.
+    nr_varies = 3 
+    nr_params = 5
+    assert(reps*array_l*nr_varies==len(res_numbers)) # Sanity Check
+    
+    # The Values used in the Simulations
+    mu_vec = np.array([0.001, 0.003, 0.005, 0.007, 0.009])
+    sd_p_vec = np.array([0.04, 0.06, 0.08, 0.1, 0.12])
+    ips_vec = np.array([6, 10, 14, 18, 22])*4*np.pi
     
     
+    batch_l = reps * array_l
     
     # Load the Results
     res_vec = np.array([load_pickle_data(folder, i, 0, method, subfolder=res_folder) for i in res_numbers])
+    unc_vec = np.array([load_pickle_data(folder, i, 1, method) for i in res_numbers])
     
-    # Do the Data Analysis (calculate Mean and Std)
-    #means = 
-    #stds = 
+    # Print the results
+    if pr == True:
+        for l in range(len(res_numbers)):
+            i = res_numbers[l]
+            print("\nRun: %i" % i)
+            for j in range(3):
+                print("Parameter: %i" % j)
+                print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+    
+    
+    # Prepare some Containers for the Summary Results for Barrier Strength:
+    means = np.zeros((nr_varies, array_l))
+    stds = np.zeros((nr_varies, array_l))
+    
+    # Calculate the Summary Results
+    barriers = res_vec[:, 2]  # Load all the estimated Barriers:
+    
+    for i in xrange(nr_varies):
+        for j in xrange(array_l):
+            start = batch_l * i + j * reps
+            end = batch_l * i + (j + 1) * reps
+            
+            sub_array = barriers[start:end]   # Extract the right Subarray
+            
+            means[i, j] = np.mean(sub_array) # calculate its Mean
+            stds[i, j] = np.std(sub_array)  # Calculate its Standarddeviation
+            errors = 1/np.sqrt(reps) * stds # Calculate the Error
     
     # Do the plot
+    # Define the color:
+    c="blue"
+    fs=18 # Fontsize for axis labels
     
+    x_arrays = np.array([mu_vec, sd_p_vec, ips_vec]) # Produces the Objects for the x-Axis
+    f, axes = plt.subplots(2, 3, figsize=(10, 5), sharex='col', sharey='row')
     
-    # The x-array to plot against 
-    x = np.array(range(array_l)) + 0.5 
+    for i in xrange(3):
+        '''Vary over rows'''
+        x_array = x_arrays[i] # Load the right x-Array
+        
+        ax=axes[0,i] # Upper Panel: Mean 
+        ax.errorbar(x_array, means[i,:], yerr=errors[i,:], fmt="o-", color="red")
+        ax.axhline(k, label="True Value", color="green", linewidth=2, zorder=0)
+        
+        ax=axes[1,i] # Lower Panel: STD
+        ax.plot(x_array, stds[i,:], "bo-")
     
-    #plt.figure()
+    # Do the general Plotting
+    axes[0,0].legend()
+    axes[0,0].set_ylabel("Mean", fontsize=fs)
+    axes[1,0].set_ylabel("STD", fontsize=fs)
     
-    #plt.plot()
+    axes[1,0].set_xlabel("m", fontsize=fs)
+    axes[1,1].set_xlabel("s", fontsize=fs)
+    axes[1,2].set_xlabel("Nb", fontsize=fs)
     
-    print("To Implement")
+    # Turn off the right axis labels
+    #plt.gcf().text(0.5, 0.04, r"$\gamma=0.01$", ha="center", fontsize=18)  # Set the x-Label
+    
+    plt.show()
     
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
     # plot_coal_times()  # Plots the Distribution of Coalescence Times.
-    plot_variation_param_estimates(,method=2, res_number)
+    plot_variation_param_estimates("./multi_param_weak/", method=2, k=0.2)  # The plot for a strong Barrier
+    #plot_variation_param_estimates("./multi_param_strong/", method=2, k=0.01)    # The plot for a weak Barrier
+    #plot_variation_param_estimates("./multi_param_intermediate/", method=2, k=0.1) # The plot for the intermediate Barrier
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
@@ -2632,7 +2691,7 @@ if __name__ == "__main__":
     #       scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
-    #plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
+    # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
     #         genotype_path="./barrier_folder2/barrier_file_genotypes60.csv",
     #         bins=10, max_dist=16, best_fit_params=[50.316, 0.01857, 0.52246], bootstrap=False, nr_bootstraps=50,
     #         scale_factor=1, deme_bin=False, title="IBD Scenario") # No Binning: Too few Individuals

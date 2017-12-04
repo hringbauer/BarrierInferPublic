@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=1
-#SBATCH --job-name="BITCOIN_MINING (Just Joking)"
+#SBATCH --job-name="strong_barrier"
 #SBATCH --time=12:00:00
 #SBATCH --mem=4G
 #SBATCH --mail-user=hringbauer@ist.ac.at

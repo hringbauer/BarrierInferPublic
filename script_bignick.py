@@ -79,11 +79,11 @@ data_set_nr = int(sys.argv[1])  # Which data-set to use
 # MultiRun = fac_method("multi_barrier_bts", "./multi_barrier_bts/", multi_processing=mp)
 # MultiRun = fac_method("multi_loci_barrier", "./multi_loci_barrier/", multi_processing=mp)
 # MultiRun = fac_method("multi_params", "./multi_param_strong/", multi_processing=mp)
-MultiRun = fac_method("multi_params", "./multi_param_intermediate/", multi_processing=mp)
+MultiRun = fac_method("multi_params", "./multi_param_strong1/", multi_processing=mp)
 
 ########### For creating and analyzing the data sets ###############
 # MultiRun.create_data_set(data_set_nr)     # Creates data set and saves to Folder.
-MultiRun.create_data_set(data_set_nr, barrier_strength=0.1)
+MultiRun.create_data_set(data_set_nr, barrier_strength=0.02)
 
 
 ########### For analyzing the data set ##############

@@ -1192,6 +1192,55 @@ def plot_theory_f():
     
     plt.show()
     
+def plot_theory_f_local_barrier():
+    '''Plot the effects of a local barriers for David's grant'''
+    ss = [0, 0.1, 0.5]
+    k = len(ss)
+    
+    
+    rr = np.linspace(-5.1, 5.1, 521)
+    res = np.zeros((k, len(rr)))  # The Container for the Results
+    
+    # The Container for the 
+    kc = fac_kernel("DiffusionBarrierK0")
+    
+    for i in xrange(k):
+        for j in xrange(len(rr)):
+            # calculate the Barrier Strength
+            s = ss[i]
+            r = np.abs(rr[j])/100.0
+            print("s: %.2f, r: %.2f" % (s, r))
+            gamma = r / (r + s)
+            kc.set_parameters([4 * np.pi * 5, 0.006, gamma, 1.0, 0.0])  # Nbh, L, k, t0, ss
+
+            f = kc.num_integral_barrier(0, -1, 1)
+            res[i, j] = f
+
+    
+    
+    c0, c1, c2 = "yellow", "orange", "crimson"
+    # f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'width_ratios':[2, 2.5]})
+    f = plt.figure(figsize=(8, 5))
+    
+    
+    
+    # Plot the IBD
+    lw = 4
+    a=0.95
+    labels = [r"s=%.2f" % s for s in ss]
+    plt.plot(rr, res[0, :], alpha=a, color=c0, label=labels[0], linewidth=lw)
+    plt.plot(rr, res[1, :], alpha=a, color=c1, label=labels[1], linewidth=lw)
+    plt.plot(rr, res[2, :], alpha=a, color=c2, label=labels[2], linewidth=lw)
+
+    # ax1.set_xlim([0, max(x_vec)])
+    # ax1.set_ylim([0, 0.05])
+    plt.xlabel("Genetic Distance [cM]", fontsize=18)
+    plt.ylabel("Expected F", fontsize=18)
+    
+    # plt.xscale("log")
+    plt.legend(fontsize=12, labelspacing=0.3)
+    plt.show()
+    
     
 def multi_barrier(folder):
     '''Prints Inference of multiple Barrier strenghts'''
@@ -2016,7 +2065,7 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     
         # Replace Color Vector if necessary:
     if len(color_path) == 0:
-        color = ["k" for _ in position_list]
+        color = ["DarkGray" for _ in position_list]
     else:
         color_path_full = folder + color_path
         color = np.loadtxt(color_path_full, delimiter='$', dtype='str').astype('str')
@@ -2045,16 +2094,16 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
     # ax2.legend(loc="lower right")
     
     # Plot the Positions:
-    ax3.scatter(position_list[:, 0] , position_list[:, 1], c=color, s=5, zorder=1)  # c = nr_nearby_inds
-    ax3.set_xlabel("x-Position [m]", fontsize=18)
-    ax3.set_ylabel("y-Position [m]", fontsize=18)
+    ax3.scatter(position_list[:, 0] , position_list[:, 1], c=color, s=4, zorder=1, label="Sample Position")  # c = nr_nearby_inds
+    ax3.set_xlabel("x-Position", fontsize=18)
+    ax3.set_ylabel("y-Position", fontsize=18)
     
     # Plot first Barrier Position (for labelling)
-    ax3.vlines(barrier_pos[0], min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3, label="Putative Barrier") 
+    ax3.vlines(barrier_pos[0], min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3, label="Putative Barrier", zorder=2) 
     for x in barrier_pos[1:]:  # Plot rest
-        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=3, zorder=0)
+        ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=2, zorder=2)
     if real_barrier:
-        ax3.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=6, label="True Barrier", zorder=0)
+        ax3.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=3, label="True Barrier", zorder=3)
     ax3.legend(loc="upper right")
     plt.show()
     
@@ -2499,19 +2548,19 @@ def plot_coal_times():
             wspace=0.05, hspace=0.1)
     plt.show()
 
-def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res_folder=None, pr=True, k=0.01):
+def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res_folder=None,
+                                   pr=True, k=0.01, reps=100, outlier=1.0):
     '''Plot what happens when various Parameters are varied
     pr  Print Results if needed'''
-    reps = 20 # How many replicates
     array_l = 5  # How often Parameters have been varied.
     nr_varies = 3 
     nr_params = 5
-    assert(reps*array_l*nr_varies==len(res_numbers)) # Sanity Check
+    assert(reps * array_l * nr_varies == len(res_numbers))  # Sanity Check
     
     # The Values used in the Simulations
-    mu_vec = np.array([0.001, 0.003, 0.005, 0.007, 0.009])
+    mu_vec = np.array([0.001, 0.003, 0.005, 0.007, 0.009]) * 2
     sd_p_vec = np.array([0.04, 0.06, 0.08, 0.1, 0.12])
-    ips_vec = np.array([6, 10, 14, 18, 22])*4*np.pi
+    ips_vec = np.array([6, 10, 14, 18, 22]) * 4 * np.pi
     
     
     batch_l = reps * array_l
@@ -2528,6 +2577,8 @@ def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res
             for j in range(3):
                 print("Parameter: %i" % j)
                 print("Value: %f (%f,%f)" % (res_vec[l, j], unc_vec[l, j, 0], unc_vec[l, j, 1]))
+                
+    
     
     
     # Prepare some Containers for the Summary Results for Barrier Strength:
@@ -2537,47 +2588,61 @@ def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res
     # Calculate the Summary Results
     barriers = res_vec[:, 2]  # Load all the estimated Barriers:
     
+    param_names = ["m", r"\sigma(\bar{p})", "Nb"]
+    x_arrays = np.array([mu_vec, sd_p_vec, ips_vec])  # Produces the Objects for the x-Axis
     for i in xrange(nr_varies):
         for j in xrange(array_l):
             start = batch_l * i + j * reps
             end = batch_l * i + (j + 1) * reps
             
-            sub_array = barriers[start:end]   # Extract the right Subarray
+            sub_array = barriers[start:end]  # Extract the right Subarray
+            sub_array = sub_array[sub_array < outlier]  # To remove outliers
             
-            means[i, j] = np.mean(sub_array) # calculate its Mean
+            means[i, j] = np.mean(sub_array)  # calculate its Mean
             stds[i, j] = np.std(sub_array)  # Calculate its Standarddeviation
-            errors = 1/np.sqrt(reps) * stds # Calculate the Error
+            errors = 1 / np.sqrt(reps) * stds  # Calculate the Error
+            
+            # Plot some histograms of estimates - comment out if interested!
+            # x_vec = np.arange(len(sub_array))
+            # plt.figure()
+            # plt.plot(x_vec, sub_array, "ro")
+            # plt.title("Parameter: %s, Value: %.3f" % (param_names[i], x_arrays[i,j]))
+            # plt.show()
     
     # Do the plot
     # Define the color:
-    c="blue"
-    fs=18 # Fontsize for axis labels
+    c = "blue"
+    fs = 18  # Fontsize for axis labels
     
-    x_arrays = np.array([mu_vec, sd_p_vec, ips_vec]) # Produces the Objects for the x-Axis
+    x_arrays = np.array([mu_vec, sd_p_vec, ips_vec])  # Produces the Objects for the x-Axis
     f, axes = plt.subplots(2, 3, figsize=(10, 5), sharex='col', sharey='row')
     
+    ms = 7
     for i in xrange(3):
         '''Vary over rows'''
-        x_array = x_arrays[i] # Load the right x-Array
+        x_array = x_arrays[i]  # Load the right x-Array
         
-        ax=axes[0,i] # Upper Panel: Mean 
-        ax.errorbar(x_array, means[i,:], yerr=errors[i,:], fmt="o-", color="red")
-        ax.axhline(k, label="True Value", color="green", linewidth=2, zorder=0)
+        ax = axes[0, i]  # Upper Panel: Mean 
+        ax.errorbar(x_array, means[i, :], yerr=errors[i, :], fmt="o-", color="red", markersize=ms)
+        ax.set_ylim([0, 0.03])
+        ax.axhline(k, label=r"True $\gamma$", color="green", linewidth=2, zorder=0)
         
-        ax=axes[1,i] # Lower Panel: STD
-        ax.plot(x_array, stds[i,:], "bo-")
+        ax = axes[1, i]  # Lower Panel: STD
+        ax.plot(x_array, stds[i, :], "bo-", markersize=ms)
     
     # Do the general Plotting
-    axes[0,0].legend()
-    axes[0,0].set_ylabel("Mean", fontsize=fs)
-    axes[1,0].set_ylabel("STD", fontsize=fs)
+    axes[0, 0].legend(fontsize=12)
+    axes[0, 0].set_ylabel("Mean", fontsize=fs)
+    axes[1, 0].set_ylabel("STD", fontsize=fs)
     
-    axes[1,0].set_xlabel("m", fontsize=fs)
-    axes[1,1].set_xlabel("s", fontsize=fs)
-    axes[1,2].set_xlabel("Nb", fontsize=fs)
-    
+    axes[1, 0].set_xlabel("m", fontsize=fs)
+    axes[1, 1].set_xlabel(r"$\sigma(\bar{p})$", fontsize=fs)
+    axes[1, 2].set_xlabel("Nbh", fontsize=fs)
+    f.text(0.92, 0.5, r'Estimates of $\gamma$', va='center', rotation=270, fontsize=fs)
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
+            wspace=0.07, hspace=0.07)
     # Turn off the right axis labels
-    #plt.gcf().text(0.5, 0.04, r"$\gamma=0.01$", ha="center", fontsize=18)  # Set the x-Label
+    # plt.gcf().text(0.5, 0.04, r"$\gamma=0.01$", ha="center", fontsize=18)  # Set the x-Label
     
     plt.show()
     
@@ -2586,9 +2651,11 @@ if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
     # plot_coal_times()  # Plots the Distribution of Coalescence Times.
-    plot_variation_param_estimates("./multi_param_weak/", method=2, k=0.2)  # The plot for a strong Barrier
-    #plot_variation_param_estimates("./multi_param_strong/", method=2, k=0.01)    # The plot for a weak Barrier
-    #plot_variation_param_estimates("./multi_param_intermediate/", method=2, k=0.1) # The plot for the intermediate Barrier
+    # plot_variation_param_estimates("./multi_param_weak/", method=2, k=0.2, reps=20)  # The plot for a strong Barrier
+    # plot_variation_param_estimates("./multi_param_strong/", method=2, k=0.01, reps=20)    # The plot for a weak Barrier
+    # plot_variation_param_estimates("./multi_param_strong1/", method=2, k=0.02, res_numbers=range(1500), reps=100, outlier=0.08) # Plot for 100 Reps of gamma = 0.02
+    # plot_variation_param_estimates("./multi_param_intermediate/", method=2, k=0.1, res_numbers=range(1500), reps=100, outlier=0.28) # The plot for the intermediate Barrier
+    
     
     # multi_nbh_single(multi_nbh_folder, method=0, res_numbers=range(0,100))
     # multi_nbh_all(multi_nbh_folder, res_numbers=range(0, 100))
@@ -2604,6 +2671,8 @@ if __name__ == "__main__":
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
     # plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
+    plot_theory_f_local_barrier()  # For David's grant
+    
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)
     # multi_secondary_contact_all(secondary_contact_folder, secondary_contact_folder_b, method=2)

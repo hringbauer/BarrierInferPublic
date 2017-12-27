@@ -1753,7 +1753,7 @@ if __name__ == "__main__":
     # Multi Paramaters
     MultiRun = fac_method("multi_params", "./multi_param_strong/", multi_processing=0)
     #MultiRun.create_data_set(0, barrier_strength=0.01)
-    MultiRun.analyze_data_set(0, method=2)
+    #MultiRun.analyze_data_set(0, method=2)
     
     
     

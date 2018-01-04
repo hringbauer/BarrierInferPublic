@@ -21,6 +21,8 @@ from scipy.stats import sem
 from kernels import fac_kernel  # Factory Method which yields Kernel Object
 from grid import Grid
 from scipy.special import erfc
+from diff_test_barrier import Diffusion_test, barrier_function
+from scipy.stats import norm
 
 
 multi_nbh_folder = "./nbh_folder/"
@@ -1190,6 +1192,9 @@ def plot_theory_f():
     ax2.annotate("x", (0.85, -0.4))
     ax2.annotate("y", (-0.45, 0.85))
     
+    plt.subplots_adjust(wspace=0.06)
+    #plt.tight_layout()
+    plt.savefig("com1.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
 def plot_theory_f_local_barrier():
@@ -2338,6 +2343,7 @@ def sim_idea_grid(save=True, load=True, path="idea_sim.p", winter=False):
     # plt.tight_layout()
     plt.subplots_adjust(left=None, bottom=0.13, right=None, top=None,
                 wspace=0.07, hspace=0)
+    #plt.savefig("test.pdf", bbox_inches = 'tight', pad_inches = 0) # Saving figure without boundaries
     plt.show()
 
 ###############################################################################
@@ -2646,11 +2652,87 @@ def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res
     
     plt.show()
     
+    
+def diffusion_test_plot(c_values, initial_position=-15, barrier_pos=0.5,
+                    nr_steps=1000, nr_replicates=2000, dispersal="rw"):
+    '''Create a plot of Diffusion PDF vrs. 
+    fit for four c_values
+    '''
+    assert(len(c_values) == 4)  # So that 4 plots are done
+    results = []  # Empty vector for results
+    
+    # Create the diff_tester Object
+    diff_tester = Diffusion_test(initial_position=initial_position, reduced_migration=0.1, 
+                                 nr_steps=nr_steps, dispersal=dispersal)
+    
+    # Actually do the runs:
+    for c in c_values:
+        diff_tester.set_c(c)
+        diff_tester.set_barrier_pos(barrier_pos)
+        pdf = diff_tester.create_pdf(nr_replicates)
+        results.append(pdf)
+        
+    # Do the actual plot:
+    x_vec = np.linspace(-73, 100, 1000)  # Creates the positions for x-Array: -100 to 100
+    f, axarr = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(12, 8))  # Create sub-plots
+    for i in range(4):  # Loop through interval list
+        curr_plot = axarr[i / 2, i % 2]  # Set current plot
+        # curr_plot.set_yscale('log')  # Set Log-Scale
+        k = c_values[i]  # Load the right Barrier Strength
+        end_points = results[i]  # Load the right PDF
+        
+        # Bin the data
+        bins = np.arange(-71, 98, 8) - 0.5
+        #bins = np.arange(-101, 104, 6) - 0.5  # Choose intervall so that 
+        n, bins = np.histogram(end_points, normed=0, bins=bins)
+        mean_dist = (bins[1:] + bins[:-1]) / 2.0  # Get the mean Distance
+        norm_factor = (bins[1] - bins[0]) * len(end_points)  # Factor so that histogram is normalized
+        errors = np.sqrt(n) / float(norm_factor)  # Get the poisson error
+        nn = n / float(norm_factor)  # Norm the end points
+        # print(np.sum(n)*(bins[1]-bins[0])) # Sums up t0 1. Check
+        
+        y_vec_g = norm.pdf(x_vec, scale=1.0 * np.sqrt(nr_steps), loc=initial_position)
+        y_vec_barrier = [barrier_function(initial_position, x-0.5, nr_steps / 2.0, k) for x in x_vec]
+        curr_plot.axvline(barrier_pos, color="r", linewidth=4, label="Barrier", zorder=5)
+        
+        lw=2.5
+        a=0.9
+        l1, = curr_plot.plot(x_vec, y_vec_g, zorder=1, linewidth=lw, alpha=a)
+        l2, = curr_plot.plot(x_vec, y_vec_barrier, zorder=2, linewidth=lw, alpha=a)
+        l3 = curr_plot.plot(mean_dist, nn, "go", zorder=3)
+                
+        curr_plot.text(-74, 0.01, r"$\kappa$: " + str(k), fontsize=16)
+        curr_plot.tick_params(axis='x', labelsize=14)
+        curr_plot.tick_params(axis='y', labelsize=14)
+        
+        # curr_plot.annotate("Blocks: %.0f" % self.total_bl_nr, xy=(0.4, 0.7), xycoords='axes fraction', fontsize=16)
+    f.text(0.5, 0.02, 'End Point', ha='center', va='center', fontsize=16)
+    f.text(0.025, 0.5, 'Probability', ha='center', va='center', rotation='vertical', fontsize=16)
+    axarr[0,0].legend((l1, l2, l3), ('Gaussian No Barrier', 'Barrier Function', 'Random Walk'),
+             fontsize=10, loc=(0.01, 0.82))
+    plt.subplots_adjust(left=0.095, bottom=0.08, right=None, top=None,
+                wspace=0.03, hspace=0.05)
+    #plt.tight_layout()
+    plt.savefig("random_walk.pdf", bbox_inches = 'tight', pad_inches = 0)
+    plt.show() 
+    
+
+    
+
+    
+    
+    
+    
+    
 ######################################################
 if __name__ == "__main__":
     '''Here one chooses which Plot to do:'''
     # sim_idea_grid(save=False, load=True, winter=True)  # Simulate the Idea of the Grid
     # plot_coal_times()  # Plots the Distribution of Coalescence Times.
+    # diffusion_test_plot([0.001, 0.01, 0.1, 0.5], nr_steps=500, nr_replicates=1000000, dispersal="rw", initial_position=20)  # Creates 2x2 Plot # Dispersal: rw laplace
+    
+    
+    
     # plot_variation_param_estimates("./multi_param_weak/", method=2, k=0.2, reps=20)  # The plot for a strong Barrier
     # plot_variation_param_estimates("./multi_param_strong/", method=2, k=0.01, reps=20)    # The plot for a weak Barrier
     # plot_variation_param_estimates("./multi_param_strong1/", method=2, k=0.02, res_numbers=range(1500), reps=100, outlier=0.08) # Plot for 100 Reps of gamma = 0.02
@@ -2670,8 +2752,8 @@ if __name__ == "__main__":
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
-    # plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
-    plot_theory_f_local_barrier()  # For David's grant
+    plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
+    # plot_theory_f_local_barrier()  # For David's grant
     
     
     # multi_secondary_contact_single(secondary_contact_folder_b, method=2)

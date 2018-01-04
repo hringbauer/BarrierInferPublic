@@ -30,7 +30,7 @@ class Diffusion_test(object):
     nr_steps = 500  # Nr of Steps to take for a single realization
     sigma = 0.965  # For Laplace Dispersal
     barrier = 0.5  # Where to find the Barrier (x-coordinate) At the moment only applies for Laplace Migration!
-    dispersal = "rw"  # "laplace" re: random walk, laplace: Laplace Dispersal
+    dispersal = "rw"  # "laplace" rw: random walk, laplace: Laplace Dispersal
     
     
     def __init__(self, initial_position=-10, reduced_migration=1.0, nr_steps=1000,
@@ -206,7 +206,7 @@ def create_2x2_plot(c_values, initial_position=-15, barrier_pos=0.5,
         
     # Do the actual plot:
     x_vec = np.linspace(-100, 100, 1000)  # Creates the positions for x-Array: -100 to 100
-    f, axarr = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(10, 20))  # Create sub-plots
+    f, axarr = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(12, 8))  # Create sub-plots
     for i in range(4):  # Loop through interval list
         curr_plot = axarr[i / 2, i % 2]  # Set current plot
         # curr_plot.set_yscale('log')  # Set Log-Scale
@@ -240,15 +240,20 @@ def create_2x2_plot(c_values, initial_position=-15, barrier_pos=0.5,
     f.text(0.025, 0.5, 'Probability', ha='center', va='center', rotation='vertical', fontsize=16)
     f.legend((l1, l2, l3), ('Gaussian No Barrier', 'Barrier Function', 'Random Walk'),
              fontsize=12, loc=(0.78, 0.36))
-    plt.tight_layout()
+    #plt.subplots_adjust(left=None, bottom=0.13, right=None, top=None,
+    #            wspace=0.07, hspace=0)
+    #plt.tight_layout()
+    #plt.savefig("random_walk.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show() 
+    
 
     
     
 
 # test_diffusion()     # Single test
-create_2x2_plot([0.001, 0.01, 0.1, 0.5], nr_steps=500, 
-                nr_replicates=50000, dispersal="laplace")  # Creates 2x2 Plot # Dispersal: rw laplace
+if __name__ == "__main__":
+    create_2x2_plot([0.001, 0.01, 0.1, 0.5], nr_steps=500, 
+                nr_replicates=5000, dispersal="laplace")  # Creates 2x2 Plot # Dispersal: rw laplace
 
     
 

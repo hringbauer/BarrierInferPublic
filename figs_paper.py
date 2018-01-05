@@ -432,7 +432,7 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
     # Put the Barrier Estimates >1 to 1:
     res_vec[res_numbers, 2] = np.where(res_vec[res_numbers, 2] > 1, 1, res_vec[res_numbers, 2])
     
-    f, ((ax1, ax2, ax3, ax4, ax5)) = plt.subplots(5, 1, sharex=True)
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(12, 8))
     ax32 = ax3.twinx()  # Copy for different y-Scaling
     
     # Nbh Size Plot:
@@ -507,11 +507,12 @@ def multi_barrier10(folder, method=2, res_numbers=range(200), res_folder=None):
 #     #ax5.yscale("log")
 #     ax5.set_ylim([0.01,1.1])
 #     ax5.set_yscale("log")
+    #plt.savefig("barrier10.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
     
     
-def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999], nr_reps=5, figsize=(12, 12)):
+def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999], nr_reps=5):
     '''Plots the Bootstraps over Barriers.'''
     nr_data_sets = len(k_vec) * nr_reps  # Nr of Independent DS
     nr_all_data = nr_bts * len(k_vec) * nr_reps  # Nr of all DS
@@ -549,7 +550,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999
     color_vec = np.repeat(colors, nr_bts)
     color_vec = np.tile(color_vec, nr_data_sets)[:nr_all_data]  # Gets the color vector (double and extract what needed)
 
-    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True)
+    f, ((ax1, ax2, ax3, ax4)) = plt.subplots(4, 1, sharex=True, figsize=(12,6))
     # ax32 = ax3.twinx()  # Copy for different y-Scaling
     
     # Nbh Size Plot:
@@ -579,7 +580,7 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999
     for i in range(nr_data_sets):
         ax3.hlines(k_vec_full[i] , i, i + 1, linewidth=2, color="g", zorder=1)
     ax3.set_ylim([0, 1])
-    ax3.legend(loc="upper left")
+    ax3.legend(loc="upper left", fontsize=12)
     ax3.set_ylabel("$\gamma$", fontsize=18, rotation=0, labelpad=10)
     ax3.set_ylim(0.01, 1.2)
     # ax3.set_yscale("log")
@@ -593,6 +594,8 @@ def multi_bts_barrier(folder, method=2, nr_bts=25, k_vec=[0.002, 0.1, 0.5, 0.999
     plt.xlabel("Dataset", fontsize=18)
     plt.xlim([0, 20])
     plt.xticks(np.linspace(0, 20, (nr_all_data + 1) / 100), map(int, np.linspace(0, nr_all_data, (nr_all_data + 1) / 100)), fontsize=10)
+    
+    #plt.savefig("bootstrap.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
 def multi_barrier_loci(folder, method=2, k_only_folder="k_only/", loci_nr=range(5, 101, 5), nr_reps=25, k_true=0.05):
@@ -1194,7 +1197,7 @@ def plot_theory_f():
     
     plt.subplots_adjust(wspace=0.06)
     #plt.tight_layout()
-    plt.savefig("com1.pdf", bbox_inches = 'tight', pad_inches = 0)
+    #plt.savefig("com1.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
 def plot_theory_f_local_barrier():
@@ -1789,14 +1792,16 @@ def plot_homos_2(position_path, genotype_path, position_path1, genotype_path1, b
     ax2.set_title("Simulated Data", fontsize=18)
     plt.show()
     
+    # Single Plot!
     plt.plot()
     plt.plot(bin_dist, bin_h, "ro", label="Observed")
     plt.plot(x_plot, homo_vec_fit, label="Best Fit", color="green", linewidth=2)
     plt.ylabel("Pairwise h", fontsize=18)
     plt.xlabel("Pw. Distance [m]", fontsize=18)
     # ax1.legend(fontsize=18, loc="upper right")
-    ax1.set_title("Hybrid Zone IBD", fontsize=18)
+    plt.title("Hybrid Zone Data", fontsize=18)
     plt.legend(fontsize=18, loc="upper right")
+    #plt.savefig("hz_ibd.pdf", bbox_inches = 'tight', pad_inches = 0) # Saving figure without boundaries
     plt.show()
     
     # Plot Dataset left: Left: IBD for pairwise heterozygosity. Right: Pairwise F
@@ -2003,7 +2008,8 @@ def plot_IBD_anisotropy(position_path, genotype_path, scale_factor=50):
     
 
 def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5,
-                   true_gamma=0.05, true_nbh=62.831, plot_hlines=1, color_path="", scale_factor=1, real_barrier=True):
+                   true_gamma=0.05, true_nbh=62.831, plot_hlines=1, color_path="", scale_factor=1, real_barrier=True,
+                   max_nbh=350, figsize=(8,8)):
     '''Plots multiple Barrier positions throughout the area.
     Upper Plot: For every Barrier-Position plot the most likely estimate -
     as well as Bootstrap Estimates around it! Lower Plot: Plot the Positions of the
@@ -2076,17 +2082,17 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
         color = np.loadtxt(color_path_full, delimiter='$', dtype='str').astype('str')
     
     # Do the plotting:
-    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+    f, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=figsize)
     # Plot the Nbh Estiamtes:
     inds_sorted, true_inds = argsort_bts(res_vec[:, 0], nr_bts)
     ax1.scatter(barr_pos_plot, res_vec[inds_sorted, 0], c=color_vec, label="Bootstrap Estimate", alpha=0.8, zorder=1)
     ax1.plot(barr_pos_plot[true_inds], res_mean[:, 0], 'o', label="Estimate", color="k")
-    ax1.set_ylim([0, 350])
+    ax1.set_ylim([0, max_nbh])
     ax1.set_ylabel("Nbh", fontsize=18)
     if plot_hlines:
         ax1.hlines(true_nbh, min(position_list[:, 0]), max(position_list[:, 0]), linewidth=2, color=c_lines)
     # ax1.title.set_text("No Barrier")
-    ax1.legend(loc="upper right")
+    ax1.legend(loc="upper left")
     
     inds_sorted, true_inds = argsort_bts(res_vec[:, 2], nr_bts)
     ax2.scatter(barr_pos_plot, res_vec[inds_sorted, 2], label="Bootstrap Estimates", alpha=0.8, c=color_vec, zorder=1)
@@ -2109,7 +2115,11 @@ def multi_pos_plot(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, 
         ax3.vlines(x, min(position_list[:, 1]), max(position_list[:, 1]), alpha=0.8, linewidth=2, zorder=2)
     if real_barrier:
         ax3.vlines(real_barrier_pos, min(position_list[:, 1]), max(position_list[:, 1]), color="red", linewidth=3, label="True Barrier", zorder=3)
-    ax3.legend(loc="upper right")
+    ax3.legend(loc="lower left")
+    
+    plt.subplots_adjust(hspace=0.08)
+    #plt.savefig("synth_dat_mp.pdf", bbox_inches = 'tight', pad_inches = 0) # Saving figure without boundaries
+    #plt.savefig("HZ_mp.pdf", bbox_inches = 'tight', pad_inches = 0) # Saving figure without boundaries
     plt.show()
     
 def multi_pos_plot_k_only(folder, method_folder, res_numbers=range(0, 200), nr_bts=20, real_barrier_pos=500.5, plot_hlines=1):
@@ -2649,7 +2659,7 @@ def plot_variation_param_estimates(folder, method=2, res_numbers=range(300), res
             wspace=0.07, hspace=0.07)
     # Turn off the right axis labels
     # plt.gcf().text(0.5, 0.04, r"$\gamma=0.01$", ha="center", fontsize=18)  # Set the x-Label
-    
+    #plt.savefig("var_params.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show()
     
     
@@ -2713,7 +2723,7 @@ def diffusion_test_plot(c_values, initial_position=-15, barrier_pos=0.5,
     plt.subplots_adjust(left=0.095, bottom=0.08, right=None, top=None,
                 wspace=0.03, hspace=0.05)
     #plt.tight_layout()
-    plt.savefig("random_walk.pdf", bbox_inches = 'tight', pad_inches = 0)
+    #plt.savefig("random_walk.pdf", bbox_inches = 'tight', pad_inches = 0)
     plt.show() 
     
 
@@ -2752,7 +2762,7 @@ if __name__ == "__main__":
     # multi_bts_barrier("./multi_barrier_bts/")  # "./multi_barrier_bts/" Plots the Bootstrap Estimates for various Barrier Strengths
     # multi_barrier_loci("./multi_loci_barrier/")  # Plots the Estimates (Including Barrier) across various Numbers of Loci (To detect Power)
     
-    plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
+    # plot_theory_f()  # Plots the theoretical F; from Kernel calculations. Fig. 3: Decay of IBD in data.
     # plot_theory_f_local_barrier()  # For David's grant
     
     
@@ -2762,7 +2772,7 @@ if __name__ == "__main__":
     # cluster_plot(cluster_folder, method=2)
     # boots_trap("./bts_folder_test/", method=2)   # Bootstrap over Test Data Set: Dataset 00 from cluster data-set; clustered 3x3
     # ll_barrier("./barrier_folder1/")
-    # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0, 300))
+    # multi_pos_plot(multi_pos_syn_folder, met2_folder, res_numbers=range(0, 300), max_nbh=150)
     # Plot for simulated Data with HZ Parameters:
     # multi_pos_plot("./barrier_folder_HZ_synth/", "method2/", res_numbers=range(0, 300), true_nbh=200, true_gamma=0.02)
     
@@ -2774,9 +2784,9 @@ if __name__ == "__main__":
     # multi_pos_plot(multi_pos_hz_folder, "all/", nr_bts=20, real_barrier_pos=2, res_numbers=range(0, 460))
     
     # For Dataset where Demes are not weighted; m.d.: 4200  
-    # Plot for Paper!!!
-    # multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
-    #               scale_factor=50, real_barrier=False)
+    # Plot for Paper:
+    #multi_pos_plot("./multi_barrier_hz_ALL/chr0/", "result/", nr_bts=20 , real_barrier_pos=2, res_numbers=range(0, 460), plot_hlines=0, color_path="colorsHZALL.csv",
+    #              scale_factor=50, real_barrier=False, figsize=(8,6), max_nbh=400)
     
     
     
@@ -2804,6 +2814,7 @@ if __name__ == "__main__":
     # plot_IBD_bootstrap("./hz_folder/hz_file_coords00.csv","./hz_folder/hz_file_genotypes00.csv", hz_folder, "barrier2/", res_number=100, nr_bootstraps=20)
     
     # plot_IBD_bootstrap("./nbh_folder/nbh_file_coords30.csv", "./nbh_folder/nbh_file_genotypes30.csv", hz_folder, "barrier2/")  # Bootstrap Random Data Set
+    
     # plot_IBD_across_Zone("./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", "./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", bins=20, max_dist=4, nr_bootstraps=25)  # Usually the dist. factor is 50
     # plot_IBD_anisotropy("./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", "./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv")
     
@@ -2827,19 +2838,20 @@ if __name__ == "__main__":
     #            scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=5)
     
     # Compared to data simulated under HZ parameters:
-    # plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
-    #          position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
-    #          bins=15, max_dist=1800, max_dist1=25, 
-    #          best_fit_params=[188.12, 0.0004426, 0.5257], best_fit_params1=[150.6, 0.0055816, 0.52735],
-    #          scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)  #192.2, 0.000839, 0.528088
+    # Plot for Paper:
+    plot_homos_2(position_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL/chr0/mb_posHZ_genotypes00.csv", 
+             position_path1="./barrier_folder_HZ_synth/mb_pos_coords00.csv", genotype_path1="./barrier_folder_HZ_synth/mb_pos_genotypes00.csv", 
+             bins=15, max_dist=3000, max_dist1=25, 
+             best_fit_params=[188.12, 0.0004426, 0.5257], best_fit_params1=[150.6, 0.0055816, 0.52735],
+             scale_factor=50, scale_factor1=1, demes_x=50, demes_y=10, demes_x1=30, demes_y1=20, min_ind_nr=5)  #192.2, 0.000839, 0.528088
     
     
     # 2014 Estimates:
-    # plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
-    #       position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
-    #       bins=50, max_dist=3000, max_dist1=20, 
-    #       best_fit_params=[290.102813, 0.000051, 0.524790], best_fit_params1=[67.74, 0.0107, 0.52343],
-    #       scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
+    #plot_homos_2(position_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_coords00.csv", genotype_path="./multi_barrier_hz_ALL14/min25/mb_posHZ_genotypes00.csv", 
+    #      position_path1="./barrier_folder10/barrier_file_coords199.csv", genotype_path1="./barrier_folder10/barrier_file_genotypes199.csv", 
+    #      bins=50, max_dist=3000, max_dist1=20, 
+    #      best_fit_params=[290.102813, 0.000051, 0.524790], best_fit_params1=[67.74, 0.0107, 0.52343],
+    #      scale_factor=50, scale_factor1=1, demes_x=100, demes_y=20, demes_x1=30, demes_y1=20, min_ind_nr=3)
     
     # Plot IBD for Dataset used in Geneland Comparison
     # plot_homos(position_path="./barrier_folder2/barrier_file_coords60.csv", 
